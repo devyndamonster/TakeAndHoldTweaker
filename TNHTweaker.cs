@@ -14,12 +14,12 @@ namespace FistVR
 
     public class CustomCharData
     {
-        public List<int> AdditionalSupplyPoints = new List<int>();
         public List<CustomTNHLevel> Levels = new List<CustomTNHLevel>();
     }
 
     public class CustomTNHLevel
     {
+        public int AdditionalSupplyPoints = 0;
         public List<CustomTNHPhase> Phases = new List<CustomTNHPhase>();
     }
 
@@ -550,11 +550,26 @@ namespace FistVR
                                 currField = Traverse.Create(customCharDict[character].Levels[levelIndex].Phases[phaseIndex]).Field(GetTagFromLine(line));
                             }
 
-                            //Otherwise the field is inside the character
-                            else
+
+                            //If we are inside level, redirect field to current custom level
+                            else if (traverseStack.Peek().GetValue().GetType() == typeof(TNH_Progression.Level))
+                            {
+                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD IS FOR CUSTOM DATA OF LEVEL");
+                                int levelIndex = customCharDict[character].Levels.Count - 1;
+                                currField = Traverse.Create(customCharDict[character].Levels[levelIndex]).Field(GetTagFromLine(line));
+                            }
+
+                            //Otherwise check if this is a field in the custom character file
+                            else if(Traverse.Create(customCharDict[character]).Field(GetTagFromLine(line)).FieldExists())
                             {
                                 Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD IS FOR CUSTOM DATA OF CHARACTER");
                                 currField = Traverse.Create(customCharDict[character]).Field(GetTagFromLine(line));
+                            }
+
+                            else
+                            {
+                                Debug.LogWarning("" + GetIndent(traverseStack.Count) + "CUSTOM FIELD IS NOT FOUND - SKIPPING ENTRY");
+                                continue;
                             }
                         }
 
@@ -994,7 +1009,6 @@ namespace FistVR
                     sw.WriteLine("Has_Item_Secondary=false");
                     sw.WriteLine("Has_Item_Tertiary=false");
                     sw.WriteLine("Has_Item_Shield=false");
-                    sw.WriteLine("@AdditionalSupplyPoints=2,2,2,2,2");
 
 
                     sw.WriteLine("\n");
@@ -1110,6 +1124,7 @@ namespace FistVR
                     sw.WriteLine("  #START OF LEVEL 1");
                     sw.WriteLine("  {");
                     sw.WriteLine("      NumOverrideTokensForHold=5");
+                    sw.WriteLine("      @AdditionalSupplyPoints=1");
 
                     //Open Take Challenge
                     sw.WriteLine("");
@@ -1435,7 +1450,7 @@ namespace FistVR
             CustomCharData characterData;
             if(customCharDict.TryGetValue(___C, out characterData))
             {
-                if(characterData.AdditionalSupplyPoints.Count > ___m_level)
+                if(characterData.Levels.Count > ___m_level)
                 {
 
                     List<TNH_SupplyPoint> possiblePoints = new List<TNH_SupplyPoint>(___SupplyPoints);
@@ -1453,7 +1468,7 @@ namespace FistVR
                     possiblePoints.Shuffle();
 
                     //Now that we have a list of valid points, set up some of those points
-                    for(int i = 0; i < characterData.AdditionalSupplyPoints[___m_level] && i < possiblePoints.Count; i++)
+                    for(int i = 0; i < characterData.Levels[___m_level].AdditionalSupplyPoints && i < possiblePoints.Count; i++)
                     {
                         TNH_SupplyPoint.SupplyPanelType panelType = TNH_SupplyPoint.SupplyPanelType.GunRecycler;
                         possiblePoints[i].Configure(___m_curLevel.SupplyChallenge, true, true, true, panelType, 1, 2);
