@@ -274,6 +274,8 @@ namespace FistVR
             Sprite charSprite = LoadSprite(imagePath);
             string[] characterData = File.ReadAllLines(dataPath);
 
+            /////Yu[
+
             //First, assign default values for this character for the values that we will be loading from a file
             character.DisplayName = "NAME NOT FOUND";
             character.Group = TNH_CharacterDef.CharacterGroup.MemetasticMeats;
