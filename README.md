@@ -1,5 +1,5 @@
 # TakeAndHoldTweaker
-An H3VR plugin for modifying Take &amp; Hold
+An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters, as well as global tweaks to spice things up.
 
 ## Installation
 1. Install the latest x64 version of [BepInEx](https://github.com/BepInEx/BepInEx/releases)
