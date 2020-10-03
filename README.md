@@ -8,3 +8,6 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
     1. This will generate a CustomCharacter folder in your H3VR install folder
     2. This will also generate a config file inside BepInEx/config
 4. Place any character files into the custom character folder (unzipped)
+
+## Character Creation
+Check out the [Wiki](https://github.com/devyndamonster/TakeAndHoldTweaker/wiki) for documentation on character creation, and other important stuff
