@@ -54,6 +54,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TNHTweakerUtils.cs" />
+    <Compile Include="ObjectBuilder.cs" />
     <Compile Include="TNHTweaker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
