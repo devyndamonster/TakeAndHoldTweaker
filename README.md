@@ -9,5 +9,9 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
     2. This will also generate a config file inside BepInEx/config
 4. Place any character files into the custom character folder (unzipped)
 
+## Current Custom Characters
+
+- **Comrade Kolbasa** \- A character which can only use russian weaponry
+
 ## Character Creation
 Check out the [Wiki](https://github.com/devyndamonster/TakeAndHoldTweaker/wiki) for documentation on character creation, and other important stuff
