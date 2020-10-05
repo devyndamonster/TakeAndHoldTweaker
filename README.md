@@ -11,6 +11,8 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
 
 ## Current Custom Characters
 
+***NOTE:*** All characters can be found in the releases page
+
 - **Comrade Kolbasa** \- A character which can only use russian weaponry
 
 ## Character Creation
