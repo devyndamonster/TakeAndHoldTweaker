@@ -58,8 +58,8 @@ namespace FistVR
                 Debug.Log("PatrolSize = " + patrol.PatrolSize);
                 Debug.Log("TimeTilRegen = " + patrol.TimeTilRegen);
                 Debug.Log("IFF = " + patrol.IFFUsed);
-                Debug.Log("EnemyType = " + patrol.EnemyType);
-                Debug.Log("LeaderType = " + patrol.LeaderType);
+                Debug.Log("EnemyType = " + patrol.EType);
+                Debug.Log("LeaderType = " + patrol.LType);
             }
         }
 
@@ -338,8 +338,7 @@ namespace FistVR
                     sw.WriteLine("          #Options: " + string.Join(",", Enum.GetNames(typeof(TNH_TurretType))));
                     sw.WriteLine("          TurretType=SMG");
                     sw.WriteLine("          NumTurrets=0");
-                    sw.WriteLine("          #Options: " + string.Join(",", Enum.GetNames(typeof(TNH_EnemyType))));
-                    sw.WriteLine("          GuardType=M_Swat_Scout");
+                    sw.WriteLine("          GID=M_Swat_Scout");
                     sw.WriteLine("          NumGuards=2");
                     sw.WriteLine("          IFFUsed=1");
                     sw.WriteLine("      }");
@@ -359,10 +358,8 @@ namespace FistVR
                     sw.WriteLine("          {");
                     sw.WriteLine("              #Options: " + string.Join(",", Enum.GetNames(typeof(TNH_EncryptionType))));
                     sw.WriteLine("              Encryption=Static");
-                    sw.WriteLine("              #Options: " + string.Join(",", Enum.GetNames(typeof(TNH_EnemyType))));
-                    sw.WriteLine("              EnemyType=M_Swat_Scout");
-                    sw.WriteLine("              #Options: " + string.Join(",", Enum.GetNames(typeof(TNH_EnemyType))));
-                    sw.WriteLine("              EnemyType_Leader=M_Swat_Scout");
+                    sw.WriteLine("              EType=M_Swat_Scout");
+                    sw.WriteLine("              LType=M_Swat_Scout");
                     sw.WriteLine("              MinTargets=3");
                     sw.WriteLine("              MaxTargets=4");
                     sw.WriteLine("              MinEnemies=3");
@@ -391,8 +388,7 @@ namespace FistVR
                     sw.WriteLine("          #Options: " + string.Join(",", Enum.GetNames(typeof(TNH_TurretType))));
                     sw.WriteLine("          TurretType=SMG");
                     sw.WriteLine("          NumTurrets=0");
-                    sw.WriteLine("          #Options: " + string.Join(",", Enum.GetNames(typeof(TNH_EnemyType))));
-                    sw.WriteLine("          GuardType=M_Swat_Scout");
+                    sw.WriteLine("          GID=M_Swat_Scout");
                     sw.WriteLine("          NumGuards=2");
                     sw.WriteLine("          IFFUsed=1");
                     sw.WriteLine("      }");
@@ -407,10 +403,8 @@ namespace FistVR
                     //Open Patrol
                     sw.WriteLine("");
                     sw.WriteLine("          {");
-                    sw.WriteLine("              #Options: " + string.Join(",", Enum.GetNames(typeof(TNH_EnemyType))));
-                    sw.WriteLine("              EnemyType=M_Swat_Scout");
-                    sw.WriteLine("              #Options: " + string.Join(",", Enum.GetNames(typeof(TNH_EnemyType))));
-                    sw.WriteLine("              LeaderType=M_Swat_Scout");
+                    sw.WriteLine("              EType=M_Swat_Scout");
+                    sw.WriteLine("              LType=M_Swat_Scout");
                     sw.WriteLine("              PatrolSize=4");
                     sw.WriteLine("              MaxPatrols=4");
                     sw.WriteLine("              MaxPatrols_LimitedAmmo=4");

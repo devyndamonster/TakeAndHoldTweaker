@@ -351,8 +351,8 @@ namespace FistVR
                     leaderType = "M_Swat_Scout";
                 }
 
-                P.Patrols[0].EnemyType = (TNH_EnemyType)Enum.Parse(typeof(TNH_EnemyType), enemyType, true);
-                P.Patrols[0].LeaderType = (TNH_EnemyType)Enum.Parse(typeof(TNH_EnemyType), leaderType, true);
+                P.Patrols[0].EType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), enemyType, true);
+                P.Patrols[0].LType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), leaderType, true);
 
                 //Allow for an IFF to be 0 instead of 1
                 if (allowFriendlyPatrols.Value && patrolTeams.Value >= 2)
@@ -432,7 +432,7 @@ namespace FistVR
             for(int i = 0; i < ___T.NumGuards && i < ___SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
-                SosigEnemyTemplate template = ___M.GetEnemyTemplate(___T.GuardType);
+                SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
                 Sosig enemy = ___M.SpawnEnemy(template, transform, ___T.IFFUsed, false, transform.position, true);
                 ___m_activeSosigs.Add(enemy);
             }
@@ -471,7 +471,8 @@ namespace FistVR
             for (int i = 0; i < ___T.NumGuards && i < ___SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
-                SosigEnemyTemplate template = ___M.GetEnemyTemplate(___T.GuardType);
+                //SosigEnemyTemplate template = ___M.GetEnemyTemplate(___T.GuardType);
+                SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
                 Sosig enemy = ___M.SpawnEnemy(template, transform, ___T.IFFUsed, false, transform.position, true);
                 ___m_activeSosigs.Add(enemy);
             }
@@ -546,7 +547,7 @@ namespace FistVR
             numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
 
             //Set first enemy to be spawned as leader
-            SosigEnemyTemplate enemyTemplate = M.GetEnemyTemplate(curPhase.EnemyType_Leader);
+            SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[curPhase.LType];
             int enemiesToSpawn = UnityEngine.Random.Range(curPhase.MinEnemies, curPhase.MaxEnemies + 1);
 
             int sosigsSpawned = 0;
@@ -569,7 +570,7 @@ namespace FistVR
                     Debug.Log("TNHTWEAKER -- SOSIG SPAWNED");
 
                     //At this point, the leader has been spawned, so always set enemy to be regulars
-                    enemyTemplate = M.GetEnemyTemplate(curPhase.EnemyType);
+                    enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[curPhase.EType];
                     sosigsSpawned += 1;
                 }
 
