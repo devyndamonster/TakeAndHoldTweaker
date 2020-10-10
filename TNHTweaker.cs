@@ -262,21 +262,6 @@ namespace FistVR
             }
         }
 
-        
-
-        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawningRoutineUpdate")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPostfix]
-        public static void SpawningRoutineUpdateAfter(ref float ___m_tickDownToNextGroupSpawn, List<Sosig> ___m_activeSosigs)
-        {
-            if(___m_activeSosigs.Count == 0 && instantRespawn.Value)
-            {
-                if(___m_tickDownToNextGroupSpawn > 1)
-                {
-                    Debug.Log("TNHTWEAKER -- FORCING NEXT WAVE TO BEGIN");
-                    ___m_tickDownToNextGroupSpawn = 1;
-                }
-            }
-        }
 
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
@@ -366,8 +351,8 @@ namespace FistVR
                     leaderType = "M_Swat_Scout";
                 }
 
-                P.Patrols[0].EnemyType = (TNH_EnemyType)Enum.Parse(typeof(TNH_EnemyType), enemyType, true);
-                P.Patrols[0].LeaderType = (TNH_EnemyType)Enum.Parse(typeof(TNH_EnemyType), leaderType, true);
+                P.Patrols[0].EType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), enemyType, true);
+                P.Patrols[0].LType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), leaderType, true);
 
                 //Allow for an IFF to be 0 instead of 1
                 if (allowFriendlyPatrols.Value && patrolTeams.Value >= 2)
@@ -447,7 +432,7 @@ namespace FistVR
             for(int i = 0; i < ___T.NumGuards && i < ___SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
-                SosigEnemyTemplate template = ___M.GetEnemyTemplate(___T.GuardType);
+                SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
                 Sosig enemy = ___M.SpawnEnemy(template, transform, ___T.IFFUsed, false, transform.position, true);
                 ___m_activeSosigs.Add(enemy);
             }
@@ -486,7 +471,8 @@ namespace FistVR
             for (int i = 0; i < ___T.NumGuards && i < ___SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
-                SosigEnemyTemplate template = ___M.GetEnemyTemplate(___T.GuardType);
+                //SosigEnemyTemplate template = ___M.GetEnemyTemplate(___T.GuardType);
+                SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
                 Sosig enemy = ___M.SpawnEnemy(template, transform, ___T.IFFUsed, false, transform.position, true);
                 ___m_activeSosigs.Add(enemy);
             }
@@ -516,51 +502,148 @@ namespace FistVR
 
         
 
-
-
-        
-        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnHoldEnemyGroup")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPrefix]
-        public static bool SpawnGrenadesDuringHold(List<TNH_HoldPoint.AttackVector> ___AttackVectors, TNH_Manager ___M, int ___m_phaseIndex)
+        public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int m_phaseIndex)
         {
-
             CustomCharData characterData;
-            if (customCharDict.TryGetValue(___M.C, out characterData))
+            if (customCharDict.TryGetValue(M.C, out characterData))
             {
 
-                Debug.Log("TNHTWEAKER -- SPAWNING A WAVE");
-
-
-                int currLevel = (int)Traverse.Create(___M).Field("m_level").GetValue();
+                int currLevel = (int)Traverse.Create(M).Field("m_level").GetValue();
 
                 if (characterData.Levels.Count > currLevel)
                 {
-                    if(characterData.Levels[currLevel].Phases.Count > ___m_phaseIndex)
+                    if(characterData.Levels[currLevel].Phases.Count > m_phaseIndex)
                     {
-                        float grenadeChance = characterData.Levels[currLevel].Phases[___m_phaseIndex].GrenadeChance;
-                        string grenadeType = characterData.Levels[currLevel].Phases[___m_phaseIndex].GrenadeType;
+                        float grenadeChance = characterData.Levels[currLevel].Phases[m_phaseIndex].GrenadeChance;
+                        string grenadeType = characterData.Levels[currLevel].Phases[m_phaseIndex].GrenadeType;
                         
                         if(grenadeChance >= UnityEngine.Random.Range(0f, 1f))
                         {
-                            Debug.Log("TNHTWEAKER -- THROWING A GRENADE");
+                            Debug.Log("TNHTWEAKER -- THROWING A GRENADE ");
 
                             //Get a random grenade vector to spawn a grenade at
-                            TNH_HoldPoint.AttackVector randAttackVector = ___AttackVectors[UnityEngine.Random.Range(0, ___AttackVectors.Count)];
+                            TNH_HoldPoint.AttackVector randAttackVector = AttackVectors[UnityEngine.Random.Range(0, AttackVectors.Count)];
 
                             //Instantiate the grenade object
                             GameObject grenadeObject = Instantiate(IM.OD[grenadeType].GetGameObject(), randAttackVector.GrenadeVector.position, randAttackVector.GrenadeVector.rotation);
 
                             //Give the grenade an initial velocity based on the grenade vector
-                            grenadeObject.GetComponent<Rigidbody>().velocity = randAttackVector.GrenadeVelRange.y * randAttackVector.GrenadeVector.forward;
+                            grenadeObject.GetComponent<Rigidbody>().velocity = 15 * randAttackVector.GrenadeVector.forward;
                             grenadeObject.GetComponent<SosigWeapon>().FuseGrenade();
                         }
                     }
                 }
             }
-
-            return true;
         }
-        
+
+
+
+        public static void SpawnHoldEnemyGroup(TNH_HoldChallenge.Phase curPhase, List<TNH_HoldPoint.AttackVector> AttackVectors, List<Transform> SpawnPoints_Turrets, List<Sosig> ActiveSosigs, TNH_Manager M, ref bool isFirstWave)
+        {
+            Debug.Log("TNHTWEAKER -- SPAWNING AN ENEMY WAVE");
+
+            //TODO add custom property form MinDirections
+            int numAttackVectors = UnityEngine.Random.Range(1, curPhase.MaxDirections + 1);
+            numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
+
+            //Set first enemy to be spawned as leader
+            SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[curPhase.LType];
+            int enemiesToSpawn = UnityEngine.Random.Range(curPhase.MinEnemies, curPhase.MaxEnemies + 1);
+
+            int sosigsSpawned = 0;
+            int vectorSpawnPoint = 0;
+            Vector3 targetVector;
+            while(sosigsSpawned < enemiesToSpawn)
+            {
+                //Loop through each attack vector, and spawn a sosig at the current selected point
+                for (int i = 0; i < numAttackVectors; i++)
+                {
+                    Debug.Log("TNHTWEAKER -- SPAWNING AT ATTCK VECTOR: " + i);
+
+                    if (AttackVectors[i].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint) return;
+
+                    //Spawn the enemy
+                    targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
+                    Sosig enemy = M.SpawnEnemy(enemyTemplate, AttackVectors[i].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], curPhase.IFFUsed, true, targetVector, true);
+                    ActiveSosigs.Add(enemy);
+
+                    Debug.Log("TNHTWEAKER -- SOSIG SPAWNED");
+
+                    //At this point, the leader has been spawned, so always set enemy to be regulars
+                    enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[curPhase.EType];
+                    sosigsSpawned += 1;
+                }
+
+                vectorSpawnPoint += 1;
+            }
+            isFirstWave = false;
+
+        }
+
+
+
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawningRoutineUpdate")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool SpawningUpdateReplacement(
+            ref float ___m_tickDownToNextGroupSpawn,
+            List<Sosig> ___m_activeSosigs,
+            TNH_HoldPoint.HoldState ___m_state,
+            ref bool ___m_hasThrownNadesInWave,
+            List<TNH_HoldPoint.AttackVector> ___AttackVectors,
+            List<Transform> ___SpawnPoints_Turrets,
+            TNH_Manager ___M,
+            TNH_HoldChallenge.Phase ___m_curPhase,
+            int ___m_phaseIndex,
+            ref bool ___m_isFirstWave)
+        {
+
+            ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
+
+            
+            if (___m_activeSosigs.Count < 1)
+            {
+                if (instantRespawn.Value)
+                {
+                    ___m_tickDownToNextGroupSpawn = 0;
+                }
+
+                else if(___m_state == TNH_HoldPoint.HoldState.Analyzing)
+                {
+                    ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
+                }
+            }
+
+            if(___m_tickDownToNextGroupSpawn <= 0)
+            {
+                Debug.Log("TNHTWEAKER -- TIME TO SPAWN!");
+                Debug.Log("Max Alive: " + ___m_curPhase.MaxEnemiesAlive);
+                Debug.Log("Max Spawned: " + ___m_curPhase.MaxEnemies);
+                Debug.Log("Currently Active: " + ___m_activeSosigs.Count);
+            }
+
+
+            if(!___m_hasThrownNadesInWave && ___m_tickDownToNextGroupSpawn <= 5f && !___m_isFirstWave)
+            {
+                SpawnGrenades(___AttackVectors, ___M, ___m_phaseIndex);
+                ___m_hasThrownNadesInWave = true;
+            }
+
+            //Handle spawning of a wave if it is time
+            if(___m_tickDownToNextGroupSpawn <= 0 && ___m_activeSosigs.Count + ___m_curPhase.MaxEnemies <= ___m_curPhase.MaxEnemiesAlive)
+            {
+                ___AttackVectors.Shuffle();
+
+                SpawnHoldEnemyGroup(___m_curPhase, ___AttackVectors, ___SpawnPoints_Turrets, ___m_activeSosigs, ___M, ref ___m_isFirstWave);
+                ___m_hasThrownNadesInWave = false;
+                ___m_tickDownToNextGroupSpawn = ___m_curPhase.SpawnCadence;
+            }
+
+
+            return false;
+        }
+            
+
+
 
 
 
