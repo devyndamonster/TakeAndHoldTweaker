@@ -8,6 +8,7 @@ using System.Reflection;
 using BepInEx.Configuration;
 using System.IO;
 using System.Collections;
+using System.Linq;
 
 namespace FistVR
 {
@@ -20,6 +21,12 @@ namespace FistVR
     public class CustomTNHLevel
     {
         public int AdditionalSupplyPoints = 0;
+        public int MaxBoxesSpawned = 4;
+        public int MinBoxesSpawned = 2;
+        public int MaxTokensPerSupply = 1;
+        public int MinTokensPerSupply = 1;
+        public float BoxTokenChance = 1;
+        public float BoxHealthChance = 0.8f;
         public List<CustomTNHPhase> Phases = new List<CustomTNHPhase>();
     }
 
@@ -52,6 +59,7 @@ namespace FistVR
 
         private static Dictionary<int, List<string>> teamEnemyTypes = new Dictionary<int, List<string>>();
         private static Dictionary<int, List<string>> teamLeaderTypes = new Dictionary<int, List<string>>();
+        private static Dictionary<string, Sprite> equipmentIcons = new Dictionary<string, Sprite>();
 
         private static float timeTillForcedSpawn;
         private static string characterPath;
@@ -174,6 +182,7 @@ namespace FistVR
         {
 
             TNHTweakerUtils.CreateObjectIDFile(characterPath);
+            TNHTweakerUtils.CreateSosigIDFile(characterPath);
 
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
@@ -203,6 +212,10 @@ namespace FistVR
                     Debug.Log("CHARACTER IN UI CATEGORY: " + character);
                 }
             }
+
+            equipmentIcons = TNHTweakerUtils.GetAllIcons(___CharDatabase);
+
+            TNHTweakerUtils.CreateIconIDFile(characterPath, equipmentIcons.Keys.ToList());
 
             LoadCustomCharacters(___CharDatabase.Characters[0]);
 
@@ -255,7 +268,7 @@ namespace FistVR
                 }
 
 
-                TNH_CharacterDef character = ObjectBuilder.GetCharacterFromString(characterDir, customCharDict, backupCharacter);
+                TNH_CharacterDef character = ObjectBuilder.GetCharacterFromString(characterDir, customCharDict, equipmentIcons, backupCharacter);
                 customCharacters.Add(character);
 
                 Debug.Log("TNHTWEAKER -- CHARACTER LOADED: " + character.DisplayName);
@@ -411,7 +424,8 @@ namespace FistVR
                     //Now that we have a list of valid points, set up some of those points
                     for(int i = 0; i < characterData.Levels[___m_level].AdditionalSupplyPoints && i < possiblePoints.Count; i++)
                     {
-                        TNH_SupplyPoint.SupplyPanelType panelType = TNH_SupplyPoint.SupplyPanelType.GunRecycler;
+                        TNH_SupplyPoint.SupplyPanelType panelType = (TNH_SupplyPoint.SupplyPanelType)UnityEngine.Random.Range(1,3);
+                        
                         possiblePoints[i].Configure(___m_curLevel.SupplyChallenge, true, true, true, panelType, 1, 2);
                         TAH_ReticleContact contact = ___TAHReticle.RegisterTrackedObject(possiblePoints[i].SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                         possiblePoints[i].SetContact(contact);
@@ -500,7 +514,79 @@ namespace FistVR
             return false;
         }
 
-        
+
+
+
+        [HarmonyPatch(typeof(TNH_HoldPoint), "IdentifyEncryption")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool SpawnEncryptionReplacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase)
+        {
+            if(___m_curPhase.MaxTargets <= 0)
+            {
+                Traverse.Create(__instance).Method("CompletePhase").GetValue();
+                return false;
+            }
+
+            return true;
+        }
+
+
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnBoxes")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool SpawnBoxesReplacement(TNH_SupplyPoint __instance, TNH_Manager ___M, List<GameObject> ___m_spawnBoxes)
+        {
+            CustomCharData characterData;
+            if (customCharDict.TryGetValue(___M.C, out characterData)){
+
+                int currLevel = (int)Traverse.Create(___M).Field("m_level").GetValue();
+
+                if(characterData.Levels.Count > currLevel)
+                {
+                    __instance.SpawnPoints_Boxes.Shuffle();
+
+                    int boxesToSpawn = UnityEngine.Random.Range(characterData.Levels[currLevel].MinBoxesSpawned, characterData.Levels[currLevel].MaxBoxesSpawned + 1);
+
+                    Debug.Log("TNHTWEAKER -- GOING TO SPAWN " + boxesToSpawn + " BOXES AT THIS SUPPLY POINT -- MIN (" + characterData.Levels[currLevel].MinBoxesSpawned + "), MAX (" + characterData.Levels[currLevel].MaxBoxesSpawned + ")");
+
+                    for (int i = 0; i < boxesToSpawn; i++)
+                    {
+                        Transform spawnTransform = __instance.SpawnPoints_Boxes[UnityEngine.Random.Range(0, __instance.SpawnPoints_Boxes.Count)];
+                        Vector3 position = spawnTransform.position + Vector3.up * 0.1f + Vector3.right * UnityEngine.Random.Range(-0.5f, 0.5f) + Vector3.forward * UnityEngine.Random.Range(-0.5f, 0.5f);
+                        Quaternion rotation = Quaternion.Slerp(spawnTransform.rotation, UnityEngine.Random.rotation, 0.1f);
+                        GameObject box = Instantiate(___M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, ___M.Prefabs_ShatterableCrates.Count)], position, rotation);
+                        ___m_spawnBoxes.Add(box);
+                        Debug.Log("TNHTWEAKER -- BOX SPAWNED");
+                    }
+
+                    int tokensSpawned = 0;
+
+                    foreach(GameObject boxObj in ___m_spawnBoxes)
+                    {
+                        if(tokensSpawned < characterData.Levels[currLevel].MinTokensPerSupply)
+                        {
+                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(___M);
+                            tokensSpawned += 1;
+                        }
+
+                        else if (tokensSpawned < characterData.Levels[currLevel].MaxTokensPerSupply && UnityEngine.Random.value < characterData.Levels[currLevel].BoxTokenChance)
+                        {
+                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(___M);
+                            tokensSpawned += 1;
+                        }
+
+                        else if (UnityEngine.Random.value < characterData.Levels[currLevel].BoxHealthChance)
+                        {
+                            boxObj.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(___M);
+                        }
+                    }
+
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
 
         public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int m_phaseIndex)
         {
@@ -641,13 +727,20 @@ namespace FistVR
 
             return false;
         }
-            
 
 
 
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "Configure")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool PrintSupplyPoint(TNH_SupplyPoint.SupplyPanelType panelType)
+        {
+            Debug.Log("TNHTWEAKER -- CONFIGURING SUPPLY POINT -- PANEL TYPE: " + panelType.ToString());
+            return true;
+        }
 
 
-        public static int GetClosestSupplyPointIndex(List<TNH_SupplyPoint> SupplyPoints, Vector3 playerPosition)
+
+            public static int GetClosestSupplyPointIndex(List<TNH_SupplyPoint> SupplyPoints, Vector3 playerPosition)
         {
             float minDist = 999999999f;
             int minIndex = 0;

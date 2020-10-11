@@ -15,7 +15,7 @@ namespace FistVR
 
     public class ObjectBuilder
     {
-        public static TNH_CharacterDef GetCharacterFromString(string charPath, Dictionary<TNH_CharacterDef, CustomCharData> customCharDict, TNH_CharacterDef backupCharacter)
+        public static TNH_CharacterDef GetCharacterFromString(string charPath, Dictionary<TNH_CharacterDef, CustomCharData> customCharDict, Dictionary<string, Sprite> icons, TNH_CharacterDef backupCharacter)
         {
             TNH_CharacterDef character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
             customCharDict.Add(character, new CustomCharData());
@@ -411,7 +411,7 @@ namespace FistVR
                         //Handle case where it is an enum
                         else if (currType.IsEnum)
                         {
-
+                            //TODO this won't work for enum values that are actually -1
                             if (GetIntFromLine(line) == -1)
                             {
                                 Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: ENUM, ASSIGNED BY STRING");
@@ -426,8 +426,28 @@ namespace FistVR
 
                         else if (currType == typeof(Sprite))
                         {
-                            Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: ICON, LOADING FROM " + charPath + "/" + GetStringFromLine(line));
-                            currField.SetValue(LoadSprite(charPath + "/" + GetStringFromLine(line)));
+                            string value = GetStringFromLine(line);
+
+                            //If this starts with an @, it is a default icon
+                            if (value.StartsWith("@"))
+                            {
+                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: ICON, LOADED FROM DEFAULT ICON DICTIONARY");
+
+                                value = value.TrimStart('@');
+                                if (icons.ContainsKey(value)){
+                                    currField.SetValue(icons[value]);
+                                }
+                                else
+                                {
+                                    Debug.LogWarning("" + GetIndent(traverseStack.Count) + "ICON NOT FOUND");
+                                }
+                            }
+
+                            else
+                            {
+                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: ICON, LOADING FROM " + charPath + "/" + value);
+                                currField.SetValue(LoadSprite(charPath + "/" + value));
+                            }
                         }
 
                         else

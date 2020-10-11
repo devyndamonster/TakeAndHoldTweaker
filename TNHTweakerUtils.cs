@@ -496,6 +496,84 @@ namespace FistVR
             }
         }
 
+
+        public static void CreateSosigIDFile(string path)
+        {
+            try
+            {
+                if (File.Exists(path + "/SosigIDs.txt"))
+                {
+                    File.Delete(path + "/SosigIDs.txt");
+                }
+
+                // Create a new file     
+                using (StreamWriter sw = File.CreateText(path + "/SosigIDs.txt"))
+                {
+                    sw.WriteLine("#Available Sosig IDs for spawning");
+                    foreach (SosigEnemyID ID in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Keys)
+                    {
+                        sw.WriteLine(ID.ToString());
+                    }
+                    sw.Close();
+                }
+            }
+
+            catch (Exception ex)
+            {
+                Debug.LogError(ex.ToString());
+            }
+        }
+
+
+        public static void CreateIconIDFile(string path, List<string> icons)
+        {
+            try
+            {
+                if (File.Exists(path + "/IconIDs.txt"))
+                {
+                    File.Delete(path + "/IconIDs.txt");
+                }
+
+                // Create a new file     
+                using (StreamWriter sw = File.CreateText(path + "/IconIDs.txt"))
+                {
+                    sw.WriteLine("#Available Icons for equipment pools");
+                    foreach (string icon in icons)
+                    {
+                        sw.WriteLine(icon);
+                    }
+                    sw.Close();
+                }
+            }
+
+            catch (Exception ex)
+            {
+                Debug.LogError(ex.ToString());
+            }
+        }
+
+
+        public static Dictionary<string, Sprite> GetAllIcons(TNH_CharacterDatabase database)
+        {
+            Dictionary<string, Sprite> icons = new Dictionary<string, Sprite>();
+
+            foreach(TNH_CharacterDef character in database.Characters)
+            {
+                foreach(EquipmentPoolDef.PoolEntry pool in character.EquipmentPool.Entries)
+                {
+                    if (!icons.ContainsKey(pool.TableDef.Icon.name))
+                    {
+                        Debug.Log("TNHTWEAKER -- ICON FOUND (" + pool.TableDef.Icon.name + ")");
+                        icons.Add(pool.TableDef.Icon.name, pool.TableDef.Icon);
+                    }
+                }
+            }
+
+            return icons;
+        }
+
+
+
     }
 
 }
