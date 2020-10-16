@@ -8,7 +8,7 @@ using System.Reflection;
 using BepInEx.Configuration;
 using System.IO;
 using System.Collections;
-
+using System.Linq;
 
 namespace FistVR
 {
@@ -64,7 +64,7 @@ namespace FistVR
                 //Handle cases where we skip a line
                 if (line.Length == 0 || line.StartsWith("#")) continue;
 
-                Debug.Log("" + GetIndent(traverseStack.Count) + "READING LINE: " + line);
+                TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "READING LINE: " + line, TNHTweakerLogger.LogType.Character);
 
                 if (line.Contains("[]"))
                 {
@@ -80,7 +80,7 @@ namespace FistVR
                             Type propertyType = fieldType.GetGenericArguments()[0];
                             traverseStack.Peek().Field(fieldName).SetValue(CreateGenericList(propertyType));
 
-                            Debug.Log("" + GetIndent(traverseStack.Count) + "CREATING EMPTY LIST FOR FIELD (" + fieldName + ")");
+                            TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "CREATING EMPTY LIST FOR FIELD (" + fieldName + ")", TNHTweakerLogger.LogType.Character);
                         }
 
                         else
@@ -194,7 +194,7 @@ namespace FistVR
                     //If the previous item in the stack is a list, add this object to that list
                     if (IsGenericList(traverseStack.Peek().GetValue().GetType()))
                     {
-                        Debug.Log("" + GetIndent(traverseStack.Count) + "CREATING NEW LIST ELEMENT (" + fieldType.FullName + ")");
+                        TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "CREATING NEW LIST ELEMENT (" + fieldType.FullName + ")", TNHTweakerLogger.LogType.Character);
 
                         Traverse currentList = traverseStack.Peek();
                         currentList.Method("Add", newElement.GetValue()).GetValue();
@@ -204,7 +204,7 @@ namespace FistVR
                     //If the previous object in the stack is an object, check if this is a field of the object
                     else if (traverseStack.Peek().Field(fieldName).FieldExists())
                     {
-                        Debug.Log("" + GetIndent(traverseStack.Count) + "CREATING NEW OBJECT FIELD (" + fieldName + ")");
+                        TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "CREATING NEW OBJECT FIELD (" + fieldName + ")", TNHTweakerLogger.LogType.Character);
 
                         traverseStack.Peek().Field(fieldName).SetValue(newElement.GetValue());
                         traverseStack.Push(newElement);
@@ -220,7 +220,7 @@ namespace FistVR
                     //If there is more than just the character on the stack, pop that field
                     if (traverseStack.Count > 1)
                     {
-                        Debug.Log("" + GetIndent(traverseStack.Count) + "END OF OBJECT");
+                        TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "END OF OBJECT", TNHTweakerLogger.LogType.Character);
                         traverseStack.Pop();
                     }
 
@@ -248,7 +248,7 @@ namespace FistVR
                             Type propertyType = fieldType.GetGenericArguments()[0];
                             traverseStack.Peek().SetValue(CreateGenericList(propertyType));
 
-                            Debug.Log("" + GetIndent(traverseStack.Count) + "CREATING LIST FOR FIELD (" + fieldName + ")");
+                            TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "CREATING LIST FOR FIELD (" + fieldName + ")", TNHTweakerLogger.LogType.Character);
                         }
 
                         else
@@ -272,7 +272,7 @@ namespace FistVR
                     //If there is more than just the character on the stack, pop that field
                     if (IsGenericList(traverseStack.Peek().GetValueType()))
                     {
-                        Debug.Log("" + GetIndent(traverseStack.Count) + "END OF LIST");
+                        TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "END OF LIST", TNHTweakerLogger.LogType.Character);
                         traverseStack.Pop();
                     }
 
@@ -296,7 +296,7 @@ namespace FistVR
                             //If we are inside a phase, redirect this field to the current custom phase
                             if (traverseStack.Peek().GetValue().GetType() == typeof(TNH_HoldChallenge.Phase))
                             {
-                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD IS FOR CUSTOM DATA OF HOLD PHASE");
+                                TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD IS FOR CUSTOM DATA OF HOLD PHASE", TNHTweakerLogger.LogType.Character);
                                 int levelIndex = customCharDict[character].Levels.Count - 1;
                                 int phaseIndex = customCharDict[character].Levels[levelIndex].Phases.Count - 1;
                                 currField = Traverse.Create(customCharDict[character].Levels[levelIndex].Phases[phaseIndex]).Field(GetTagFromLine(line));
@@ -306,7 +306,7 @@ namespace FistVR
                             //If we are inside level, redirect field to current custom level
                             else if (traverseStack.Peek().GetValue().GetType() == typeof(TNH_Progression.Level))
                             {
-                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD IS FOR CUSTOM DATA OF LEVEL");
+                                TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD IS FOR CUSTOM DATA OF LEVEL", TNHTweakerLogger.LogType.Character);
                                 int levelIndex = customCharDict[character].Levels.Count - 1;
                                 currField = Traverse.Create(customCharDict[character].Levels[levelIndex]).Field(GetTagFromLine(line));
                             }
@@ -314,7 +314,7 @@ namespace FistVR
                             //Otherwise check if this is a field in the custom character file
                             else if (Traverse.Create(customCharDict[character]).Field(GetTagFromLine(line)).FieldExists())
                             {
-                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD IS FOR CUSTOM DATA OF CHARACTER");
+                                TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD IS FOR CUSTOM DATA OF CHARACTER", TNHTweakerLogger.LogType.Character);
                                 currField = Traverse.Create(customCharDict[character]).Field(GetTagFromLine(line));
                             }
 
@@ -340,7 +340,7 @@ namespace FistVR
                             //Instantiate the list of items
                             currField.SetValue(CreateGenericList(propertyType));
 
-                            Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: GENERIC LIST OF ELEMENT TYPE (" + propertyType.FullName + ")");
+                            TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD: GENERIC LIST OF ELEMENT TYPE (" + propertyType.FullName + ")", TNHTweakerLogger.LogType.Character);
 
                             //Go through each element of the list and add it to the field
                             string[] values = GetStringFromLine(line).Split(',');
@@ -386,25 +386,25 @@ namespace FistVR
 
                         else if (currType == typeof(int))
                         {
-                            Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: INT");
+                            TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD: INT", TNHTweakerLogger.LogType.Character);
                             currField.SetValue(GetIntFromLine(line));
                         }
 
                         else if (currType == typeof(float))
                         {
-                            Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: FLOAT");
+                            TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD: FLOAT", TNHTweakerLogger.LogType.Character);
                             currField.SetValue(GetFloatFromLine(line));
                         }
 
                         else if (currType == typeof(bool))
                         {
-                            Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: BOOL");
+                            TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD: BOOL", TNHTweakerLogger.LogType.Character);
                             currField.SetValue(GetBoolFromLine(line));
                         }
 
                         else if (currType == typeof(string))
                         {
-                            Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: STRING");
+                            TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD: STRING", TNHTweakerLogger.LogType.Character);
                             currField.SetValue(GetStringFromLine(line));
                         }
 
@@ -414,12 +414,12 @@ namespace FistVR
                             //TODO this won't work for enum values that are actually -1
                             if (GetIntFromLine(line) == -1)
                             {
-                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: ENUM, ASSIGNED BY STRING");
+                                TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD: ENUM, ASSIGNED BY STRING", TNHTweakerLogger.LogType.Character);
                                 currField.SetValue(Enum.Parse(currType, GetStringFromLine(line)));
                             }
                             else
                             {
-                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: ENUM, ASSIGNED BY INT");
+                                TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD: ENUM, ASSIGNED BY INT", TNHTweakerLogger.LogType.Character);
                                 currField.SetValue(Enum.ToObject(currType, GetIntFromLine(line)));
                             }
                         }
@@ -431,7 +431,7 @@ namespace FistVR
                             //If this starts with an @, it is a default icon
                             if (value.StartsWith("@"))
                             {
-                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: ICON, LOADED FROM DEFAULT ICON DICTIONARY");
+                                TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD: ICON, LOADED FROM DEFAULT ICON DICTIONARY", TNHTweakerLogger.LogType.Character);
 
                                 value = value.TrimStart('@');
                                 if (icons.ContainsKey(value)){
@@ -445,7 +445,7 @@ namespace FistVR
 
                             else
                             {
-                                Debug.Log("" + GetIndent(traverseStack.Count) + "FIELD: ICON, LOADING FROM " + charPath + "/" + value);
+                                TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD: ICON, LOADING FROM " + charPath + "/" + value, TNHTweakerLogger.LogType.Character);
                                 currField.SetValue(LoadSprite(charPath + "/" + value));
                             }
                         }
@@ -594,6 +594,172 @@ namespace FistVR
                     return Tex2D;                 // If data = readable -> return texture
             }
             return null;                     // Return null if load failed
+        }
+
+
+
+        public static void BuildCompatibleMagazineCache(string path)
+        {
+            TNHTweakerLogger.Log("TNHTWEAKER -- BUILDING COMPATIBLE MAGAZINE CACHE", TNHTweakerLogger.LogType.File);
+
+            StreamWriter writer = File.CreateText(path);
+
+            List<FVRFireArmMagazine> magazines = new List<FVRFireArmMagazine>();
+            List<string> magIDs = new List<string>();
+            List<string> firearmIDs = new List<string>();
+            List<string> firearmCachedValues = new List<string>();
+
+            foreach (FVRObject magazine in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine])
+            {
+                FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
+
+                magIDs.Add(magazine.ItemID);
+
+                if (magComp != null)
+                {
+                    magazines.Add(magComp);
+                }
+            }
+
+            foreach (FVRObject firearm in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm])
+            {
+
+                //Debug.Log("Firearm with magazines: " + firearm.ItemID);
+                //foreach (FVRObject mag in firearm.CompatibleMagazines)
+                //{
+                //    Debug.Log(mag.ItemID);
+                //}
+
+                FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
+
+                firearmIDs.Add(firearm.ItemID);
+
+                if (firearmComp == null) continue;
+
+                bool addedMagazine = false;
+
+                foreach (FVRFireArmMagazine magazine in magazines)
+                {
+                    if (firearmComp.MagazineType == magazine.MagazineType && !TNHTweakerUtils.ListContainsObjectID(firearm.CompatibleMagazines, magazine.ObjectWrapper.ItemID))
+                    {
+                        //Debug.Log("New magazine found: " + magazine.name);
+                        firearm.CompatibleMagazines.Add(magazine.ObjectWrapper);
+
+                        if (firearm.MaxCapacityRelated < magazine.m_capacity)
+                        {
+                            firearm.MaxCapacityRelated = magazine.m_capacity;
+                        }
+
+                        if (firearm.MinCapacityRelated > magazine.m_capacity)
+                        {
+                            firearm.MinCapacityRelated = magazine.m_capacity;
+                        }
+
+                        addedMagazine = true;
+
+                        TNHTweakerLogger.Log("TNHTWEAKER -- ADDED COMPATIBLE MAGAZINE (" + magazine.ObjectWrapper.ItemID + ") TO FIREARM (" + firearm.ItemID + ")", TNHTweakerLogger.LogType.File);
+                    }
+                }
+
+                if (addedMagazine)
+                {
+                    firearmCachedValues.Add(firearm.ItemID + "=" + firearm.MinCapacityRelated + "," + firearm.MaxCapacityRelated + "," + string.Join(",", firearm.CompatibleMagazines.Select(f => f.ItemID).ToArray()));
+                }
+            }
+
+            writer.WriteLine("magazines=" + string.Join(",", magIDs.ToArray()));
+            writer.WriteLine("firearms=" + string.Join(",", firearmIDs.ToArray()));
+            foreach (string entry in firearmCachedValues)
+            {
+                writer.WriteLine(entry);
+            }
+
+            writer.Close();
+        }
+
+
+        public static void LoadCompatibleMagazines(string path)
+        {
+            try
+            {
+                if (!File.Exists(path + "/CachedCompatibleMags.txt"))
+                {
+                    BuildCompatibleMagazineCache(path + "/CachedCompatibleMags.txt");
+                    return;
+                }
+
+                string[] lines = File.ReadAllLines(path + "/CachedCompatibleMags.txt");
+
+                List<string> magList = new List<string>();
+                List<string> firearmList = new List<string>();
+                List<string> cachedValues = new List<string>();
+
+                foreach (string line in lines)
+                {
+                    if (GetTagFromLine(line).Equals("magazines"))
+                    {
+                        magList.AddRange(GetStringFromLine(line).Split(','));
+                    }
+
+                    else if (GetTagFromLine(line).Equals("firearms"))
+                    {
+                        firearmList.AddRange(GetStringFromLine(line).Split(','));
+                    }
+                    
+                    else if (line.Contains("="))
+                    {
+                        cachedValues.Add(line);
+                    }
+                }
+
+                bool magsSame = magList.Count == ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Count && magList.All(ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Select(f => f.ItemID).Contains);
+                bool firearmsSame = firearmList.Count == ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Count && firearmList.All(ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Select(f => f.ItemID).Contains);
+
+                //If the cached items are the same as items loaded in game, we can just rely on the cached values for each firearm
+                if (magsSame && firearmsSame)
+                {
+                    TNHTweakerLogger.Log("TNHTWEAKER -- LOADING COMPATIBLE MAGAZINES FROM CACHE", TNHTweakerLogger.LogType.File);
+
+                    FVRObject obj;
+                    
+                    foreach(string entry in cachedValues)
+                    {
+                        List<string> properties = new List<string>(GetStringFromLine(entry).Split(','));
+                        obj = IM.OD[GetTagFromLine(entry)];
+                        obj.MinCapacityRelated = int.Parse(properties[0]);
+                        obj.MaxCapacityRelated = int.Parse(properties[1]);
+
+                        for (int i = 2; i < properties.Count; i++)
+                        {
+                            if(!TNHTweakerUtils.ListContainsObjectID(obj.CompatibleMagazines, properties[i]))
+                            {
+                                TNHTweakerLogger.Log("TNHTWEAKER -- ADDED COMPATIBLE MAGAZINE (" + properties[i] + ") TO FIREARM (" + obj.ItemID + ")", TNHTweakerLogger.LogType.File);
+                                obj.CompatibleMagazines.Add(IM.OD[properties[i]]);
+                            }
+                        }
+                    }
+                }
+
+                else
+                {
+                    TNHTweakerLogger.Log("TNHTWEAKER -- CACHE OUT OF DATE!", TNHTweakerLogger.LogType.File);
+                    TNHTweakerLogger.Log("Magazine Change? " + !magsSame, TNHTweakerLogger.LogType.File);
+                    TNHTweakerLogger.Log("Firearm Change? " + !firearmsSame, TNHTweakerLogger.LogType.File);
+                    TNHTweakerLogger.Log("Magazine List sizes: " + magList.Count + ", " + ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Count, TNHTweakerLogger.LogType.File);
+                    TNHTweakerLogger.Log("Firearm List sizes: " + firearmList.Count + ", " + ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Count, TNHTweakerLogger.LogType.File);
+
+                    File.Delete(path + "/CachedCompatibleMags.txt");
+                    BuildCompatibleMagazineCache(path + "/CachedCompatibleMags.txt");
+                    return;
+                }
+
+
+            }
+
+            catch (Exception ex)
+            {
+                Debug.LogError(ex.ToString());
+            }
         }
 
 

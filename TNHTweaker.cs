@@ -9,6 +9,7 @@ using BepInEx.Configuration;
 using System.IO;
 using System.Collections;
 using System.Linq;
+using BepInEx.Logging;
 
 namespace FistVR
 {
@@ -38,7 +39,6 @@ namespace FistVR
 
 
 
-
     [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "1.0.0.0")]
     public class TNHTweaker : BaseUnityPlugin
     {
@@ -48,7 +48,9 @@ namespace FistVR
         private static ConfigEntry<bool> allowFriendlyPatrols;
         private static ConfigEntry<bool> alwaysSpawnPatrols;
         private static ConfigEntry<bool> printCharacters;
-        private static ConfigEntry<bool> onlyPrintCustomCharacters;
+        private static ConfigEntry<bool> logPatrols;
+        private static ConfigEntry<bool> logFileReads;
+        private static ConfigEntry<bool> allowLog;
 
         private static ConfigEntry<int> maxPatrols;
         private static ConfigEntry<int> patrolSize;
@@ -68,12 +70,13 @@ namespace FistVR
 
         private static Dictionary<TNH_CharacterDef,CustomCharData> customCharDict = new Dictionary<TNH_CharacterDef, CustomCharData>();
 
+        private static bool filesBuilt = false;
+
+
         private void Awake()
         {
-            Debug.Log("Patching!");
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
-            Debug.Log("Patched!");
-            
+
             LoadConfigFile();
 
             SetupCharacterDirectory();
@@ -134,17 +137,32 @@ namespace FistVR
                                       "M_Swat_Officer,M_Swat_Heavy;D_BountyHunterBoss,D_Boss",
                                       "Sets the type of sosig that spawns as a leader of the patrol");
 
+            allowLog = Config.Bind("Debug",
+                                    "EnableLogging",
+                                    false,
+                                    "Set to true to enable logging");
+
             printCharacters = Config.Bind("Debug",
                                          "PrintCharacterInfo",
                                          false,
                                          "Decide if should print all character info");
 
-            onlyPrintCustomCharacters = Config.Bind("Debug",
-                                         "OnlyPrintCustomCharacters",
-                                         false,
-                                         "Decide if should print only the custom characters info when printing characters");
+            logPatrols = Config.Bind("Debug",
+                                    "LogPatrolSpawns",
+                                    false,
+                                    "If true, patrols that spawn will have log output");
+
+            logFileReads = Config.Bind("Debug",
+                                    "LogFileReads",
+                                    false,
+                                    "If true, reading from a file will log the reading process");
 
             timeTillForcedSpawn = timeTilRegen.Value;
+
+            TNHTweakerLogger.LogGeneral = allowLog.Value;
+            TNHTweakerLogger.LogCharacter = printCharacters.Value;
+            TNHTweakerLogger.LogPatrol = logPatrols.Value;
+            TNHTweakerLogger.LogFile = logFileReads.Value;
 
             //Load the strings for enemies and leaders into a dictionary
             List<string> enemies = new List<string>(enemyTypes.Value.Split(';'));
@@ -163,30 +181,46 @@ namespace FistVR
         private void SetupCharacterDirectory()
         {
             characterPath = Application.dataPath.Replace("/h3vr_Data", "/CustomCharacters");
-            Debug.Log("TNHTWEAKER -- CHARACTER FILE PATH IS: " + characterPath);
+            TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTER FILE PATH IS: " + characterPath, TNHTweakerLogger.LogType.Character);
 
             if (Directory.Exists(characterPath))
             {
-                Debug.Log("Folder exists!");
+                TNHTweakerLogger.Log("Folder exists!", TNHTweakerLogger.LogType.Character);
             }
             else
             {
-                Debug.Log("Folder does not exist! Creating");
+                TNHTweakerLogger.Log("Folder does not exist! Creating", TNHTweakerLogger.LogType.Character);
                 Directory.CreateDirectory(characterPath);
             }
         }
+
+
+        [HarmonyPatch(typeof(TNH_UIManager), "Start")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPostfix]
+        public static void AfterTNHMenuLoaded()
+        {
+            if (!filesBuilt)
+            {
+                ObjectBuilder.LoadCompatibleMagazines(characterPath);
+                TNHTweakerUtils.CreateObjectIDFile(characterPath);
+                TNHTweakerUtils.CreateSosigIDFile(characterPath);
+            }
+
+            filesBuilt = true;
+        }
+
+
 
         [HarmonyPatch(typeof(TNH_UIManager), "Start")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool AddCharacters(List<TNH_UIManager.CharacterCategory> ___Categories, TNH_CharacterDatabase ___CharDatabase)
         {
 
-            TNHTweakerUtils.CreateObjectIDFile(characterPath);
-            TNHTweakerUtils.CreateSosigIDFile(characterPath);
+            if (filesBuilt) return true;
 
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
-            Debug.Log("TNHTWEAKER -- CLEARING CATEGORIES");
+            TNHTweakerLogger.Log("TNHTWEAKER -- CLEARING CATEGORIES", TNHTweakerLogger.LogType.Character);
 
             //When starting out in the TNH lobby, clear all custom characters
             foreach (TNH_CharacterDef character in customCharacters)
@@ -196,23 +230,6 @@ namespace FistVR
             }
             customCharacters.Clear();
             customCharDict.Clear();
-
-            Debug.Log("TNHTWEAKER -- PRE LOADING CHECK -- THESE SHOULD ONLY BE THE DEFAULT CHARACTERS");
-            foreach (TNH_CharacterDef character in ___CharDatabase.Characters)
-            {
-                Debug.Log("CHARACTER IN DATABASE: " + character.DisplayName);
-            }
-
-            foreach (TNH_UIManager.CharacterCategory category in ___Categories)
-            {
-                Debug.Log("UI CATEGORY: " + category.CategoryName);
-
-                foreach (TNH_Char character in category.Characters)
-                {
-                    Debug.Log("CHARACTER IN UI CATEGORY: " + character);
-                }
-            }
-
             equipmentIcons = TNHTweakerUtils.GetAllIcons(___CharDatabase);
 
             TNHTweakerUtils.CreateIconIDFile(characterPath, equipmentIcons.Keys.ToList());
@@ -225,26 +242,13 @@ namespace FistVR
                 ___CharDatabase.Characters.Add(newCharacter);
             }
 
-            if (printCharacters.Value)
+            
+            TNHTweakerLogger.Log("TNHTWEAKER -- PRINTING ALL LOADED CHARACTERS\n", TNHTweakerLogger.LogType.Character);
+            foreach (TNH_CharacterDef ch in ___CharDatabase.Characters)
             {
-                if (onlyPrintCustomCharacters.Value)
-                {
-                    Debug.Log("TNHTWEAKER -- PRINTING ONLY CUSTOM CHARACTERS\n");
-                    foreach (TNH_CharacterDef ch in customCharacters)
-                    {
-                        TNHTweakerUtils.PrintCharacterInfo(ch);
-                    }
-                }
-
-                else
-                {
-                    Debug.Log("TNHTWEAKER -- PRINTING ALL LOADED CHARACTERS\n");
-                    foreach (TNH_CharacterDef ch in ___CharDatabase.Characters)
-                    {
-                        TNHTweakerUtils.PrintCharacterInfo(ch);
-                    }
-                }
+                TNHTweakerUtils.PrintCharacterInfo(ch);
             }
+                
 
             return true;
         }
@@ -254,7 +258,7 @@ namespace FistVR
         private static void LoadCustomCharacters(TNH_CharacterDef backupCharacter)
         {
 
-            Debug.Log("TNHTWEAKER -- LOADING CUSTOM CHARACTERS");
+            TNHTweakerLogger.Log("TNHTWEAKER -- LOADING CUSTOM CHARACTERS", TNHTweakerLogger.LogType.Character);
 
             string[] characterDirs = Directory.GetDirectories(characterPath);
 
@@ -271,7 +275,7 @@ namespace FistVR
                 TNH_CharacterDef character = ObjectBuilder.GetCharacterFromString(characterDir, customCharDict, equipmentIcons, backupCharacter);
                 customCharacters.Add(character);
 
-                Debug.Log("TNHTWEAKER -- CHARACTER LOADED: " + character.DisplayName);
+                TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTER LOADED: " + character.DisplayName, TNHTweakerLogger.LogType.Character);
             }
         }
 
@@ -282,7 +286,7 @@ namespace FistVR
         {
             if (overridePatrols.Value)
             {
-                Debug.Log("TNHTWEAKER -- OVERRIDING PATROLS");
+                TNHTweakerLogger.Log("TNHTWEAKER -- OVERRIDING PATROLS", TNHTweakerLogger.LogType.Patrol);
 
                 TNH_PatrolChallenge.Patrol onlyPatrol = ___m_curLevel.PatrolChallenge.Patrols[0];
 
@@ -295,7 +299,7 @@ namespace FistVR
                 ___m_curLevel.PatrolChallenge.Patrols.Clear();
                 ___m_curLevel.PatrolChallenge.Patrols.Add(onlyPatrol);
 
-                Debug.Log("TNHTWEAKER -- PATROLS OVERWRITTEN:");
+                TNHTweakerLogger.Log("TNHTWEAKER -- PATROLS OVERWRITTEN:", TNHTweakerLogger.LogType.Patrol);
             }
 
             return true;
@@ -317,8 +321,7 @@ namespace FistVR
                     ___m_timeTilPatrolCanSpawn = timeTilRegen.Value * 2;
                     timeTillForcedSpawn = timeTilRegen.Value;
 
-                    Debug.Log("TNHTWEAKER -- FORCING A PATROL TO SPAWN -- " + timeTillForcedSpawn + " SECONDS UNTIL NEXT PATROL");
-                    Debug.Log("Possible methods: " + Traverse.Create(__instance).Methods().ToString());
+                    TNHTweakerLogger.Log("TNHTWEAKER -- FORCING A PATROL TO SPAWN -- " + timeTillForcedSpawn + " SECONDS UNTIL NEXT PATROL", TNHTweakerLogger.LogType.Patrol);
 
                     Traverse.Create(__instance).Method("GenerateValidPatrol", ___m_curLevel.PatrolChallenge, GetClosestSupplyPointIndex(__instance.SupplyPoints, GM.CurrentPlayerBody.Head.position), ___m_curHoldIndex, true).GetValue();
                     
@@ -333,7 +336,7 @@ namespace FistVR
         [HarmonyPrefix]
         public static bool BeforeGeneratePatrol(TNH_PatrolChallenge P, List<TNH_Manager.SosigPatrolSquad> ___m_patrolSquads)
         {
-            Debug.Log("TNHTWEAKER -- GENERATING A PATROL -- THERE ARE CURRENTLY " + ___m_patrolSquads.Count + " PATROLS ACTIVE");
+            TNHTweakerLogger.Log("TNHTWEAKER -- GENERATING A PATROL -- THERE ARE CURRENTLY " + ___m_patrolSquads.Count + " PATROLS ACTIVE", TNHTweakerLogger.LogType.Patrol);
 
             if (overridePatrols.Value)
             {
@@ -375,16 +378,13 @@ namespace FistVR
                 P.Patrols[0].IFFUsed = team;
                 
             }
-            
-            Debug.Log("TNHTWEAKER -- LISTING CURRENT PATROLS AVAILABLE:");
-            TNHTweakerUtils.PrintPatrolList(P);
 
             return true;
         }
 
         
 
-        
+        /*
         [HarmonyPatch(typeof(TNH_HoldPoint), "BeginHoldChallenge")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool BeginHoldChallengeBefore()
@@ -393,13 +393,13 @@ namespace FistVR
 
             return true;
         }
-
+        */
 
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")] // Specify target method with HarmonyPatch attribute
         [HarmonyPostfix]
         public static void AfterSetTake(List<TNH_SupplyPoint> ___SupplyPoints, TNH_Progression.Level ___m_curLevel, TAH_Reticle ___TAHReticle, int ___m_level, TNH_CharacterDef ___C)
         {
-            Debug.Log("TNHTWEAKER -- ADDING ADDITIONAL SUPPLY POINTS");
+            TNHTweakerLogger.Log("TNHTWEAKER -- ADDING ADDITIONAL SUPPLY POINTS", TNHTweakerLogger.LogType.General);
 
             CustomCharData characterData;
             if(customCharDict.TryGetValue(___C, out characterData))
@@ -414,7 +414,7 @@ namespace FistVR
                     {
                         if((int)Traverse.Create(point).Field("m_activeSosigs").Property("Count").GetValue() > 0)
                         {
-                            Debug.Log("TNHTWEAKER -- FOUND ALREADY POPULATED POINT");
+                            TNHTweakerLogger.Log("TNHTWEAKER -- FOUND ALREADY POPULATED POINT", TNHTweakerLogger.LogType.General);
                             possiblePoints.Remove(point);
                         }
                     }
@@ -430,7 +430,7 @@ namespace FistVR
                         TAH_ReticleContact contact = ___TAHReticle.RegisterTrackedObject(possiblePoints[i].SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                         possiblePoints[i].SetContact(contact);
 
-                        Debug.Log("TNHTWEAKER -- GENERATED AN ADDITIONAL SUPPLY POINT");
+                        TNHTweakerLogger.Log("TNHTWEAKER -- GENERATED AN ADDITIONAL SUPPLY POINT", TNHTweakerLogger.LogType.General);
                     }
                 }
             }
@@ -546,7 +546,7 @@ namespace FistVR
 
                     int boxesToSpawn = UnityEngine.Random.Range(characterData.Levels[currLevel].MinBoxesSpawned, characterData.Levels[currLevel].MaxBoxesSpawned + 1);
 
-                    Debug.Log("TNHTWEAKER -- GOING TO SPAWN " + boxesToSpawn + " BOXES AT THIS SUPPLY POINT -- MIN (" + characterData.Levels[currLevel].MinBoxesSpawned + "), MAX (" + characterData.Levels[currLevel].MaxBoxesSpawned + ")");
+                    TNHTweakerLogger.Log("TNHTWEAKER -- GOING TO SPAWN " + boxesToSpawn + " BOXES AT THIS SUPPLY POINT -- MIN (" + characterData.Levels[currLevel].MinBoxesSpawned + "), MAX (" + characterData.Levels[currLevel].MaxBoxesSpawned + ")", TNHTweakerLogger.LogType.General);
 
                     for (int i = 0; i < boxesToSpawn; i++)
                     {
@@ -555,7 +555,7 @@ namespace FistVR
                         Quaternion rotation = Quaternion.Slerp(spawnTransform.rotation, UnityEngine.Random.rotation, 0.1f);
                         GameObject box = Instantiate(___M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, ___M.Prefabs_ShatterableCrates.Count)], position, rotation);
                         ___m_spawnBoxes.Add(box);
-                        Debug.Log("TNHTWEAKER -- BOX SPAWNED");
+                        TNHTweakerLogger.Log("TNHTWEAKER -- BOX SPAWNED", TNHTweakerLogger.LogType.General);
                     }
 
                     int tokensSpawned = 0;
@@ -605,7 +605,7 @@ namespace FistVR
                         
                         if(grenadeChance >= UnityEngine.Random.Range(0f, 1f))
                         {
-                            Debug.Log("TNHTWEAKER -- THROWING A GRENADE ");
+                            TNHTweakerLogger.Log("TNHTWEAKER -- THROWING A GRENADE ", TNHTweakerLogger.LogType.General);
 
                             //Get a random grenade vector to spawn a grenade at
                             TNH_HoldPoint.AttackVector randAttackVector = AttackVectors[UnityEngine.Random.Range(0, AttackVectors.Count)];
@@ -626,7 +626,7 @@ namespace FistVR
 
         public static void SpawnHoldEnemyGroup(TNH_HoldChallenge.Phase curPhase, List<TNH_HoldPoint.AttackVector> AttackVectors, List<Transform> SpawnPoints_Turrets, List<Sosig> ActiveSosigs, TNH_Manager M, ref bool isFirstWave)
         {
-            Debug.Log("TNHTWEAKER -- SPAWNING AN ENEMY WAVE");
+            TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING AN ENEMY WAVE", TNHTweakerLogger.LogType.General);
 
             //TODO add custom property form MinDirections
             int numAttackVectors = UnityEngine.Random.Range(1, curPhase.MaxDirections + 1);
@@ -644,7 +644,7 @@ namespace FistVR
                 //Loop through each attack vector, and spawn a sosig at the current selected point
                 for (int i = 0; i < numAttackVectors; i++)
                 {
-                    Debug.Log("TNHTWEAKER -- SPAWNING AT ATTCK VECTOR: " + i);
+                    TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING AT ATTCK VECTOR: " + i, TNHTweakerLogger.LogType.General);
 
                     if (AttackVectors[i].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint) return;
 
@@ -653,7 +653,7 @@ namespace FistVR
                     Sosig enemy = M.SpawnEnemy(enemyTemplate, AttackVectors[i].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], curPhase.IFFUsed, true, targetVector, true);
                     ActiveSosigs.Add(enemy);
 
-                    Debug.Log("TNHTWEAKER -- SOSIG SPAWNED");
+                    TNHTweakerLogger.Log("TNHTWEAKER -- SOSIG SPAWNED", TNHTweakerLogger.LogType.General);
 
                     //At this point, the leader has been spawned, so always set enemy to be regulars
                     enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[curPhase.EType];
@@ -699,15 +699,6 @@ namespace FistVR
                 }
             }
 
-            if(___m_tickDownToNextGroupSpawn <= 0)
-            {
-                Debug.Log("TNHTWEAKER -- TIME TO SPAWN!");
-                Debug.Log("Max Alive: " + ___m_curPhase.MaxEnemiesAlive);
-                Debug.Log("Max Spawned: " + ___m_curPhase.MaxEnemies);
-                Debug.Log("Currently Active: " + ___m_activeSosigs.Count);
-            }
-
-
             if(!___m_hasThrownNadesInWave && ___m_tickDownToNextGroupSpawn <= 5f && !___m_isFirstWave)
             {
                 SpawnGrenades(___AttackVectors, ___M, ___m_phaseIndex);
@@ -734,13 +725,25 @@ namespace FistVR
         [HarmonyPrefix]
         public static bool PrintSupplyPoint(TNH_SupplyPoint.SupplyPanelType panelType)
         {
-            Debug.Log("TNHTWEAKER -- CONFIGURING SUPPLY POINT -- PANEL TYPE: " + panelType.ToString());
+            TNHTweakerLogger.Log("TNHTWEAKER -- CONFIGURING SUPPLY POINT -- PANEL TYPE: " + panelType.ToString(), TNHTweakerLogger.LogType.General);
             return true;
         }
 
 
+        [HarmonyPatch(typeof(FVRObject), "GetRandomAmmoObject")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool PrintCompatableMagazines(FVRObject __instance)
+        {
+            TNHTweakerLogger.Log("TNHTWEAKER -- COMPATABLE MAGAZINE COUNT: " + __instance.CompatibleMagazines.Count, TNHTweakerLogger.LogType.General);
+            foreach(FVRObject mag in __instance.CompatibleMagazines)
+            {
+                TNHTweakerLogger.Log(mag.ItemID, TNHTweakerLogger.LogType.General);
+            }
+            return true;
+        }
 
-            public static int GetClosestSupplyPointIndex(List<TNH_SupplyPoint> SupplyPoints, Vector3 playerPosition)
+
+        public static int GetClosestSupplyPointIndex(List<TNH_SupplyPoint> SupplyPoints, Vector3 playerPosition)
         {
             float minDist = 999999999f;
             int minIndex = 0;

@@ -8,6 +8,7 @@ using System.Reflection;
 using BepInEx.Configuration;
 using System.IO;
 using System.Collections;
+using System.Linq;
 
 namespace FistVR
 {
@@ -16,16 +17,15 @@ namespace FistVR
 
         public static void PrintCharacterInfo(TNH_CharacterDef character)
         {
-            Debug.Log("\n\n\nTNHTWEAKER -- CHARACTER INFO");
-            Debug.Log("Name: " + character.DisplayName);
-            Debug.Log("ID: " + character.CharacterID);
-            Debug.Log("Group: " + character.Group);
-            Debug.Log("TableID: " + character.TableID);
-            Debug.Log("Starting Tokens: " + character.StartingTokens);
-            Debug.Log("Force Agent Weapons: " + character.ForceAllAgentWeapons);
-            Debug.Log("Printing Pools:");
-
-            Debug.Log("Num entries: " + character.EquipmentPool.Entries.Count);
+            TNHTweakerLogger.Log("\n\n\nTNHTWEAKER -- CHARACTER INFO", TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Name: " + character.DisplayName, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("ID: " + character.CharacterID, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Group: " + character.Group, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("TableID: " + character.TableID, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Starting Tokens: " + character.StartingTokens, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Force Agent Weapons: " + character.ForceAllAgentWeapons, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Printing Pools:", TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Num entries: " + character.EquipmentPool.Entries.Count, TNHTweakerLogger.LogType.Character);
 
             foreach (EquipmentPoolDef.PoolEntry entry in character.EquipmentPool.Entries)
             {
@@ -36,14 +36,14 @@ namespace FistVR
 
         public static void PrintPoolEntry(EquipmentPoolDef.PoolEntry entry)
         {
-            Debug.Log("\n--Pool Entry--");
-            Debug.Log("EntryType: " + entry.Type);
-            Debug.Log("Token Cost: " + entry.TokenCost);
-            Debug.Log("Token Cost Limited: " + entry.TokenCost_Limited);
-            Debug.Log("Min Level Appears: " + entry.MinLevelAppears);
-            Debug.Log("Max Level Appears: " + entry.MaxLevelAppears);
-            Debug.Log("Rarity: " + entry.Rarity);
-            Debug.Log("Object Table Def:");
+            TNHTweakerLogger.Log("\n--Pool Entry--", TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("EntryType: " + entry.Type, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Token Cost: " + entry.TokenCost, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Token Cost Limited: " + entry.TokenCost_Limited, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Min Level Appears: " + entry.MinLevelAppears, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Max Level Appears: " + entry.MaxLevelAppears, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Rarity: " + entry.Rarity, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("Object Table Def:", TNHTweakerLogger.LogType.Character);
             PrintObjectTableDef(entry.TableDef);
         }
 
@@ -53,135 +53,135 @@ namespace FistVR
         {
             foreach (TNH_PatrolChallenge.Patrol patrol in patrolChallenge.Patrols)
             {
-                Debug.Log("TNHTWEAKER -- Patrol:");
-                Debug.Log("MaxPatrols = " + patrol.MaxPatrols);
-                Debug.Log("PatrolSize = " + patrol.PatrolSize);
-                Debug.Log("TimeTilRegen = " + patrol.TimeTilRegen);
-                Debug.Log("IFF = " + patrol.IFFUsed);
-                Debug.Log("EnemyType = " + patrol.EType);
-                Debug.Log("LeaderType = " + patrol.LType);
+                TNHTweakerLogger.Log("TNHTWEAKER -- Patrol:", TNHTweakerLogger.LogType.Patrol);
+                TNHTweakerLogger.Log("MaxPatrols = " + patrol.MaxPatrols, TNHTweakerLogger.LogType.Patrol);
+                TNHTweakerLogger.Log("PatrolSize = " + patrol.PatrolSize, TNHTweakerLogger.LogType.Patrol);
+                TNHTweakerLogger.Log("TimeTilRegen = " + patrol.TimeTilRegen, TNHTweakerLogger.LogType.Patrol);
+                TNHTweakerLogger.Log("IFF = " + patrol.IFFUsed, TNHTweakerLogger.LogType.Patrol);
+                TNHTweakerLogger.Log("EnemyType = " + patrol.EType, TNHTweakerLogger.LogType.Patrol);
+                TNHTweakerLogger.Log("LeaderType = " + patrol.LType, TNHTweakerLogger.LogType.Patrol);
             }
         }
 
         public static void PrintObjectTableDef(ObjectTableDef def)
         {
-            Debug.Log(" - Category: " + def.Category);
-            Debug.Log(" - MinAmmoCapacity: " + def.MinAmmoCapacity);
-            Debug.Log(" - MaxAmmoCapacity: " + def.MaxAmmoCapacity);
-            Debug.Log(" - IsBlanked: " + def.IsBlanked);
-            Debug.Log(" - SpawnsInSmallCase: " + def.SpawnsInSmallCase);
-            Debug.Log(" - SpawnsInLargeCase: " + def.SpawnsInLargeCase);
-            Debug.Log(" - UseIDListOverride: " + def.UseIDListOverride);
+            TNHTweakerLogger.Log(" - Category: " + def.Category, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log(" - MinAmmoCapacity: " + def.MinAmmoCapacity, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log(" - MaxAmmoCapacity: " + def.MaxAmmoCapacity, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log(" - IsBlanked: " + def.IsBlanked, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log(" - SpawnsInSmallCase: " + def.SpawnsInSmallCase, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log(" - SpawnsInLargeCase: " + def.SpawnsInLargeCase, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log(" - UseIDListOverride: " + def.UseIDListOverride, TNHTweakerLogger.LogType.Character);
 
-            Debug.Log(" - IDOverrides: ");
+            TNHTweakerLogger.Log(" - IDOverrides: ", TNHTweakerLogger.LogType.Character);
             foreach (string id in def.IDOverride)
             {
-                Debug.Log(" - - " + id);
+                TNHTweakerLogger.Log(" - - " + id, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - Contained Objects: ");
+            TNHTweakerLogger.Log(" - Contained Objects: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject obj in def.Objs)
             {
-                Debug.Log(" - - " + obj.DisplayName);
+                TNHTweakerLogger.Log(" - - " + obj.DisplayName, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - Eras: ");
+            TNHTweakerLogger.Log(" - Eras: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagEra item in def.Eras)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - Sets: ");
+            TNHTweakerLogger.Log(" - Sets: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagSet item in def.Sets)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - Sizes: ");
+            TNHTweakerLogger.Log(" - Sizes: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagFirearmSize item in def.Sizes)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - Actions: ");
+            TNHTweakerLogger.Log(" - Actions: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagFirearmAction item in def.Actions)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - Modes: ");
+            TNHTweakerLogger.Log(" - Modes: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagFirearmFiringMode item in def.Modes)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - ExludedModes: ");
+            TNHTweakerLogger.Log(" - ExludedModes: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagFirearmFiringMode item in def.ExcludeModes)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - FeedOptions: ");
+            TNHTweakerLogger.Log(" - FeedOptions: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagFirearmFeedOption item in def.Feedoptions)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - Mounts: ");
+            TNHTweakerLogger.Log(" - Mounts: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagFirearmMount item in def.MountsAvailable)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - RoundPowers: ");
+            TNHTweakerLogger.Log(" - RoundPowers: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagFirearmRoundPower item in def.RoundPowers)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - Features: ");
+            TNHTweakerLogger.Log(" - Features: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagAttachmentFeature item in def.Features)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - MeleeStyles: ");
+            TNHTweakerLogger.Log(" - MeleeStyles: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagMeleeStyle item in def.MeleeStyles)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - MeleeHandedness: ");
+            TNHTweakerLogger.Log(" - MeleeHandedness: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagMeleeHandedness item in def.MeleeHandedness)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - MountTypes: ");
+            TNHTweakerLogger.Log(" - MountTypes: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagFirearmMount item in def.MountTypes)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - PowerupTypes: ");
+            TNHTweakerLogger.Log(" - PowerupTypes: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagPowerupType item in def.PowerupTypes)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - ThrownType: ");
+            TNHTweakerLogger.Log(" - ThrownType: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagThrownType item in def.ThrownTypes)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - ThrownDamageTypes: ");
+            TNHTweakerLogger.Log(" - ThrownDamageTypes: ", TNHTweakerLogger.LogType.Character);
             foreach (FVRObject.OTagThrownDamageType item in def.ThrownDamageTypes)
             {
-                Debug.Log(" - - " + item);
+                TNHTweakerLogger.Log(" - - " + item, TNHTweakerLogger.LogType.Character);
             }
 
-            Debug.Log(" - End of object table");
+            TNHTweakerLogger.Log(" - End of object table", TNHTweakerLogger.LogType.Character);
 
         }
 
@@ -563,7 +563,7 @@ namespace FistVR
                 {
                     if (!icons.ContainsKey(pool.TableDef.Icon.name))
                     {
-                        Debug.Log("TNHTWEAKER -- ICON FOUND (" + pool.TableDef.Icon.name + ")");
+                        TNHTweakerLogger.Log("TNHTWEAKER -- ICON FOUND (" + pool.TableDef.Icon.name + ")", TNHTweakerLogger.LogType.Character);
                         icons.Add(pool.TableDef.Icon.name, pool.TableDef.Icon);
                     }
                 }
@@ -573,6 +573,18 @@ namespace FistVR
         }
 
 
+        public static bool ListContainsObjectID(List<FVRObject> objs, string ID)
+        {
+            foreach(FVRObject obj in objs)
+            {
+                if (obj.ItemID.Equals(ID))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
     }
 

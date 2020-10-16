@@ -55,6 +55,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Logger.cs" />
     <Compile Include="TNHTweakerUtils.cs" />
     <Compile Include="ObjectBuilder.cs" />
     <Compile Include="TNHTweaker.cs" />
