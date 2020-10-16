@@ -215,34 +215,36 @@ namespace FistVR
         [HarmonyPrefix]
         public static bool AddCharacters(List<TNH_UIManager.CharacterCategory> ___Categories, TNH_CharacterDatabase ___CharDatabase)
         {
-
-            if (filesBuilt) return true;
-
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- CLEARING CATEGORIES", TNHTweakerLogger.LogType.Character);
+            //TNHTweakerLogger.Log("TNHTWEAKER -- CLEARING CATEGORIES", TNHTweakerLogger.LogType.Character);
 
             //When starting out in the TNH lobby, clear all custom characters
-            foreach (TNH_CharacterDef character in customCharacters)
-            {
-                ___Categories[(int)character.Group].Characters.Remove(character.CharacterID);
-                ___CharDatabase.Characters.Remove(character);
-            }
-            customCharacters.Clear();
-            customCharDict.Clear();
+            //foreach (TNH_CharacterDef character in customCharacters)
+            //{
+            //    ___Categories[(int)character.Group].Characters.Remove(character.CharacterID);
+            //    ___CharDatabase.Characters.Remove(character);
+            //}
+            //customCharacters.Clear();
+            //customCharDict.Clear();
+
             equipmentIcons = TNHTweakerUtils.GetAllIcons(___CharDatabase);
 
             TNHTweakerUtils.CreateIconIDFile(characterPath, equipmentIcons.Keys.ToList());
 
-            LoadCustomCharacters(___CharDatabase.Characters[0]);
-
+            if (!filesBuilt)
+            {
+                LoadCustomCharacters(___CharDatabase.Characters[0]);
+            }
+            
             foreach (TNH_CharacterDef newCharacter in customCharacters)
             {
                 ___Categories[(int)newCharacter.Group].Characters.Add(newCharacter.CharacterID);
                 ___CharDatabase.Characters.Add(newCharacter);
             }
 
-            
+            TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTERS LOADED: " + ___CharDatabase.Characters.Count, TNHTweakerLogger.LogType.Character);
+
             TNHTweakerLogger.Log("TNHTWEAKER -- PRINTING ALL LOADED CHARACTERS\n", TNHTweakerLogger.LogType.Character);
             foreach (TNH_CharacterDef ch in ___CharDatabase.Characters)
             {
@@ -273,6 +275,7 @@ namespace FistVR
 
 
                 TNH_CharacterDef character = ObjectBuilder.GetCharacterFromString(characterDir, customCharDict, equipmentIcons, backupCharacter);
+
                 customCharacters.Add(character);
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTER LOADED: " + character.DisplayName, TNHTweakerLogger.LogType.Character);
@@ -639,28 +642,32 @@ namespace FistVR
             int sosigsSpawned = 0;
             int vectorSpawnPoint = 0;
             Vector3 targetVector;
+            int vectorIndex = 0;
             while(sosigsSpawned < enemiesToSpawn)
             {
-                //Loop through each attack vector, and spawn a sosig at the current selected point
-                for (int i = 0; i < numAttackVectors; i++)
+                TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING AT ATTACK VECTOR: " + vectorIndex, TNHTweakerLogger.LogType.General);
+
+                if (AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint) break;
+
+                //Spawn the enemy
+                targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
+                Sosig enemy = M.SpawnEnemy(enemyTemplate, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], curPhase.IFFUsed, true, targetVector, true);
+                ActiveSosigs.Add(enemy);
+
+                TNHTweakerLogger.Log("TNHTWEAKER -- SOSIG SPAWNED", TNHTweakerLogger.LogType.General);
+
+                //At this point, the leader has been spawned, so always set enemy to be regulars
+                enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[curPhase.EType];
+                sosigsSpawned += 1;
+
+                vectorIndex += 1;
+                if(vectorIndex >= numAttackVectors)
                 {
-                    TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING AT ATTCK VECTOR: " + i, TNHTweakerLogger.LogType.General);
-
-                    if (AttackVectors[i].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint) return;
-
-                    //Spawn the enemy
-                    targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
-                    Sosig enemy = M.SpawnEnemy(enemyTemplate, AttackVectors[i].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], curPhase.IFFUsed, true, targetVector, true);
-                    ActiveSosigs.Add(enemy);
-
-                    TNHTweakerLogger.Log("TNHTWEAKER -- SOSIG SPAWNED", TNHTweakerLogger.LogType.General);
-
-                    //At this point, the leader has been spawned, so always set enemy to be regulars
-                    enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[curPhase.EType];
-                    sosigsSpawned += 1;
+                    vectorIndex = 0;
+                    vectorSpawnPoint += 1;
                 }
 
-                vectorSpawnPoint += 1;
+                
             }
             isFirstWave = false;
 

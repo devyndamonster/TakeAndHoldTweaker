@@ -467,7 +467,88 @@ namespace FistVR
 
             }
 
+            RemoveUnloadedObjectIDs(character);
+
             return character;
+        }
+
+
+        public static void RemoveUnloadedObjectIDs(TNH_CharacterDef character)
+        {
+            if (character.Has_Weapon_Primary) {
+                foreach (ObjectTableDef table in character.Weapon_Primary.TableDefs)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.Has_Weapon_Secondary)
+            {
+                foreach (ObjectTableDef table in character.Weapon_Secondary.TableDefs)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.Has_Weapon_Tertiary)
+            {
+                foreach (ObjectTableDef table in character.Weapon_Tertiary.TableDefs)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.Has_Item_Primary)
+            {
+                foreach (ObjectTableDef table in character.Item_Primary.TableDefs)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.Has_Item_Secondary)
+            {
+                foreach (ObjectTableDef table in character.Item_Secondary.TableDefs)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.Has_Item_Tertiary)
+            {
+                foreach (ObjectTableDef table in character.Item_Tertiary.TableDefs)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.Has_Item_Shield)
+            {
+                foreach (ObjectTableDef table in character.Item_Shield.TableDefs)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            foreach(EquipmentPoolDef.PoolEntry pool in character.EquipmentPool.Entries)
+            {
+                RemoveUnloadedObjectIDs(pool.TableDef);
+            }
+        }
+
+        public static void RemoveUnloadedObjectIDs(ObjectTableDef table)
+        {
+            if (table.UseIDListOverride)
+            {
+                for(int i = 0; i < table.IDOverride.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(table.IDOverride[i]))
+                    {
+                        table.IDOverride.RemoveAt(i);
+                        i--;
+                    }
+                }
+            }
         }
 
 
