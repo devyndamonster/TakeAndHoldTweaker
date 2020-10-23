@@ -15,6 +15,7 @@ namespace FistVR
 
     public class ObjectBuilder
     {
+        /*
         public static TNH_CharacterDef GetCharacterFromString(string charPath, Dictionary<TNH_CharacterDef, CustomCharData> customCharDict, Dictionary<string, Sprite> icons, TNH_CharacterDef backupCharacter)
         {
             TNH_CharacterDef character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
@@ -172,6 +173,7 @@ namespace FistVR
                     else if (fieldType == typeof(TNH_PatrolChallenge.Patrol))
                     {
                         newElement = Traverse.Create(new TNH_PatrolChallenge.Patrol());
+                        customCharDict[character].Levels[customCharDict[character].Levels.Count - 1].Patrols.Add(new CustomTNHPatrol());
                     }
 
                     else if (fieldType == typeof(TNH_TrapsChallenge))
@@ -300,6 +302,16 @@ namespace FistVR
                                 int levelIndex = customCharDict[character].Levels.Count - 1;
                                 int phaseIndex = customCharDict[character].Levels[levelIndex].Phases.Count - 1;
                                 currField = Traverse.Create(customCharDict[character].Levels[levelIndex].Phases[phaseIndex]).Field(GetTagFromLine(line));
+                            }
+
+
+                            //If we are inside a patrol, redirect this field to the current custom patrol
+                            else if (traverseStack.Peek().GetValue().GetType() == typeof(TNH_PatrolChallenge.Patrol))
+                            {
+                                TNHTweakerLogger.Log("" + GetIndent(traverseStack.Count) + "FIELD IS FOR CUSTOM DATA OF PATROL", TNHTweakerLogger.LogType.Character);
+                                int levelIndex = customCharDict[character].Levels.Count - 1;
+                                int patrolIndex = customCharDict[character].Levels[levelIndex].Patrols.Count - 1;
+                                currField = Traverse.Create(customCharDict[character].Levels[levelIndex].Patrols[patrolIndex]).Field(GetTagFromLine(line));
                             }
 
 
@@ -471,7 +483,7 @@ namespace FistVR
 
             return character;
         }
-
+        */
 
         public static void RemoveUnloadedObjectIDs(TNH_CharacterDef character)
         {
@@ -656,6 +668,7 @@ namespace FistVR
         public static Sprite LoadSprite(string path, float pixelsPerUnit = 100f)
         {
             Texture2D spriteTexture = LoadTexture(path);
+            if (spriteTexture == null) return null;
             return Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), pixelsPerUnit);
         }
 

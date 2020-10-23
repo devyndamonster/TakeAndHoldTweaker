@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29519.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeAndHoldTweaker", "TakeAndHoldTweaker.csproj", "{13103263-BAB2-4450-AE68-23C78EB493B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSONBuilder", "..\JSONBuilder\JSONBuilder.csproj", "{35469F29-2E19-4872-8B82-7694BD674C4F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{13103263-BAB2-4450-AE68-23C78EB493B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13103263-BAB2-4450-AE68-23C78EB493B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13103263-BAB2-4450-AE68-23C78EB493B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35469F29-2E19-4872-8B82-7694BD674C4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35469F29-2E19-4872-8B82-7694BD674C4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35469F29-2E19-4872-8B82-7694BD674C4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35469F29-2E19-4872-8B82-7694BD674C4F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
