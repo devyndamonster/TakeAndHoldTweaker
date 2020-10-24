@@ -23,6 +23,7 @@ namespace FistVR
         private static ConfigEntry<bool> logPatrols;
         private static ConfigEntry<bool> logFileReads;
         private static ConfigEntry<bool> allowLog;
+        private static ConfigEntry<bool> cacheCompatibleMagazines;
 
         private static Dictionary<string, Sprite> equipmentIcons = new Dictionary<string, Sprite>();
 
@@ -48,6 +49,11 @@ namespace FistVR
         {
             Debug.Log("TNHTWEAKER -- GETTING CONFIG FILE");
 
+            cacheCompatibleMagazines = Config.Bind("General",
+                                    "CacheCompatibleMagazines",
+                                    false,
+                                    "If true, guns will be able to spawn with any compatible mag in TNH (Eg. by default the VSS cannot spawn with 30rnd magazines)");
+
             allowLog = Config.Bind("Debug",
                                     "EnableLogging",
                                     false,
@@ -67,7 +73,6 @@ namespace FistVR
                                     "LogFileReads",
                                     false,
                                     "If true, reading from a file will log the reading process");
-
 
             TNHTweakerLogger.LogGeneral = allowLog.Value;
             TNHTweakerLogger.LogCharacter = printCharacters.Value;
@@ -99,7 +104,11 @@ namespace FistVR
         {
             if (!filesBuilt)
             {
-                ObjectBuilder.LoadCompatibleMagazines(characterPath);
+                if (cacheCompatibleMagazines.Value)
+                {
+                    ObjectBuilder.LoadCompatibleMagazines(characterPath);
+                }
+                
                 TNHTweakerUtils.CreateObjectIDFile(characterPath);
                 TNHTweakerUtils.CreateSosigIDFile(characterPath);
             }
