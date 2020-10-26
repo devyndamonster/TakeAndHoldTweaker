@@ -13,7 +13,8 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
 
 ***NOTE:*** All characters can be found in the releases page
 
-- **Comrade Kolbasa** \- A character which can only use russian weaponry
+- **Comrade Kolbasa** \- A character which can only use russian and czech weaponry
+- **Time Travel Timmy** \- Progress through each age of weaponry, from wild west to modern
 
 ## Character Creation
 Check out the [Wiki](https://github.com/devyndamonster/TakeAndHoldTweaker/wiki) for documentation on character creation, and other important stuff
