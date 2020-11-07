@@ -110,7 +110,6 @@ namespace FistVR
                 }
                 
                 TNHTweakerUtils.CreateObjectIDFile(characterPath);
-                TNHTweakerUtils.CreateSosigIDFile(characterPath);
             }
 
             filesBuilt = true;
@@ -125,6 +124,8 @@ namespace FistVR
 
             if (!filesBuilt)
             {
+                TNHTweakerUtils.CreateSosigIDFile(characterPath);
+                TNHTweakerUtils.CreateDefaultSosigTemplateFiles(characterPath);
                 TNHTweakerUtils.CreateDefaultCharacterFiles(___CharDatabase, characterPath);
                 equipmentIcons = TNHTweakerUtils.GetAllIcons(___CharDatabase);
                 TNHTweakerUtils.CreateIconIDFile(characterPath, equipmentIcons.Keys.ToList());
@@ -156,7 +157,16 @@ namespace FistVR
 
             int ID = 30;
 
-            //First load the default characters into the custom character dictionary
+            //First, load all of the default sosig IDs into the sosig ID dict
+            foreach(SosigEnemyID sosig in Enum.GetValues(typeof(SosigEnemyID)))
+            {
+                if (!SosigTemplate.SosigIDDict.ContainsKey(sosig.ToString()))
+                {
+                    SosigTemplate.SosigIDDict.Add(sosig.ToString(), (int)sosig);
+                }
+            }
+
+            //Second, load the default characters into the custom character dictionary
             foreach(TNH_CharacterDef characterDef in characters)
             {
                 ObjectBuilder.RemoveUnloadedObjectIDs(characterDef);
@@ -176,6 +186,30 @@ namespace FistVR
                     continue;
                 }
 
+                //Load all of the custom sosig templates for this character
+                foreach (string file in Directory.GetFiles(characterDir))
+                {
+
+
+                    if (file.Contains("sosig_"))
+                    {
+                        string sosigJson = File.ReadAllText(file);
+                        SosigTemplate template = JsonConvert.DeserializeObject<SosigTemplate>(sosigJson);
+                        TNHTweakerLogger.Log("TNHTWEAKER -- DESERIALIZED SOSIG TEMPLATE", TNHTweakerLogger.LogType.Character);
+
+                        if (SosigTemplate.SosigIDDict.ContainsKey(template.SosigEnemyID))
+                        {
+                            TNHTweakerLogger.Log("TNHTWEAKER -- SOSIG TEMPLATE ALREADY EXISTS! SKIPPING", TNHTweakerLogger.LogType.Character);
+                            continue;
+                        }
+
+                        SosigEnemyTemplate enemyTemplate = template.GetSosigEnemyTemplate();
+                        ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(enemyTemplate.SosigEnemyID, enemyTemplate);
+                        TNHTweakerLogger.Log("TNHTWEAKER -- ADDED SOSIG ID (" + enemyTemplate.SosigEnemyID + ") FOR SOSIG (" + template.SosigEnemyID + ")", TNHTweakerLogger.LogType.Character);
+                    }
+                }
+
+                //Load the character itself
                 string json = File.ReadAllText(characterDir + "/character.json");
                 CustomCharacter character = JsonConvert.DeserializeObject<CustomCharacter>(json);
                 TNHTweakerLogger.Log("TNHTWEAKER -- DESERIALIZED", TNHTweakerLogger.LogType.Character);
@@ -183,10 +217,13 @@ namespace FistVR
                 TNHTweakerLogger.Log("TNHTWEAKER -- CONVERTED", TNHTweakerLogger.LogType.Character);
                 ObjectBuilder.RemoveUnloadedObjectIDs(characterDef);
                 customCharDict.Add(characterDef, character);
-                ID += 1;
 
+                ID += 1;
                 TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTER LOADED: " + character.DisplayName, TNHTweakerLogger.LogType.Character);
             }
+
+
+
         }
 
         
@@ -256,7 +293,10 @@ namespace FistVR
 
             int PatrolSize = Mathf.Clamp(patrol.PatrolSize, 0, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense.Count);
 
-            for(int i = 0; i < PatrolSize; i++)
+            Debug.Log("Leader ID: " + patrol.LType);
+            Debug.Log("Enemy ID: " + patrol.EType);
+
+            for (int i = 0; i < PatrolSize; i++)
             {
                 SosigEnemyTemplate template;
                 bool allowAllWeapons;
@@ -272,6 +312,8 @@ namespace FistVR
                     template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[patrol.EType];
                     allowAllWeapons = false;
                 }
+
+                Debug.Log("Sosig: " + template.DisplayName + ", Integrity: " + template.ConfigTemplates[0].StartingLinkIntegrity[0]);
 
                 CustomCharacter character = customCharDict[instance.C];
                 Level currLevel = character.GetCurrentLevel(level);
@@ -393,7 +435,6 @@ namespace FistVR
             for (int i = 0; i < ___T.NumGuards && i < ___SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
-                //SosigEnemyTemplate template = ___M.GetEnemyTemplate(___T.GuardType);
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
                 Sosig enemy = ___M.SpawnEnemy(template, transform, ___T.IFFUsed, false, transform.position, true);
                 ___m_activeSosigs.Add(enemy);

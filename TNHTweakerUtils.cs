@@ -174,10 +174,81 @@ namespace FistVR
             {
                 Debug.LogError(ex.ToString());
             }
-
-            
         }
 
+        public static void CreateDefaultSosigTemplateFiles(string path)
+        {
+            try
+            {
+                path = path + "/DefaultSosigTemplates";
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                foreach (SosigEnemyTemplate template in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Values)
+                {
+                    if (File.Exists(path + "/" + template.SosigEnemyID + ".json"))
+                    {
+                        File.Delete(path + "/" + template.SosigEnemyID + ".json");
+                    }
+
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(path + "/" + template.SosigEnemyID + ".json"))
+                    {
+                        TNHTweakerLogger.Log("TNHTWEAKER -- CREATING SOSIG TEMPLATE OBJECT", TNHTweakerLogger.LogType.File);
+                        SosigTemplate sosig = new SosigTemplate(template);
+                        TNHTweakerLogger.Log("TNHTWEAKER -- SERIALIZING", TNHTweakerLogger.LogType.File);
+                        string characterString = JsonConvert.SerializeObject(sosig, Formatting.Indented, new StringEnumConverter());
+                        //TNHTweakerLogger.Log(characterString, TNHTweakerLogger.LogType.File);
+                        sw.WriteLine(characterString);
+                        sw.Close();
+                        TNHTweakerLogger.Log("TNHTWEAKER -- LOADED SOSIG:", TNHTweakerLogger.LogType.File);
+                    }
+                }
+
+                TNHTweakerLogger.Log("TNHTWEAKER -- FINISHED LOADING DEFAULT SOSIG TEMPLATES", TNHTweakerLogger.LogType.File);
+            }
+
+            catch (Exception ex)
+            {
+                Debug.LogError(ex.ToString());
+            }
+
+
+        }
+
+    }
+
+
+    public class Vector2Serializable
+    {
+        public float x;
+        public float y;
+
+        [JsonIgnore]
+        private Vector2 v;
+
+        public Vector2Serializable() { }
+
+        public Vector2Serializable(Vector2 v)
+        {
+            x = v.x;
+            y = v.y;
+            this.v = v;
+        }
+
+        public Vector2 GetVector2()
+        {
+            v = new Vector2(x,y);
+            
+            Debug.Log("Getting vector: " + v);
+            Debug.Log("Initial X: " + x);
+            Debug.Log("Initial Y: " + y);
+
+            return v;
+        }
     }
 
 }
