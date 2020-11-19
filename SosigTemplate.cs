@@ -22,6 +22,11 @@ namespace FistVR
         public List<string> WeaponOptionsTertiary;
         public float SecondaryChance;
         public float TertiaryChance;
+		public float DroppedLootChance;
+		public ObjectPool DroppedObjectPool;
+
+		[JsonIgnore]
+		public ObjectTable TableDef = new ObjectTable();
 
 		[JsonIgnore]
 		public static int NewID = 30000;
@@ -51,6 +56,10 @@ namespace FistVR
 			Configs = template.ConfigTemplates.Select(o => new SosigConfig(o)).ToList();
 			ConfigsEasy = template.ConfigTemplates_Easy.Select(o => new SosigConfig(o)).ToList();
 			OutfitConfigs = template.OutfitConfig.Select(o => new OutfitConfig(o)).ToList();
+
+			DroppedLootChance = 0;
+			DroppedObjectPool = new ObjectPool();
+
 
 			this.template = template;
 
