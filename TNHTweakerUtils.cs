@@ -16,6 +16,7 @@ namespace FistVR
 {
     class TNHTweakerUtils
     {
+        public static bool CacheLoaded = true;
 
         public static void CreateObjectIDFile(string path)
         {
@@ -425,173 +426,149 @@ namespace FistVR
             return null;                     // Return null if load failed
         }
 
-
-
-        public static void BuildCompatibleMagazineCache(string path)
+        
+        public static void LoadMagazineCache(string path)
         {
-            TNHTweakerLogger.Log("TNHTWEAKER -- BUILDING COMPATIBLE MAGAZINE CACHE", TNHTweakerLogger.LogType.File);
+            CompatibleMagazineCache magazineCache = null;
 
-            StreamWriter writer = File.CreateText(path);
+            path = path + "/CachedCompatibleMags.json";
 
-            List<FVRFireArmMagazine> magazines = new List<FVRFireArmMagazine>();
-            List<string> magIDs = new List<string>();
-            List<string> firearmIDs = new List<string>();
-            List<string> firearmCachedValues = new List<string>();
-
-            foreach (FVRObject magazine in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine])
+            //If the cache exists, we load it and check it's validity
+            if (File.Exists(path))
             {
-                FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
+                string cacheJson = File.ReadAllText(path);
+                magazineCache = JsonConvert.DeserializeObject<CompatibleMagazineCache>(cacheJson);
 
-                magIDs.Add(magazine.ItemID);
-
-                if (magComp != null)
+                if (!IsMagazineCacheValid(magazineCache))
                 {
-                    magazines.Add(magComp);
+                    File.Delete(path);
+                    magazineCache = null;
                 }
             }
 
-            foreach (FVRObject firearm in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm])
+            //If the magazine cache file didn't exist, or wasn't valid, we must build a new one
+            if (magazineCache == null)
             {
+                TNHTweakerLogger.Log("TNHTWEAKER -- BUILDING NEW MAGAZINE CACHE", TNHTweakerLogger.LogType.File);
+                magazineCache = new CompatibleMagazineCache();
 
-                //Debug.Log("Firearm with magazines: " + firearm.ItemID);
-                //foreach (FVRObject mag in firearm.CompatibleMagazines)
-                //{
-                //    Debug.Log(mag.ItemID);
-                //}
-
-                FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
-
-                firearmIDs.Add(firearm.ItemID);
-
-                if (firearmComp == null) continue;
-
-                bool addedMagazine = false;
-
-                foreach (FVRFireArmMagazine magazine in magazines)
+                //Load all of the magazines into the cache
+                foreach (FVRObject magazine in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine])
                 {
-                    if (firearmComp.MagazineType == magazine.MagazineType && !TNHTweakerUtils.ListContainsObjectID(firearm.CompatibleMagazines, magazine.ObjectWrapper.ItemID))
-                    {
-                        //Debug.Log("New magazine found: " + magazine.name);
-                        firearm.CompatibleMagazines.Add(magazine.ObjectWrapper);
+                    FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
+                    magazineCache.Magazines.Add(magazine.ItemID);
 
-                        if (firearm.MaxCapacityRelated < magazine.m_capacity)
+                    if (magComp != null)
+                    {
+                        magazineCache.MagazineObjects.Add(magComp);
+                    }
+                }
+
+                //Load all firearms into the cache
+                foreach (FVRObject firearm in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm])
+                {
+                    FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
+
+                    magazineCache.Firearms.Add(firearm.ItemID);
+
+                    if (firearmComp == null)
+                    {
+                        continue;
+                    }
+
+                    bool addedMagazine = false;
+                    foreach (FVRFireArmMagazine magazine in magazineCache.MagazineObjects)
+                    {
+                        if (firearmComp.MagazineType == magazine.MagazineType && !ListContainsObjectID(firearm.CompatibleMagazines, magazine.ObjectWrapper.ItemID))
                         {
-                            firearm.MaxCapacityRelated = magazine.m_capacity;
-                        }
-
-                        if (firearm.MinCapacityRelated > magazine.m_capacity)
-                        {
-                            firearm.MinCapacityRelated = magazine.m_capacity;
-                        }
-
-                        addedMagazine = true;
-
-                        TNHTweakerLogger.Log("TNHTWEAKER -- ADDED COMPATIBLE MAGAZINE (" + magazine.ObjectWrapper.ItemID + ") TO FIREARM (" + firearm.ItemID + ")", TNHTweakerLogger.LogType.File);
-                    }
-                }
-
-                if (addedMagazine)
-                {
-                    firearmCachedValues.Add(firearm.ItemID + "=" + firearm.MinCapacityRelated + "," + firearm.MaxCapacityRelated + "," + string.Join(",", firearm.CompatibleMagazines.Select(f => f.ItemID).ToArray()));
-                }
-            }
-
-            writer.WriteLine("magazines=" + string.Join(",", magIDs.ToArray()));
-            writer.WriteLine("firearms=" + string.Join(",", firearmIDs.ToArray()));
-            foreach (string entry in firearmCachedValues)
-            {
-                writer.WriteLine(entry);
-            }
-
-            writer.Close();
-        }
-
-
-        public static void LoadCompatibleMagazines(string path)
-        {
-            try
-            {
-                if (!File.Exists(path + "/CachedCompatibleMags.txt"))
-                {
-                    BuildCompatibleMagazineCache(path + "/CachedCompatibleMags.txt");
-                    return;
-                }
-
-                string[] lines = File.ReadAllLines(path + "/CachedCompatibleMags.txt");
-
-                List<string> magList = new List<string>();
-                List<string> firearmList = new List<string>();
-                List<string> cachedValues = new List<string>();
-
-                foreach (string line in lines)
-                {
-                    if (GetTagFromLine(line).Equals("magazines"))
-                    {
-                        magList.AddRange(GetStringFromLine(line).Split(','));
-                    }
-
-                    else if (GetTagFromLine(line).Equals("firearms"))
-                    {
-                        firearmList.AddRange(GetStringFromLine(line).Split(','));
-                    }
-
-                    else if (line.Contains("="))
-                    {
-                        cachedValues.Add(line);
-                    }
-                }
-
-                bool magsSame = magList.Count == ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Count && magList.All(ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Select(f => f.ItemID).Contains);
-                bool firearmsSame = firearmList.Count == ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Count && firearmList.All(ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Select(f => f.ItemID).Contains);
-
-                //If the cached items are the same as items loaded in game, we can just rely on the cached values for each firearm
-                if (magsSame && firearmsSame)
-                {
-                    TNHTweakerLogger.Log("TNHTWEAKER -- LOADING COMPATIBLE MAGAZINES FROM CACHE", TNHTweakerLogger.LogType.File);
-
-                    FVRObject obj;
-
-                    foreach (string entry in cachedValues)
-                    {
-                        List<string> properties = new List<string>(GetStringFromLine(entry).Split(','));
-                        obj = IM.OD[GetTagFromLine(entry)];
-                        obj.MinCapacityRelated = int.Parse(properties[0]);
-                        obj.MaxCapacityRelated = int.Parse(properties[1]);
-
-                        for (int i = 2; i < properties.Count; i++)
-                        {
-                            if (!TNHTweakerUtils.ListContainsObjectID(obj.CompatibleMagazines, properties[i]))
+                            //If this is the first time a magazine has been added to this firearm, we need to create an entry
+                            if (!addedMagazine)
                             {
-                                TNHTweakerLogger.Log("TNHTWEAKER -- ADDED COMPATIBLE MAGAZINE (" + properties[i] + ") TO FIREARM (" + obj.ItemID + ")", TNHTweakerLogger.LogType.File);
-                                obj.CompatibleMagazines.Add(IM.OD[properties[i]]);
+                                magazineCache.Entries.Add(new MagazineCacheEntry());
+                                magazineCache.Entries.Last().FirearmID = firearm.ItemID;
                             }
+                            addedMagazine = true;
+
+                            //Update the ammo and compatible magazines for the entry
+                            if (firearm.MaxCapacityRelated < magazine.m_capacity)
+                            {
+                                firearm.MaxCapacityRelated = magazine.m_capacity;
+                            }
+                            if (firearm.MinCapacityRelated > magazine.m_capacity)
+                            {
+                                firearm.MinCapacityRelated = magazine.m_capacity;
+                            }
+                            magazineCache.Entries.Last().MaxAmmo = firearm.MaxCapacityRelated;
+                            magazineCache.Entries.Last().MinAmmo = firearm.MinCapacityRelated;
+                            firearm.CompatibleMagazines.Add(magazine.ObjectWrapper);
+                            magazineCache.Entries.Last().CompatibleMagazines.Add(magazine.ObjectWrapper.ItemID);
+                            
+                            TNHTweakerLogger.Log("TNHTWEAKER -- ADDED COMPATIBLE MAGAZINE (" + magazine.ObjectWrapper.ItemID + ") TO FIREARM (" + firearm.ItemID + ")", TNHTweakerLogger.LogType.File);
                         }
                     }
+
                 }
 
-                else
+                //Create the cache file 
+                using (StreamWriter sw = File.CreateText(path))
                 {
-                    TNHTweakerLogger.Log("TNHTWEAKER -- CACHE OUT OF DATE!", TNHTweakerLogger.LogType.File);
-                    TNHTweakerLogger.Log("Magazine Change? " + !magsSame, TNHTweakerLogger.LogType.File);
-                    TNHTweakerLogger.Log("Firearm Change? " + !firearmsSame, TNHTweakerLogger.LogType.File);
-                    TNHTweakerLogger.Log("Magazine List sizes: " + magList.Count + ", " + ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Count, TNHTweakerLogger.LogType.File);
-                    TNHTweakerLogger.Log("Firearm List sizes: " + firearmList.Count + ", " + ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Count, TNHTweakerLogger.LogType.File);
-
-                    File.Delete(path + "/CachedCompatibleMags.txt");
-                    BuildCompatibleMagazineCache(path + "/CachedCompatibleMags.txt");
-                    return;
+                    string cacheString = JsonConvert.SerializeObject(magazineCache, Formatting.Indented, new StringEnumConverter());
+                    sw.WriteLine(cacheString);
+                    sw.Close();
                 }
-
-
             }
 
-            catch (Exception ex)
+            //If the cache is valid, we can just load each entry from the cache
+            else
             {
-                Debug.LogError(ex.ToString());
+                TNHTweakerLogger.Log("TNHTWEAKER -- LOADING EXISTING MAGAZINE CACHE", TNHTweakerLogger.LogType.File);
+
+                foreach (MagazineCacheEntry entry in magazineCache.Entries)
+                {
+                    FVRObject firearm = IM.OD[entry.FirearmID];
+                    foreach(string mag in entry.CompatibleMagazines)
+                    {
+                        firearm.CompatibleMagazines.Add(IM.OD[mag]);
+                    }
+                    firearm.MaxCapacityRelated = entry.MaxAmmo;
+                    firearm.MinCapacityRelated = entry.MinAmmo;
+                }
             }
+
+            CacheLoaded = true;
         }
 
 
+        public static bool IsMagazineCacheValid(CompatibleMagazineCache magazineCache)
+        {
+            bool cacheValid = true;
+
+            //Determine if the magazine cache is valid
+            if (magazineCache.Magazines.Count != ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Count ||
+                magazineCache.Firearms.Count != ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Count) cacheValid = false;
+            else
+            {
+                //NOTE: you could return false immediately in here, but we don't for the sake of debugging
+                foreach (string mag in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Select(f => f.ItemID))
+                {
+                    if (!magazineCache.Magazines.Contains(mag))
+                    {
+                        TNHTweakerLogger.Log("TNHTWEAKER -- MAGAZINE NOT FOUND IN CACHE: " + mag, TNHTweakerLogger.LogType.File);
+                        cacheValid = false;
+                    }
+                }
+                foreach (string firearm in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Select(f => f.ItemID))
+                {
+                    if (!magazineCache.Firearms.Contains(firearm))
+                    {
+                        TNHTweakerLogger.Log("TNHTWEAKER -- FIREARM NOT FOUND IN CACHE: " + firearm, TNHTweakerLogger.LogType.File);
+                        cacheValid = false;
+                    }
+                }
+            }
+
+            return cacheValid;
+        }
     }
 
 

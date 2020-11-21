@@ -35,9 +35,7 @@ namespace FistVR
         private static List<int> spawnedBossIndexes = new List<int>();
 
         private static bool filesBuilt = false;
-
-        //private static FVRObject tokenPrefab = null;
-
+        private static bool preventOutfitFunctionality = false;
 
         private void Awake()
         {
@@ -109,9 +107,9 @@ namespace FistVR
             {
                 if (cacheCompatibleMagazines.Value)
                 {
-                    TNHTweakerUtils.LoadCompatibleMagazines(characterPath);
+                    TNHTweakerUtils.LoadMagazineCache(characterPath);
                 }
-                
+
                 TNHTweakerUtils.CreateObjectIDFile(characterPath);
             }
 
@@ -280,7 +278,6 @@ namespace FistVR
 
         }
 
-
         private static int GetValidPatrolIndex(List<TNH_PatrolChallenge.Patrol> patrols)
         {
             int index = UnityEngine.Random.Range(0, patrols.Count);
@@ -296,7 +293,6 @@ namespace FistVR
 
             return index;
         }
-
 
 
         [HarmonyPatch(typeof(TNH_Manager), "GenerateValidPatrol")] // Specify target method with HarmonyPatch attribute
@@ -447,9 +443,10 @@ namespace FistVR
 
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
-        public static void BeforeSetTake()
+        public static void BeforeSetTake(TNH_CharacterDef ___C)
         {
             spawnedBossIndexes.Clear();
+            preventOutfitFunctionality = customCharDict[___C].ForceDisableOutfitFunctionality;
         }
 
 
@@ -462,7 +459,7 @@ namespace FistVR
             CustomCharacter character = customCharDict[___C];
             Level currLevel = character.GetCurrentLevel(___m_curLevel);
 
-            List<TNH_SupplyPoint> possiblePoints = new List<TNH_SupplyPoint>(___SupplyPoints);
+            List <TNH_SupplyPoint> possiblePoints = new List<TNH_SupplyPoint>(___SupplyPoints);
             possiblePoints.Remove(___SupplyPoints[GetClosestSupplyPointIndex(___SupplyPoints, GM.CurrentPlayerBody.Head.position)]);
 
             foreach(TNH_SupplyPoint point in ___SupplyPoints)
@@ -969,6 +966,13 @@ namespace FistVR
             return true;
         }
 
+
+        [HarmonyPatch(typeof(Sosig), "BuffHealing_Invis")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool OverrideCloaking()
+        {
+            return !preventOutfitFunctionality;
+        }
 
         public static int GetClosestSupplyPointIndex(List<TNH_SupplyPoint> SupplyPoints, Vector3 playerPosition)
         {

@@ -80,6 +80,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CompatibleMagazineCache.cs" />
     <Compile Include="CustomCharacter.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Logger.cs" />

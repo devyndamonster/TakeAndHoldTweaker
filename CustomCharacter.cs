@@ -22,6 +22,7 @@ namespace FistVR
         public string CharacterIconName;
         public int StartingTokens;
         public bool ForceAllAgentWeapons;
+        public bool ForceDisableOutfitFunctionality;
         public bool UsesPurchasePriceIncrement;
         public bool HasPrimaryWeapon;
         public bool HasSecondaryWeapon;
@@ -83,6 +84,8 @@ namespace FistVR
             EquipmentPools = character.EquipmentPool.Entries.Select(o => new EquipmentPool(o)).ToList();
             Levels = character.Progressions[0].Levels.Select(o => new Level(o)).ToList();
             LevelsEndless = character.Progressions_Endless[0].Levels.Select(o => new Level(o)).ToList();
+
+            ForceDisableOutfitFunctionality = false;
 
             this.character = character;
         }
