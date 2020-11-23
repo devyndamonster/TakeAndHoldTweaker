@@ -15,7 +15,7 @@ using Valve.Newtonsoft.Json;
 
 namespace FistVR
 {
-    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "1.0.0.0")]
+    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "1.3.0.0")]
     public class TNHTweaker : BaseUnityPlugin
     {
 
@@ -30,11 +30,12 @@ namespace FistVR
         private static string characterPath;
 
         private static Dictionary<TNH_CharacterDef,CustomCharacter> customCharDict = new Dictionary<TNH_CharacterDef,CustomCharacter>();
+        private static Dictionary<SosigEnemyTemplate, SosigTemplate> customSosigs = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
+
+        private static List<int> spawnedBossIndexes = new List<int>();
 
         private static bool filesBuilt = false;
-
-        //private static FVRObject tokenPrefab = null;
-
+        private static bool preventOutfitFunctionality = false;
 
         private void Awake()
         {
@@ -106,11 +107,10 @@ namespace FistVR
             {
                 if (cacheCompatibleMagazines.Value)
                 {
-                    ObjectBuilder.LoadCompatibleMagazines(characterPath);
+                    TNHTweakerUtils.LoadMagazineCache(characterPath);
                 }
-                
+
                 TNHTweakerUtils.CreateObjectIDFile(characterPath);
-                TNHTweakerUtils.CreateSosigIDFile(characterPath);
             }
 
             filesBuilt = true;
@@ -125,6 +125,8 @@ namespace FistVR
 
             if (!filesBuilt)
             {
+                TNHTweakerUtils.CreateSosigIDFile(characterPath);
+                TNHTweakerUtils.CreateDefaultSosigTemplateFiles(characterPath);
                 TNHTweakerUtils.CreateDefaultCharacterFiles(___CharDatabase, characterPath);
                 equipmentIcons = TNHTweakerUtils.GetAllIcons(___CharDatabase);
                 TNHTweakerUtils.CreateIconIDFile(characterPath, equipmentIcons.Keys.ToList());
@@ -156,10 +158,26 @@ namespace FistVR
 
             int ID = 30;
 
-            //First load the default characters into the custom character dictionary
+            //First, load all of the default sosig IDs into the sosig ID dict
+            foreach(SosigEnemyID sosig in Enum.GetValues(typeof(SosigEnemyID)))
+            {
+                if (!SosigTemplate.SosigIDDict.ContainsKey(sosig.ToString()))
+                {
+                    SosigTemplate.SosigIDDict.Add(sosig.ToString(), (int)sosig);
+                }
+            }
+
+            //Now load all default sosig templates into custom sosig dictionary
+            foreach(SosigEnemyTemplate config in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Values)
+            {
+                SosigTemplate customTemplate = new SosigTemplate(config);
+                customSosigs.Add(config, customTemplate);
+            }
+
+            //Load the default characters into the custom character dictionary
             foreach(TNH_CharacterDef characterDef in characters)
             {
-                ObjectBuilder.RemoveUnloadedObjectIDs(characterDef);
+                TNHTweakerUtils.RemoveUnloadedObjectIDs(characterDef);
 
                 CustomCharacter character = new CustomCharacter(characterDef);
                 customCharDict.Add(characterDef, character);
@@ -176,20 +194,112 @@ namespace FistVR
                     continue;
                 }
 
+                //Load all of the custom sosig templates for this character
+                foreach (string file in Directory.GetFiles(characterDir))
+                {
+                    if (file.Contains("sosig_"))
+                    {
+                        string sosigJson = File.ReadAllText(file);
+                        SosigTemplate template = JsonConvert.DeserializeObject<SosigTemplate>(sosigJson);
+                        TNHTweakerLogger.Log("TNHTWEAKER -- DESERIALIZED SOSIG TEMPLATE", TNHTweakerLogger.LogType.Character);
+
+                        if (SosigTemplate.SosigIDDict.ContainsKey(template.SosigEnemyID))
+                        {
+                            TNHTweakerLogger.Log("TNHTWEAKER -- SOSIG TEMPLATE ALREADY EXISTS! SKIPPING", TNHTweakerLogger.LogType.Character);
+                            continue;
+                        }
+
+                        TNHTweakerUtils.RemoveUnloadedObjectIDs(template);
+
+                        if (template.DroppedObjectPool != null)
+                        {
+                            template.TableDef.Initialize(template.DroppedObjectPool.GetObjectTable());
+                        }
+
+                        SosigEnemyTemplate enemyTemplate = template.GetSosigEnemyTemplate();
+                        ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(enemyTemplate.SosigEnemyID, enemyTemplate);
+                        ManagerSingleton<IM>.Instance.odicSosigIDsByCategory[enemyTemplate.SosigEnemyCategory].Add(enemyTemplate.SosigEnemyID);
+                        ManagerSingleton<IM>.Instance.odicSosigObjsByCategory[enemyTemplate.SosigEnemyCategory].Add(enemyTemplate);
+
+                        
+                       
+                        customSosigs.Add(enemyTemplate, template);
+                        TNHTweakerLogger.Log("TNHTWEAKER -- ADDED SOSIG ID (" + enemyTemplate.SosigEnemyID + ") FOR SOSIG (" + template.SosigEnemyID + ")", TNHTweakerLogger.LogType.Character);
+                    }
+                }
+
+                //Load the character itself
                 string json = File.ReadAllText(characterDir + "/character.json");
                 CustomCharacter character = JsonConvert.DeserializeObject<CustomCharacter>(json);
                 TNHTweakerLogger.Log("TNHTWEAKER -- DESERIALIZED", TNHTweakerLogger.LogType.Character);
                 TNH_CharacterDef characterDef = character.GetCharacter(ID, characterDir, equipmentIcons);
                 TNHTweakerLogger.Log("TNHTWEAKER -- CONVERTED", TNHTweakerLogger.LogType.Character);
-                ObjectBuilder.RemoveUnloadedObjectIDs(characterDef);
+                TNHTweakerUtils.RemoveUnloadedObjectIDs(characterDef);
                 customCharDict.Add(characterDef, character);
-                ID += 1;
 
+                ID += 1;
                 TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTER LOADED: " + character.DisplayName, TNHTweakerLogger.LogType.Character);
             }
         }
 
-        
+
+        [HarmonyPatch(typeof(TNH_Manager), "InitTables")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPostfix]
+        public static void PrintGenerateTables(Dictionary<ObjectTableDef, ObjectTable> ___m_objectTableDics)
+        {
+            try
+            {
+                string path = characterPath + "/pool_contents.txt";
+
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
+                // Create a new file     
+                using (StreamWriter sw = File.CreateText(path))
+                {
+                    foreach (KeyValuePair<ObjectTableDef, ObjectTable> pool in ___m_objectTableDics)
+                    {
+                        sw.WriteLine("Pool: " + pool.Key.Icon.name);
+                        foreach(FVRObject obj in pool.Value.Objs)
+                        {
+                            if(obj == null)
+                            {
+                                TNHTweakerLogger.Log("TNHTWEAKER -- NULL OBJECT IN TABLE", TNHTweakerLogger.LogType.Character);
+                                continue;
+                            }
+                            sw.WriteLine("-" + obj.ItemID);
+                        }
+                        sw.WriteLine("");
+                    }
+                }
+            }
+
+            catch (Exception ex)
+            {
+                Debug.LogError(ex.ToString());
+            }
+
+        }
+
+        private static int GetValidPatrolIndex(List<TNH_PatrolChallenge.Patrol> patrols)
+        {
+            int index = UnityEngine.Random.Range(0, patrols.Count);
+            int attempts = 0;
+
+            while(spawnedBossIndexes.Contains(index) && attempts < patrols.Count)
+            {
+                index += 1;
+                if (index >= patrols.Count) index = 0;
+            }
+
+            if (spawnedBossIndexes.Contains(index)) return -1;
+
+            return index;
+        }
+
+
         [HarmonyPatch(typeof(TNH_Manager), "GenerateValidPatrol")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool GenerateValidPatrolReplacement(TNH_PatrolChallenge P, int curStandardIndex, int excludeHoldIndex, bool isStart, TNH_Manager __instance, TNH_Progression.Level ___m_curLevel, List<TNH_Manager.SosigPatrolSquad> ___m_patrolSquads, ref float ___m_timeTilPatrolCanSpawn)
@@ -198,15 +308,27 @@ namespace FistVR
 
             if (P.Patrols.Count < 1) return false;
 
-            int patrolIndex = UnityEngine.Random.Range(0, P.Patrols.Count);
+            //Get a valid patrol index, and exit if there are no valid patrols
+            int patrolIndex = GetValidPatrolIndex(P.Patrols);
+            if(patrolIndex == -1)
+            {
+                TNHTweakerLogger.Log("TNHTWEAKER -- NO VALID PATROLS", TNHTweakerLogger.LogType.Patrol);
+                ___m_timeTilPatrolCanSpawn = 999;
+                return false;
+            }
+
+            TNHTweakerLogger.Log("TNHTWEAKER -- VALID PATROL FOUND", TNHTweakerLogger.LogType.Patrol);
+
             TNH_PatrolChallenge.Patrol patrol = P.Patrols[patrolIndex];
 
             List<int> validLocations = new List<int>();
             float minDist = __instance.TAHReticle.Range * 1.2f;
 
+            //Get a safe starting point for the patrol to spawn
             TNH_SafePositionMatrix.PositionEntry startingEntry;
             if (isStart) startingEntry = __instance.SafePosMatrix.Entries_SupplyPoints[curStandardIndex];
             else startingEntry = __instance.SafePosMatrix.Entries_HoldPoints[curStandardIndex];
+
 
             for(int i = 0; i < startingEntry.SafePositions_HoldPoints.Count; i++)
             {
@@ -223,7 +345,7 @@ namespace FistVR
             if (validLocations.Count < 1) return false;
             validLocations.Shuffle();
 
-            TNH_Manager.SosigPatrolSquad squad = GeneratePatrol(validLocations[0], __instance, ___m_curLevel, patrol);
+            TNH_Manager.SosigPatrolSquad squad = GeneratePatrol(validLocations[0], __instance, ___m_curLevel, patrol, patrolIndex);
 
             if(__instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking)
             {
@@ -240,7 +362,7 @@ namespace FistVR
         }
 
         
-        public static TNH_Manager.SosigPatrolSquad GeneratePatrol(int HoldPointStart, TNH_Manager instance, TNH_Progression.Level level, TNH_PatrolChallenge.Patrol patrol)
+        public static TNH_Manager.SosigPatrolSquad GeneratePatrol(int HoldPointStart, TNH_Manager instance, TNH_Progression.Level level, TNH_PatrolChallenge.Patrol patrol, int patrolIndex)
         {
             TNH_Manager.SosigPatrolSquad squad = new TNH_Manager.SosigPatrolSquad();
 
@@ -256,45 +378,64 @@ namespace FistVR
 
             int PatrolSize = Mathf.Clamp(patrol.PatrolSize, 0, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense.Count);
 
-            for(int i = 0; i < PatrolSize; i++)
+            CustomCharacter character = customCharDict[instance.C];
+            Level currLevel = character.GetCurrentLevel(level);
+            Patrol currPatrol = currLevel.GetPatrol(patrol);
+
+            TNHTweakerLogger.Log("TNHTWEAKER -- IS PATROL BOSS: " + currPatrol.IsBoss, TNHTweakerLogger.LogType.Patrol);
+
+            for (int i = 0; i < PatrolSize; i++)
             {
                 SosigEnemyTemplate template;
                 bool allowAllWeapons;
 
-                if(i == 0)
+                //If this is a boss, then we can only spawn it once, so add it to the list of spawned bosses
+                if (currPatrol.IsBoss)
                 {
-                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[patrol.LType];
+                    spawnedBossIndexes.Add(patrolIndex);
+                }
+
+                //Select a sosig template from the custom character patrol
+                if (i == 0)
+                {
+                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)SosigTemplate.SosigIDDict[currPatrol.LeaderType]];
                     allowAllWeapons = true;
                 }
 
                 else
                 {
-                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[patrol.EType];
+                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)SosigTemplate.SosigIDDict[currPatrol.EnemyType.GetRandom<string>()]];
                     allowAllWeapons = false;
                 }
 
-                CustomCharacter character = customCharDict[instance.C];
-                Level currLevel = character.GetCurrentLevel(level);
-                Patrol currPatrol = currLevel.GetPatrol(patrol);
 
+                SosigTemplate customTemplate = customSosigs[template];
                 FVRObject droppedObject = instance.Prefab_HealthPickupMinor;
 
+                //If squad is set to swarm, the first point they path to should be the players current position
                 Sosig sosig;
                 if (currPatrol.SwarmPlayer)
                 {
                     squad.PatrolPoints[0] = GM.CurrentPlayerBody.transform.position;
-                    sosig = instance.SpawnEnemy(template, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense[i], currPatrol.IFFUsed, true, squad.PatrolPoints[0], allowAllWeapons);
-                    sosig.SetAssaultSpeed(Sosig.SosigMoveSpeed.Running);
+                    sosig = SpawnEnemy(customTemplate, character, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense[i], instance.AI_Difficulty, currPatrol.IFFUsed, true, squad.PatrolPoints[0], allowAllWeapons);
+                    sosig.SetAssaultSpeed(currPatrol.AssualtSpeed);
                 }
                 else
                 {
-                    sosig = instance.SpawnEnemy(template, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense[i], currPatrol.IFFUsed, true, squad.PatrolPoints[0], allowAllWeapons);
+                    sosig = SpawnEnemy(customTemplate, character, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense[i], instance.AI_Difficulty, currPatrol.IFFUsed, true, squad.PatrolPoints[0], allowAllWeapons);
                     sosig.SetAssaultSpeed(currPatrol.AssualtSpeed);
                 }
 
+                //Handle patrols dropping health
                 if(i == 0 && UnityEngine.Random.value < currPatrol.DropChance)
                 {
                     sosig.Links[1].RegisterSpawnOnDestroy(droppedObject);
+                }
+
+                //Handle sosig dropping custom loot
+                if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
+                {
+                    sosig.Links[2].RegisterSpawnOnDestroy(customTemplate.TableDef.GetRandomObject());
                 }
 
                 squad.Squad.Add(sosig);
@@ -305,6 +446,13 @@ namespace FistVR
         }
 
 
+        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static void BeforeSetTake(TNH_CharacterDef ___C)
+        {
+            spawnedBossIndexes.Clear();
+            preventOutfitFunctionality = customCharDict[___C].ForceDisableOutfitFunctionality;
+        }
 
 
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")] // Specify target method with HarmonyPatch attribute
@@ -316,7 +464,7 @@ namespace FistVR
             CustomCharacter character = customCharDict[___C];
             Level currLevel = character.GetCurrentLevel(___m_curLevel);
 
-            List<TNH_SupplyPoint> possiblePoints = new List<TNH_SupplyPoint>(___SupplyPoints);
+            List <TNH_SupplyPoint> possiblePoints = new List<TNH_SupplyPoint>(___SupplyPoints);
             possiblePoints.Remove(___SupplyPoints[GetClosestSupplyPointIndex(___SupplyPoints, GM.CurrentPlayerBody.Head.position)]);
 
             foreach(TNH_SupplyPoint point in ___SupplyPoints)
@@ -355,7 +503,18 @@ namespace FistVR
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
-                Sosig enemy = ___M.SpawnEnemy(template, transform, ___T.IFFUsed, false, transform.position, true);
+                SosigTemplate customTemplate = customSosigs[template];
+
+                TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING TAKE GROUP AT " + transform.position, TNHTweakerLogger.LogType.Patrol);
+
+                Sosig enemy = SpawnEnemy(customTemplate, customCharDict[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
+
+                //Handle sosig dropping custom loot
+                if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
+                {
+                    enemy.Links[2].RegisterSpawnOnDestroy(customTemplate.TableDef.GetRandomObject());
+                }
+
                 ___m_activeSosigs.Add(enemy);
             }
 
@@ -393,9 +552,19 @@ namespace FistVR
             for (int i = 0; i < ___T.NumGuards && i < ___SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
-                //SosigEnemyTemplate template = ___M.GetEnemyTemplate(___T.GuardType);
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
-                Sosig enemy = ___M.SpawnEnemy(template, transform, ___T.IFFUsed, false, transform.position, true);
+                SosigTemplate customTemplate = customSosigs[template];
+
+                TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING SUPPLY GROUP AT " + transform.position, TNHTweakerLogger.LogType.Patrol);
+
+                Sosig enemy = SpawnEnemy(customTemplate, customCharDict[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
+
+                //Handle sosig dropping custom loot
+                if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
+                {
+                    enemy.Links[2].RegisterSpawnOnDestroy(customTemplate.TableDef.GetRandomObject());
+                }
+
                 ___m_activeSosigs.Add(enemy);
             }
 
@@ -438,6 +607,261 @@ namespace FistVR
             return true;
         }
 
+
+        public static Sosig SpawnEnemy(SosigTemplate template, CustomCharacter character, Transform spawnLocation, TNHModifier_AIDifficulty difficulty, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
+        {
+            if (character.ForceAllAgentWeapons) allowAllWeapons = true;
+
+            TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING SOSIG: " + template.SosigEnemyID, TNHTweakerLogger.LogType.Patrol);
+
+            //Create the sosig object
+            GameObject sosigPrefab = Instantiate(IM.OD[template.SosigPrefabs.GetRandom<string>()].GetGameObject(), spawnLocation.position, spawnLocation.rotation);
+            Sosig sosigComponent = sosigPrefab.GetComponentInChildren<Sosig>();
+
+            //Fill out the sosigs config based on the difficulty
+            SosigConfig config;
+
+            if (difficulty == TNHModifier_AIDifficulty.Arcade) config = template.ConfigsEasy.GetRandom<SosigConfig>();
+            else config = template.Configs.GetRandom<SosigConfig>();
+            sosigComponent.Configure(config.GetConfigTemplate());
+            sosigComponent.E.IFFCode = IFF;
+
+            //Setup the sosigs inventory
+            sosigComponent.Inventory.Init();
+            sosigComponent.Inventory.FillAllAmmo();
+            sosigComponent.InitHands();
+
+            //Equip the sosigs weapons
+            if(template.WeaponOptions.Count > 0)
+            {
+                GameObject weaponPrefab = IM.OD[template.WeaponOptions.GetRandom<string>()].GetGameObject();
+                EquipSosigWeapon(sosigComponent, weaponPrefab, difficulty);
+            }
+
+            if (template.WeaponOptionsSecondary.Count > 0 && allowAllWeapons && template.SecondaryChance >= UnityEngine.Random.value)
+            {
+                GameObject weaponPrefab = IM.OD[template.WeaponOptionsSecondary.GetRandom<string>()].GetGameObject();
+                EquipSosigWeapon(sosigComponent, weaponPrefab, difficulty);
+            }
+
+            if (template.WeaponOptionsTertiary.Count > 0 && allowAllWeapons && template.TertiaryChance >= UnityEngine.Random.value)
+            {
+                GameObject weaponPrefab = IM.OD[template.WeaponOptionsTertiary.GetRandom<string>()].GetGameObject();
+                EquipSosigWeapon(sosigComponent, weaponPrefab, difficulty);
+            }
+
+            //Equip clothing to the sosig
+            OutfitConfig outfitConfig = template.OutfitConfigs.GetRandom<OutfitConfig>();
+            if(outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
+            {
+                EquipSosigClothing(outfitConfig.Headwear, sosigComponent.Links[0], outfitConfig.ForceWearAllHead);
+            }
+
+            if (outfitConfig.Chance_Facewear >= UnityEngine.Random.value)
+            {
+                EquipSosigClothing(outfitConfig.Facewear, sosigComponent.Links[0], outfitConfig.ForceWearAllFace);
+            }
+
+            if (outfitConfig.Chance_Eyewear >= UnityEngine.Random.value)
+            {
+                EquipSosigClothing(outfitConfig.Eyewear, sosigComponent.Links[0], outfitConfig.ForceWearAllEye);
+            }
+
+            if (outfitConfig.Chance_Torsowear >= UnityEngine.Random.value)
+            {
+                EquipSosigClothing(outfitConfig.Torsowear, sosigComponent.Links[1], outfitConfig.ForceWearAllTorso);
+            }
+
+            if (outfitConfig.Chance_Pantswear >= UnityEngine.Random.value)
+            {
+                EquipSosigClothing(outfitConfig.Pantswear, sosigComponent.Links[2], outfitConfig.ForceWearAllPants);
+            }
+
+            if (outfitConfig.Chance_Pantswear_Lower >= UnityEngine.Random.value)
+            {
+                EquipSosigClothing(outfitConfig.Pantswear_Lower, sosigComponent.Links[3], outfitConfig.ForceWearAllPantsLower);
+            }
+
+            if (outfitConfig.Chance_Backpacks >= UnityEngine.Random.value)
+            {
+                EquipSosigClothing(outfitConfig.Backpacks, sosigComponent.Links[1], outfitConfig.ForceWearAllBackpacks);
+            }
+
+            //Setup link spawns
+            if (config.GetConfigTemplate().UsesLinkSpawns)
+            {
+                for(int i = 0; i < sosigComponent.Links.Count; i++)
+                {
+                    if(config.GetConfigTemplate().LinkSpawnChance[i] >= UnityEngine.Random.value)
+                    {
+                        if(config.GetConfigTemplate().LinkSpawns.Count > i && config.GetConfigTemplate().LinkSpawns[i] != null && config.GetConfigTemplate().LinkSpawns[i].Category != FVRObject.ObjectCategory.Loot)
+                        {
+                            sosigComponent.Links[i].RegisterSpawnOnDestroy(config.GetConfigTemplate().LinkSpawns[i]);
+                        }
+                    }
+                }
+            }
+
+            //Setup the sosigs orders
+            if (isAssault)
+            {
+                sosigComponent.CurrentOrder = Sosig.SosigOrder.Assault;
+                sosigComponent.FallbackOrder = Sosig.SosigOrder.Assault;
+                sosigComponent.CommandAssaultPoint(pointOfInterest);
+            }
+            else
+            {
+                sosigComponent.CurrentOrder = Sosig.SosigOrder.Wander;
+                sosigComponent.FallbackOrder = Sosig.SosigOrder.Wander;
+                sosigComponent.CommandGuardPoint(pointOfInterest, true);
+                sosigComponent.SetDominantGuardDirection(UnityEngine.Random.onUnitSphere);
+            }
+            sosigComponent.SetGuardInvestigateDistanceThreshold(25f);
+
+            return sosigComponent;
+        }
+
+
+        [HarmonyPatch(typeof(FVRPlayerBody), "SetOutfit")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool SetOutfitReplacement(SosigEnemyTemplate tem, PlayerSosigBody ___m_sosigPlayerBody)
+        {
+            if (___m_sosigPlayerBody == null) return false;
+
+            GM.Options.ControlOptions.MBClothing = tem.SosigEnemyID;
+            if(tem.SosigEnemyID != SosigEnemyID.None)
+            {
+                if(tem.OutfitConfig.Count > 0 && customSosigs.ContainsKey(tem))
+                {
+                    OutfitConfig outfitConfig = customSosigs[tem].OutfitConfigs.GetRandom();
+
+                    List<GameObject> clothing = Traverse.Create(___m_sosigPlayerBody).Field("m_curClothes").GetValue<List<GameObject>>();
+                    foreach (GameObject item in clothing)
+                    {
+                        Destroy(item);
+                    }
+                    clothing.Clear();
+
+                    if (outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Headwear, clothing, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllHead);
+                    }
+
+                    if (outfitConfig.Chance_Facewear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Facewear, clothing, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllFace);
+                    }
+
+                    if (outfitConfig.Chance_Eyewear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Eyewear, clothing, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllEye);
+                    }
+
+                    if (outfitConfig.Chance_Torsowear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Torsowear, clothing, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllTorso);
+                    }
+
+                    if (outfitConfig.Chance_Pantswear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Pantswear, clothing, ___m_sosigPlayerBody.Sosig_Abdomen, outfitConfig.ForceWearAllPants);
+                    }
+
+                    if (outfitConfig.Chance_Pantswear_Lower >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Pantswear_Lower, clothing, ___m_sosigPlayerBody.Sosig_Legs, outfitConfig.ForceWearAllPantsLower);
+                    }
+
+                    if (outfitConfig.Chance_Backpacks >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Backpacks, clothing, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllBackpacks);
+                    }
+
+                }
+            }
+
+            return false;
+        }
+
+
+        public static void EquipSosigWeapon(Sosig sosig, GameObject weaponPrefab, TNHModifier_AIDifficulty difficulty)
+        {
+            SosigWeapon weapon = Instantiate(weaponPrefab, sosig.transform.position + Vector3.up * 0.1f, sosig.transform.rotation).GetComponent<SosigWeapon>();
+            weapon.SetAutoDestroy(true);
+            weapon.O.SpawnLockable = false;
+
+            TNHTweakerLogger.Log("TNHTWEAKER -- EQUIPPING WEAPON: " + weapon.gameObject.name, TNHTweakerLogger.LogType.Patrol);
+
+            //Equip the sosig weapon to the sosig
+            sosig.ForceEquip(weapon);
+            weapon.SetAmmoClamping(true);
+            if (difficulty == TNHModifier_AIDifficulty.Arcade) weapon.FlightVelocityMultiplier = 0.3f;
+        }
+
+        public static void EquipSosigClothing(List<string> options, SosigLink link, bool wearAll)
+        {
+            if (wearAll)
+            {
+                foreach(string clothing in options)
+                {
+                    GameObject clothingObject = Instantiate(IM.OD[clothing].GetGameObject(), link.transform.position, link.transform.rotation);
+                    clothingObject.transform.SetParent(link.transform);
+                    clothingObject.GetComponent<SosigWearable>().RegisterWearable(link);
+                }
+            }
+
+            else
+            {
+                GameObject clothingObject = Instantiate(IM.OD[options.GetRandom<string>()].GetGameObject(), link.transform.position, link.transform.rotation);
+                clothingObject.transform.SetParent(link.transform);
+                clothingObject.GetComponent<SosigWearable>().RegisterWearable(link);
+            }
+        }
+
+
+        public static void EquipSosigClothing(List<string> options, List<GameObject> playerClothing, Transform link,  bool wearAll)
+        {
+            if (wearAll)
+            {
+                foreach (string clothing in options)
+                {
+                    GameObject clothingObject = Instantiate(IM.OD[clothing].GetGameObject(), link.position, link.rotation);
+
+                    Component[] children = clothingObject.GetComponentsInChildren<Component>(true);
+                    foreach(Component child in children)
+                    {
+                        child.gameObject.layer = LayerMask.NameToLayer("ExternalCamOnly");
+
+                        if(!(child is Transform) && !(child is MeshFilter) && !(child is MeshRenderer))
+                        {
+                            Destroy(child);
+                        }
+                    }
+
+                    playerClothing.Add(clothingObject);
+                    clothingObject.transform.SetParent(link);
+                }
+            }
+
+            else
+            {
+                GameObject clothingObject = Instantiate(IM.OD[options.GetRandom<string>()].GetGameObject(), link.position, link.rotation);
+
+                Component[] children = clothingObject.GetComponentsInChildren<Component>(true);
+                foreach (Component child in children)
+                {
+                    child.gameObject.layer = LayerMask.NameToLayer("ExternalCamOnly");
+
+                    if (!(child is Transform) && !(child is MeshFilter) && !(child is MeshRenderer))
+                    {
+                        Destroy(child);
+                    }
+                }
+
+                playerClothing.Add(clothingObject);
+                clothingObject.transform.SetParent(link);
+            }
+        }
 
 
         [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnBoxes")] // Specify target method with HarmonyPatch attribute
@@ -516,8 +940,6 @@ namespace FistVR
             }
         }
 
-
-
         public static void SpawnHoldEnemyGroup(TNH_HoldChallenge.Phase curPhase, int phaseIndex, List<TNH_HoldPoint.AttackVector> AttackVectors, List<Transform> SpawnPoints_Turrets, List<Sosig> ActiveSosigs, TNH_Manager M, ref bool isFirstWave)
         {
             TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING AN ENEMY WAVE", TNHTweakerLogger.LogType.General);
@@ -526,16 +948,15 @@ namespace FistVR
             int numAttackVectors = UnityEngine.Random.Range(1, curPhase.MaxDirections + 1);
             numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
 
-            //Set first enemy to be spawned as leader
-            SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[curPhase.LType];
-            int enemiesToSpawn = UnityEngine.Random.Range(curPhase.MinEnemies, curPhase.MaxEnemies + 1);
-
-
-            //Figure out if enemies on this hold should go directly toward the player
+            //Get the custom character data
             CustomCharacter character = customCharDict[M.C];
             Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
-            
+
+            //Set first enemy to be spawned as leader
+            SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)SosigTemplate.SosigIDDict[currPhase.LeaderType]];
+            int enemiesToSpawn = UnityEngine.Random.Range(curPhase.MinEnemies, curPhase.MaxEnemies + 1);
+
             int sosigsSpawned = 0;
             int vectorSpawnPoint = 0;
             Vector3 targetVector;
@@ -546,7 +967,7 @@ namespace FistVR
 
                 if (AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint) break;
 
-                //Spawn the enemy
+                //Set the sosigs target position
                 if (currPhase.SwarmPlayer)
                 {
                     targetVector = GM.CurrentPlayerBody.TorsoTransform.position;
@@ -555,14 +976,23 @@ namespace FistVR
                 {
                     targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
                 }
-                
-                Sosig enemy = M.SpawnEnemy(enemyTemplate, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], curPhase.IFFUsed, true, targetVector, true);
+
+                SosigTemplate customTemplate = customSosigs[enemyTemplate];
+
+                Sosig enemy = SpawnEnemy(customTemplate, character, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M.AI_Difficulty, curPhase.IFFUsed, true, targetVector, true);
+
+                //Handle sosig dropping custom loot
+                if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
+                {
+                    enemy.Links[2].RegisterSpawnOnDestroy(customTemplate.TableDef.GetRandomObject());
+                }
+
                 ActiveSosigs.Add(enemy);
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- SOSIG SPAWNED", TNHTweakerLogger.LogType.General);
 
                 //At this point, the leader has been spawned, so always set enemy to be regulars
-                enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[curPhase.EType];
+                enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)SosigTemplate.SosigIDDict[currPhase.EnemyType.GetRandom<string>()]];
                 sosigsSpawned += 1;
 
                 vectorIndex += 1;
@@ -649,6 +1079,13 @@ namespace FistVR
             return true;
         }
 
+
+        [HarmonyPatch(typeof(Sosig), "BuffHealing_Invis")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool OverrideCloaking()
+        {
+            return !preventOutfitFunctionality;
+        }
 
         public static int GetClosestSupplyPointIndex(List<TNH_SupplyPoint> SupplyPoints, Vector3 playerPosition)
         {
