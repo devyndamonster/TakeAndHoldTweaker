@@ -15,7 +15,7 @@ using Valve.Newtonsoft.Json;
 
 namespace FistVR
 {
-    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "1.0.0.0")]
+    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "1.3.0.0")]
     public class TNHTweaker : BaseUnityPlugin
     {
 
@@ -209,14 +209,19 @@ namespace FistVR
                             continue;
                         }
 
-                        SosigEnemyTemplate enemyTemplate = template.GetSosigEnemyTemplate();
-                        ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(enemyTemplate.SosigEnemyID, enemyTemplate);
+                        TNHTweakerUtils.RemoveUnloadedObjectIDs(template);
 
-                        if(template.DroppedObjectPool != null)
+                        if (template.DroppedObjectPool != null)
                         {
-                            TNHTweakerUtils.RemoveUnloadedObjectIDs(template.DroppedObjectPool.GetObjectTable());
                             template.TableDef.Initialize(template.DroppedObjectPool.GetObjectTable());
                         }
+
+                        SosigEnemyTemplate enemyTemplate = template.GetSosigEnemyTemplate();
+                        ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(enemyTemplate.SosigEnemyID, enemyTemplate);
+                        ManagerSingleton<IM>.Instance.odicSosigIDsByCategory[enemyTemplate.SosigEnemyCategory].Add(enemyTemplate.SosigEnemyID);
+                        ManagerSingleton<IM>.Instance.odicSosigObjsByCategory[enemyTemplate.SosigEnemyCategory].Add(enemyTemplate);
+
+                        
                        
                         customSosigs.Add(enemyTemplate, template);
                         TNHTweakerLogger.Log("TNHTWEAKER -- ADDED SOSIG ID (" + enemyTemplate.SosigEnemyID + ") FOR SOSIG (" + template.SosigEnemyID + ")", TNHTweakerLogger.LogType.Character);
@@ -716,6 +721,69 @@ namespace FistVR
             return sosigComponent;
         }
 
+
+        [HarmonyPatch(typeof(FVRPlayerBody), "SetOutfit")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool SetOutfitReplacement(SosigEnemyTemplate tem, PlayerSosigBody ___m_sosigPlayerBody)
+        {
+            if (___m_sosigPlayerBody == null) return false;
+
+            GM.Options.ControlOptions.MBClothing = tem.SosigEnemyID;
+            if(tem.SosigEnemyID != SosigEnemyID.None)
+            {
+                if(tem.OutfitConfig.Count > 0 && customSosigs.ContainsKey(tem))
+                {
+                    OutfitConfig outfitConfig = customSosigs[tem].OutfitConfigs.GetRandom();
+
+                    List<GameObject> clothing = Traverse.Create(___m_sosigPlayerBody).Field("m_curClothes").GetValue<List<GameObject>>();
+                    foreach (GameObject item in clothing)
+                    {
+                        Destroy(item);
+                    }
+                    clothing.Clear();
+
+                    if (outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Headwear, clothing, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllHead);
+                    }
+
+                    if (outfitConfig.Chance_Facewear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Facewear, clothing, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllFace);
+                    }
+
+                    if (outfitConfig.Chance_Eyewear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Eyewear, clothing, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllEye);
+                    }
+
+                    if (outfitConfig.Chance_Torsowear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Torsowear, clothing, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllTorso);
+                    }
+
+                    if (outfitConfig.Chance_Pantswear >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Pantswear, clothing, ___m_sosigPlayerBody.Sosig_Abdomen, outfitConfig.ForceWearAllPants);
+                    }
+
+                    if (outfitConfig.Chance_Pantswear_Lower >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Pantswear_Lower, clothing, ___m_sosigPlayerBody.Sosig_Legs, outfitConfig.ForceWearAllPantsLower);
+                    }
+
+                    if (outfitConfig.Chance_Backpacks >= UnityEngine.Random.value)
+                    {
+                        EquipSosigClothing(outfitConfig.Backpacks, clothing, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllBackpacks);
+                    }
+
+                }
+            }
+
+            return false;
+        }
+
+
         public static void EquipSosigWeapon(Sosig sosig, GameObject weaponPrefab, TNHModifier_AIDifficulty difficulty)
         {
             SosigWeapon weapon = Instantiate(weaponPrefab, sosig.transform.position + Vector3.up * 0.1f, sosig.transform.rotation).GetComponent<SosigWeapon>();
@@ -747,6 +815,51 @@ namespace FistVR
                 GameObject clothingObject = Instantiate(IM.OD[options.GetRandom<string>()].GetGameObject(), link.transform.position, link.transform.rotation);
                 clothingObject.transform.SetParent(link.transform);
                 clothingObject.GetComponent<SosigWearable>().RegisterWearable(link);
+            }
+        }
+
+
+        public static void EquipSosigClothing(List<string> options, List<GameObject> playerClothing, Transform link,  bool wearAll)
+        {
+            if (wearAll)
+            {
+                foreach (string clothing in options)
+                {
+                    GameObject clothingObject = Instantiate(IM.OD[clothing].GetGameObject(), link.position, link.rotation);
+
+                    Component[] children = clothingObject.GetComponentsInChildren<Component>(true);
+                    foreach(Component child in children)
+                    {
+                        child.gameObject.layer = LayerMask.NameToLayer("ExternalCamOnly");
+
+                        if(!(child is Transform) && !(child is MeshFilter) && !(child is MeshRenderer))
+                        {
+                            Destroy(child);
+                        }
+                    }
+
+                    playerClothing.Add(clothingObject);
+                    clothingObject.transform.SetParent(link);
+                }
+            }
+
+            else
+            {
+                GameObject clothingObject = Instantiate(IM.OD[options.GetRandom<string>()].GetGameObject(), link.position, link.rotation);
+
+                Component[] children = clothingObject.GetComponentsInChildren<Component>(true);
+                foreach (Component child in children)
+                {
+                    child.gameObject.layer = LayerMask.NameToLayer("ExternalCamOnly");
+
+                    if (!(child is Transform) && !(child is MeshFilter) && !(child is MeshRenderer))
+                    {
+                        Destroy(child);
+                    }
+                }
+
+                playerClothing.Add(clothingObject);
+                clothingObject.transform.SetParent(link);
             }
         }
 

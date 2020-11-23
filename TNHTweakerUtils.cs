@@ -298,79 +298,82 @@ namespace FistVR
         }
 
 
-        public static string GetIndent(int count)
+        public static void RemoveUnloadedObjectIDs(SosigTemplate template)
         {
-            string indent = "";
-
-            for (int i = 0; i < count; i++)
+            if (template.DroppedObjectPool != null)
             {
-                indent = string.Concat(indent, "- ");
+                RemoveUnloadedObjectIDs(template.DroppedObjectPool.GetObjectTable());
             }
-
-            return indent;
-        }
-
-        public static string GetTagFromLine(string line)
-        {
-            if (line.Contains("="))
+            
+            //Loop through all outfit configs and remove any clothing objects that don't exist
+            foreach (OutfitConfig config in template.OutfitConfigs)
             {
-                return line.Split('=')[0];
-            }
-
-            return "";
-        }
-
-        public static string GetStringFromLine(string line)
-        {
-            if (line.Contains("="))
-            {
-                return line.Split('=')[1];
-            }
-
-            return "";
-        }
-
-        public static int GetIntFromLine(string line)
-        {
-            int result = -1;
-
-            if (line.Contains("="))
-            {
-                if (!int.TryParse(line.Split('=')[1], out result))
+                for(int i = 0; i < config.Headwear.Count; i++)
                 {
-                    return -1;
+                    if (!IM.OD.ContainsKey(config.Headwear[i]))
+                    {
+                        config.Headwear.RemoveAt(i);
+                        i -= 1;
+                    }
+                }
+
+                for (int i = 0; i < config.Facewear.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(config.Facewear[i]))
+                    {
+                        config.Facewear.RemoveAt(i);
+                        i -= 1;
+                    }
+                }
+
+                for (int i = 0; i < config.Eyewear.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(config.Eyewear[i]))
+                    {
+                        config.Eyewear.RemoveAt(i);
+                        i -= 1;
+                    }
+                }
+
+                for (int i = 0; i < config.Torsowear.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(config.Torsowear[i]))
+                    {
+                        config.Torsowear.RemoveAt(i);
+                        i -= 1;
+                    }
+                }
+
+                for (int i = 0; i < config.Pantswear.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(config.Pantswear[i]))
+                    {
+                        config.Pantswear.RemoveAt(i);
+                        i -= 1;
+                    }
+                }
+
+                for (int i = 0; i < config.Pantswear_Lower.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(config.Pantswear_Lower[i]))
+                    {
+                        config.Pantswear_Lower.RemoveAt(i);
+                        i -= 1;
+                    }
+                }
+
+                for (int i = 0; i < config.Backpacks.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(config.Backpacks[i]))
+                    {
+                        config.Backpacks.RemoveAt(i);
+                        i -= 1;
+                    }
                 }
             }
 
-            return result;
         }
 
-        public static float GetFloatFromLine(string line)
-        {
-            float result = -1;
-
-            if (line.Contains("="))
-            {
-                if (!float.TryParse(line.Split('=')[1], out result))
-                {
-                    return -1;
-                }
-            }
-
-            return result;
-        }
-
-        public static bool GetBoolFromLine(string line)
-        {
-            bool result = false;
-
-            if (line.Contains("="))
-            {
-                bool.TryParse(line.Split('=')[1], out result);
-            }
-
-            return result;
-        }
 
         /// <summary>
         /// Returns wether of not the type sent is a type of generic list. Solution found here: https://stackoverflow.com/questions/794198/how-do-i-check-if-a-given-value-is-a-generic-list/41687428
@@ -525,13 +528,19 @@ namespace FistVR
 
                 foreach (MagazineCacheEntry entry in magazineCache.Entries)
                 {
-                    FVRObject firearm = IM.OD[entry.FirearmID];
-                    foreach(string mag in entry.CompatibleMagazines)
+                    if (IM.OD.ContainsKey(entry.FirearmID))
                     {
-                        firearm.CompatibleMagazines.Add(IM.OD[mag]);
+                        FVRObject firearm = IM.OD[entry.FirearmID];
+                        foreach (string mag in entry.CompatibleMagazines)
+                        {
+                            if (IM.OD.ContainsKey(mag))
+                            {
+                                firearm.CompatibleMagazines.Add(IM.OD[mag]);
+                            }
+                        }
+                        firearm.MaxCapacityRelated = entry.MaxAmmo;
+                        firearm.MinCapacityRelated = entry.MinAmmo;
                     }
-                    firearm.MaxCapacityRelated = entry.MaxAmmo;
-                    firearm.MinCapacityRelated = entry.MinAmmo;
                 }
             }
 
@@ -539,33 +548,44 @@ namespace FistVR
         }
 
 
+        /// <summary>
+        /// Returns true if every gun and magazine is found within the cache
+        /// </summary>
+        /// <param name="magazineCache"></param>
+        /// <returns></returns>
         public static bool IsMagazineCacheValid(CompatibleMagazineCache magazineCache)
         {
             bool cacheValid = true;
 
+            //TODO: There will likely be problems with firearms max and min capacities not being correct if the cache was built with mods, and then had mods disabled
+
+            /* NOTE: This optimization is disabled for the sake of debugging
             //Determine if the magazine cache is valid
             if (magazineCache.Magazines.Count != ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Count ||
-                magazineCache.Firearms.Count != ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Count) cacheValid = false;
-            else
+                magazineCache.Firearms.Count != ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Count) 
             {
-                //NOTE: you could return false immediately in here, but we don't for the sake of debugging
-                foreach (string mag in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Select(f => f.ItemID))
+                return false;
+            }
+            */
+             
+            //NOTE: you could return false immediately in here, but we don't for the sake of debugging
+            foreach (string mag in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine].Select(f => f.ItemID))
+            {
+                if (!magazineCache.Magazines.Contains(mag))
                 {
-                    if (!magazineCache.Magazines.Contains(mag))
-                    {
-                        TNHTweakerLogger.Log("TNHTWEAKER -- MAGAZINE NOT FOUND IN CACHE: " + mag, TNHTweakerLogger.LogType.File);
-                        cacheValid = false;
-                    }
-                }
-                foreach (string firearm in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Select(f => f.ItemID))
-                {
-                    if (!magazineCache.Firearms.Contains(firearm))
-                    {
-                        TNHTweakerLogger.Log("TNHTWEAKER -- FIREARM NOT FOUND IN CACHE: " + firearm, TNHTweakerLogger.LogType.File);
-                        cacheValid = false;
-                    }
+                    TNHTweakerLogger.Log("TNHTWEAKER -- MAGAZINE NOT FOUND IN CACHE: " + mag, TNHTweakerLogger.LogType.File);
+                    cacheValid = false;
                 }
             }
+            foreach (string firearm in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Select(f => f.ItemID))
+            {
+                if (!magazineCache.Firearms.Contains(firearm))
+                {
+                    TNHTweakerLogger.Log("TNHTWEAKER -- FIREARM NOT FOUND IN CACHE: " + firearm, TNHTweakerLogger.LogType.File);
+                    cacheValid = false;
+                }
+            }
+            
 
             return cacheValid;
         }
