@@ -17,6 +17,7 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
 
 - **Comrade Kolbasa** \- A character which can only use russian and czech weaponry
 - **Time Travel Timmy** \- Progress through each age of weaponry, from wild west to modern
+- **PMC Pete** \- An Escape From Tarkov themed character
 
 ## Character Creation
 Check out the [Wiki](https://github.com/devyndamonster/TakeAndHoldTweaker/wiki) for documentation on character creation, and other important stuff
