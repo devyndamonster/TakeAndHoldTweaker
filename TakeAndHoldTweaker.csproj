@@ -37,19 +37,24 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>Libs\0Harmony.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="Assembly-CSharp">
+    <Reference Include="ADepIn, Version=20.11.19.2309, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\plugins\Deli\ADepIn.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\h3vr_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>Libs\BepInEx.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx.Harmony">
-      <HintPath>Libs\BepInEx.Harmony.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\core\BepInEx.Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Deli">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\plugins\Deli\Deli.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Private>True</Private>
@@ -83,7 +88,9 @@
     <Compile Include="CompatibleMagazineCache.cs" />
     <Compile Include="CustomCharacter.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="LoadedTemplateManager.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="TemplateLoaders.cs" />
     <Compile Include="SosigTemplate.cs" />
     <Compile Include="TNHTweakerUtils.cs" />
     <Compile Include="TNHTweaker.cs" />

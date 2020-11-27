@@ -134,6 +134,18 @@ namespace FistVR
             return character;
         }
 
+
+        public TNH_CharacterDef GetCharacter()
+        {
+            if(character == null)
+            {
+                Debug.LogError("TNHTweaker -- Tried to get character, but it hasn't been initialized yet! Returning null! Character Name : " + DisplayName);
+                return null;
+            }
+
+            return character;
+        }
+
         public Level GetCurrentLevel(TNH_Progression.Level level)
         {
             if (Levels.Select(o => o.GetLevel()).Contains(level))
@@ -346,8 +358,13 @@ namespace FistVR
                 loadout.Num_Mags_SL_Clips = NumMags;
                 loadout.Num_Rounds = NumRounds;
                 loadout.TableDefs = Tables.Select(o => o.GetObjectTable()).ToList();
-                if (ListOverride.Count > 0) loadout.ListOverride = ListOverride.Select(o => IM.OD[o]).ToList();
-                else loadout.ListOverride = new List<FVRObject>();
+
+                loadout.ListOverride = new List<FVRObject>();
+                foreach(string item in ListOverride)
+                {
+                    if (IM.OD.ContainsKey(item)) loadout.ListOverride.Add(IM.OD[item]);
+                }
+
                 if(AmmoOverride != null && IM.OD.ContainsKey(AmmoOverride)) loadout.AmmoObjectOverride = IM.OD[AmmoOverride];
 
             }
@@ -456,7 +473,7 @@ namespace FistVR
             {
                 takeChallenge = (TNH_TakeChallenge)ScriptableObject.CreateInstance(typeof(TNH_TakeChallenge));
                 takeChallenge.TurretType = TurretType;
-                takeChallenge.GID = (SosigEnemyID)SosigTemplate.SosigIDDict[EnemyType];
+                takeChallenge.GID = SosigEnemyID.None;
                 takeChallenge.NumTurrets = NumTurrets;
                 takeChallenge.NumGuards = NumGuards;
                 takeChallenge.IFFUsed = IFFUsed;
@@ -522,8 +539,8 @@ namespace FistVR
                 phase.Encryption = Encryption;
                 phase.MinTargets = MinTargets;
                 phase.MaxTargets = MaxTargets;
-                phase.EType = (SosigEnemyID)SosigTemplate.SosigIDDict[EnemyType[0]];
-                phase.LType = (SosigEnemyID)SosigTemplate.SosigIDDict[LeaderType];
+                phase.EType = SosigEnemyID.None;
+                phase.LType = SosigEnemyID.None;
                 phase.MinEnemies = MinEnemies;
                 phase.MaxEnemies = MaxEnemies;
                 phase.MaxEnemiesAlive = MaxEnemiesAlive;
@@ -585,8 +602,8 @@ namespace FistVR
             if(patrol == null)
             {
                 patrol = new TNH_PatrolChallenge.Patrol();
-                patrol.EType = (SosigEnemyID)SosigTemplate.SosigIDDict[EnemyType[0]];
-                patrol.LType = (SosigEnemyID)SosigTemplate.SosigIDDict[LeaderType];
+                patrol.EType = SosigEnemyID.None;
+                patrol.LType = SosigEnemyID.None;
                 patrol.PatrolSize = PatrolSize;
                 patrol.MaxPatrols = MaxPatrols;
                 patrol.MaxPatrols_LimitedAmmo = MaxPatrolsLimited;

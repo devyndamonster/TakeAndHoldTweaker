@@ -15,7 +15,7 @@ using Valve.Newtonsoft.Json;
 
 namespace FistVR
 {
-    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "1.3.0.0")]
+    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "0.1.3.1")]
     public class TNHTweaker : BaseUnityPlugin
     {
 
@@ -25,12 +25,7 @@ namespace FistVR
         private static ConfigEntry<bool> allowLog;
         private static ConfigEntry<bool> cacheCompatibleMagazines;
 
-        private static Dictionary<string, Sprite> equipmentIcons = new Dictionary<string, Sprite>();
-
-        private static string characterPath;
-
-        private static Dictionary<TNH_CharacterDef,CustomCharacter> customCharDict = new Dictionary<TNH_CharacterDef,CustomCharacter>();
-        private static Dictionary<SosigEnemyTemplate, SosigTemplate> customSosigs = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
+        private static string OutputFilePath;
 
         private static List<int> spawnedBossIndexes = new List<int>();
 
@@ -39,11 +34,14 @@ namespace FistVR
 
         private void Awake()
         {
+
+            Debug.Log("Hello World (from TNH Tweaker)");
+
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
 
             LoadConfigFile();
 
-            SetupCharacterDirectory();
+            SetupOutputDirectory();
         }
 
         private void LoadConfigFile()
@@ -75,65 +73,60 @@ namespace FistVR
                                     false,
                                     "If true, reading from a file will log the reading process");
 
-            TNHTweakerLogger.LogGeneral = allowLog.Value;
-            TNHTweakerLogger.LogCharacter = printCharacters.Value;
-            TNHTweakerLogger.LogPatrol = logPatrols.Value;
-            TNHTweakerLogger.LogFile = logFileReads.Value;
+            //TNHTweakerLogger.LogGeneral = allowLog.Value;
+            //TNHTweakerLogger.LogCharacter = printCharacters.Value;
+            //TNHTweakerLogger.LogPatrol = logPatrols.Value;
+            //TNHTweakerLogger.LogFile = logFileReads.Value;
+
+            TNHTweakerLogger.LogGeneral = true;
+            TNHTweakerLogger.LogCharacter = true;
+            TNHTweakerLogger.LogPatrol = true;
+            TNHTweakerLogger.LogFile = true;
 
         }
 
-        private void SetupCharacterDirectory()
+        private void SetupOutputDirectory()
         {
-            characterPath = Application.dataPath.Replace("/h3vr_Data", "/CustomCharacters");
-            TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTER FILE PATH IS: " + characterPath, TNHTweakerLogger.LogType.Character);
+            OutputFilePath = Application.dataPath.Replace("/h3vr_Data", "/TNH_Tweaker");
 
-            if (Directory.Exists(characterPath))
+            if (!Directory.Exists(OutputFilePath))
             {
-                TNHTweakerLogger.Log("Folder exists!", TNHTweakerLogger.LogType.Character);
+                Directory.CreateDirectory(OutputFilePath);
             }
-            else
-            {
-                TNHTweakerLogger.Log("Folder does not exist! Creating", TNHTweakerLogger.LogType.Character);
-                Directory.CreateDirectory(characterPath);
-            }
-        }
-
-
-        [HarmonyPatch(typeof(TNH_UIManager), "Start")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPostfix]
-        public static void AfterTNHMenuLoaded()
-        {
-            if (!filesBuilt)
-            {
-                if (cacheCompatibleMagazines.Value)
-                {
-                    TNHTweakerUtils.LoadMagazineCache(characterPath);
-                }
-
-                TNHTweakerUtils.CreateObjectIDFile(characterPath);
-            }
-
-            filesBuilt = true;
         }
 
 
         [HarmonyPatch(typeof(TNH_UIManager), "Start")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
-        public static bool AddCharacters(List<TNH_UIManager.CharacterCategory> ___Categories, TNH_CharacterDatabase ___CharDatabase)
+        public static bool InitTNH(List<TNH_UIManager.CharacterCategory> ___Categories, TNH_CharacterDatabase ___CharDatabase)
         {
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
+            Debug.Log("Entering TNH Scene!");
+            TNHTweakerLogger.Log("Entering TNH Scene!", TNHTweakerLogger.LogType.File);
+
+            //Perform first time setup of all files
             if (!filesBuilt)
             {
-                TNHTweakerUtils.CreateSosigIDFile(characterPath);
-                TNHTweakerUtils.CreateDefaultSosigTemplateFiles(characterPath);
-                TNHTweakerUtils.CreateDefaultCharacterFiles(___CharDatabase, characterPath);
-                equipmentIcons = TNHTweakerUtils.GetAllIcons(___CharDatabase);
-                TNHTweakerUtils.CreateIconIDFile(characterPath, equipmentIcons.Keys.ToList());
-                LoadCustomCharacters(___CharDatabase.Characters);
+                TNHTweakerLogger.Log("TNHTweaker -- Performing TNH Initialization", TNHTweakerLogger.LogType.File);
+
+                LoadDefaultSosigs();
+                LoadDefaultCharacters(___CharDatabase.Characters);
+                TNHTweakerUtils.CreateSosigIDFile(OutputFilePath);
+                TNHTweakerUtils.CreateDefaultSosigTemplateFiles(OutputFilePath);
+                TNHTweakerUtils.CreateDefaultCharacterFiles(___CharDatabase, OutputFilePath);
+                LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(___CharDatabase);
+                TNHTweakerUtils.CreateIconIDFile(OutputFilePath, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
+                TNHTweakerUtils.CreateObjectIDFile(OutputFilePath);
+
+                if (cacheCompatibleMagazines.Value)
+                {
+                    TNHTweakerUtils.LoadMagazineCache(OutputFilePath);
+                }
             }
             
-            foreach (TNH_CharacterDef character in customCharDict.Keys)
+            //Load all characters into the UI
+            foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharacters.Keys)
             {
                 if (!___Categories[(int)character.Group].Characters.Contains(character.CharacterID))
                 {
@@ -142,106 +135,46 @@ namespace FistVR
                 }
             }
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTERS LOADED: " + ___CharDatabase.Characters.Count, TNHTweakerLogger.LogType.Character);
-
+            filesBuilt = true;
             return true;
         }
 
-
-
-        private static void LoadCustomCharacters(List<TNH_CharacterDef> characters)
+        private static void LoadDefaultSosigs()
         {
-
-            TNHTweakerLogger.Log("TNHTWEAKER -- LOADING CUSTOM CHARACTERS", TNHTweakerLogger.LogType.Character);
-
-            string[] characterDirs = Directory.GetDirectories(characterPath);
-
-            int ID = 30;
-
-            //First, load all of the default sosig IDs into the sosig ID dict
-            foreach(SosigEnemyID sosig in Enum.GetValues(typeof(SosigEnemyID)))
-            {
-                if (!SosigTemplate.SosigIDDict.ContainsKey(sosig.ToString()))
-                {
-                    SosigTemplate.SosigIDDict.Add(sosig.ToString(), (int)sosig);
-                }
-            }
+            TNHTweakerLogger.Log("TNHTweaker -- Adding default sosigs", TNHTweakerLogger.LogType.File);
 
             //Now load all default sosig templates into custom sosig dictionary
-            foreach(SosigEnemyTemplate config in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Values)
+            foreach (SosigEnemyTemplate sosig in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Values)
             {
-                SosigTemplate customTemplate = new SosigTemplate(config);
-                customSosigs.Add(config, customTemplate);
-            }
-
-            //Load the default characters into the custom character dictionary
-            foreach(TNH_CharacterDef characterDef in characters)
-            {
-                TNHTweakerUtils.RemoveUnloadedObjectIDs(characterDef);
-
-                CustomCharacter character = new CustomCharacter(characterDef);
-                customCharDict.Add(characterDef, character);
-
-                TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTER LOADED: " + character.DisplayName, TNHTweakerLogger.LogType.Character);
-            }
-
-            //Now load custom characters from the directory
-            foreach (string characterDir in characterDirs)
-            {
-                if (!File.Exists(characterDir + "/thumb.png") || !File.Exists(characterDir + "/character.json"))
-                {
-                    Debug.LogError("TNHTWEAKER -- CHARACTER DIRECTORY FOUND, BUT MISSING ONE OR MORE OF THE FOLLOWING: character.json , thumb.png");
-                    continue;
-                }
-
-                //Load all of the custom sosig templates for this character
-                foreach (string file in Directory.GetFiles(characterDir))
-                {
-                    if (file.Contains("sosig_"))
-                    {
-                        string sosigJson = File.ReadAllText(file);
-                        SosigTemplate template = JsonConvert.DeserializeObject<SosigTemplate>(sosigJson);
-                        TNHTweakerLogger.Log("TNHTWEAKER -- DESERIALIZED SOSIG TEMPLATE", TNHTweakerLogger.LogType.Character);
-
-                        if (SosigTemplate.SosigIDDict.ContainsKey(template.SosigEnemyID))
-                        {
-                            TNHTweakerLogger.Log("TNHTWEAKER -- SOSIG TEMPLATE ALREADY EXISTS! SKIPPING", TNHTweakerLogger.LogType.Character);
-                            continue;
-                        }
-
-                        TNHTweakerUtils.RemoveUnloadedObjectIDs(template);
-
-                        if (template.DroppedObjectPool != null)
-                        {
-                            template.TableDef.Initialize(template.DroppedObjectPool.GetObjectTable());
-                        }
-
-                        SosigEnemyTemplate enemyTemplate = template.GetSosigEnemyTemplate();
-                        ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(enemyTemplate.SosigEnemyID, enemyTemplate);
-                        ManagerSingleton<IM>.Instance.odicSosigIDsByCategory[enemyTemplate.SosigEnemyCategory].Add(enemyTemplate.SosigEnemyID);
-                        ManagerSingleton<IM>.Instance.odicSosigObjsByCategory[enemyTemplate.SosigEnemyCategory].Add(enemyTemplate);
-
-                        
-                       
-                        customSosigs.Add(enemyTemplate, template);
-                        TNHTweakerLogger.Log("TNHTWEAKER -- ADDED SOSIG ID (" + enemyTemplate.SosigEnemyID + ") FOR SOSIG (" + template.SosigEnemyID + ")", TNHTweakerLogger.LogType.Character);
-                    }
-                }
-
-                //Load the character itself
-                string json = File.ReadAllText(characterDir + "/character.json");
-                CustomCharacter character = JsonConvert.DeserializeObject<CustomCharacter>(json);
-                TNHTweakerLogger.Log("TNHTWEAKER -- DESERIALIZED", TNHTweakerLogger.LogType.Character);
-                TNH_CharacterDef characterDef = character.GetCharacter(ID, characterDir, equipmentIcons);
-                TNHTweakerLogger.Log("TNHTWEAKER -- CONVERTED", TNHTweakerLogger.LogType.Character);
-                TNHTweakerUtils.RemoveUnloadedObjectIDs(characterDef);
-                customCharDict.Add(characterDef, character);
-
-                ID += 1;
-                TNHTweakerLogger.Log("TNHTWEAKER -- CHARACTER LOADED: " + character.DisplayName, TNHTweakerLogger.LogType.Character);
+                LoadedTemplateManager.AddSosigTemplate(sosig);
             }
         }
 
+        private static void LoadDefaultCharacters(List<TNH_CharacterDef> characters)
+        {
+            TNHTweakerLogger.Log("TNHTweaker -- Adding default characters", TNHTweakerLogger.LogType.File);
+
+            foreach (TNH_CharacterDef character in characters)
+            {
+                LoadedTemplateManager.AddCharacterTemplate(character);
+            }
+        }
+
+        [HarmonyPatch(typeof(TNH_Manager), "InitTables")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool BeginTNH(TNH_CharacterDef ___C)
+        {
+            TNHTweakerLogger.Log("TNHTweaker -- Removing unloaded objectIDs from character", TNHTweakerLogger.LogType.File);
+            TNHTweakerUtils.RemoveUnloadedObjectIDs(___C);
+
+            TNHTweakerLogger.Log("TNHTweaker -- Removing unloaded objectIDs from all sosigs", TNHTweakerLogger.LogType.File);
+            foreach (SosigTemplate template in LoadedTemplateManager.LoadedSosigs.Values)
+            {
+                TNHTweakerUtils.RemoveUnloadedObjectIDs(template);
+            }
+
+            return true;
+        }
 
         [HarmonyPatch(typeof(TNH_Manager), "InitTables")] // Specify target method with HarmonyPatch attribute
         [HarmonyPostfix]
@@ -249,7 +182,7 @@ namespace FistVR
         {
             try
             {
-                string path = characterPath + "/pool_contents.txt";
+                string path = OutputFilePath + "/pool_contents.txt";
 
                 if (File.Exists(path))
                 {
@@ -378,7 +311,7 @@ namespace FistVR
 
             int PatrolSize = Mathf.Clamp(patrol.PatrolSize, 0, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense.Count);
 
-            CustomCharacter character = customCharDict[instance.C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[instance.C];
             Level currLevel = character.GetCurrentLevel(level);
             Patrol currPatrol = currLevel.GetPatrol(patrol);
 
@@ -398,18 +331,18 @@ namespace FistVR
                 //Select a sosig template from the custom character patrol
                 if (i == 0)
                 {
-                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)SosigTemplate.SosigIDDict[currPatrol.LeaderType]];
+                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPatrol.LeaderType]];
                     allowAllWeapons = true;
                 }
 
                 else
                 {
-                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)SosigTemplate.SosigIDDict[currPatrol.EnemyType.GetRandom<string>()]];
+                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPatrol.EnemyType.GetRandom<string>()]];
                     allowAllWeapons = false;
                 }
 
 
-                SosigTemplate customTemplate = customSosigs[template];
+                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigs[template];
                 FVRObject droppedObject = instance.Prefab_HealthPickupMinor;
 
                 //If squad is set to swarm, the first point they path to should be the players current position
@@ -451,7 +384,7 @@ namespace FistVR
         public static void BeforeSetTake(TNH_CharacterDef ___C)
         {
             spawnedBossIndexes.Clear();
-            preventOutfitFunctionality = customCharDict[___C].ForceDisableOutfitFunctionality;
+            preventOutfitFunctionality = LoadedTemplateManager.LoadedCharacters[___C].ForceDisableOutfitFunctionality;
         }
 
 
@@ -461,7 +394,7 @@ namespace FistVR
         {
             TNHTweakerLogger.Log("TNHTWEAKER -- ADDING ADDITIONAL SUPPLY POINTS", TNHTweakerLogger.LogType.General);
 
-            CustomCharacter character = customCharDict[___C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[___C];
             Level currLevel = character.GetCurrentLevel(___m_curLevel);
 
             List <TNH_SupplyPoint> possiblePoints = new List<TNH_SupplyPoint>(___SupplyPoints);
@@ -503,11 +436,11 @@ namespace FistVR
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
-                SosigTemplate customTemplate = customSosigs[template];
+                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigs[template];
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING TAKE GROUP AT " + transform.position, TNHTweakerLogger.LogType.Patrol);
 
-                Sosig enemy = SpawnEnemy(customTemplate, customCharDict[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
+                Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharacters[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
 
                 //Handle sosig dropping custom loot
                 if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
@@ -553,11 +486,11 @@ namespace FistVR
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
-                SosigTemplate customTemplate = customSosigs[template];
+                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigs[template];
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING SUPPLY GROUP AT " + transform.position, TNHTweakerLogger.LogType.Patrol);
 
-                Sosig enemy = SpawnEnemy(customTemplate, customCharDict[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
+                Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharacters[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
 
                 //Handle sosig dropping custom loot
                 if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
@@ -731,9 +664,9 @@ namespace FistVR
             GM.Options.ControlOptions.MBClothing = tem.SosigEnemyID;
             if(tem.SosigEnemyID != SosigEnemyID.None)
             {
-                if(tem.OutfitConfig.Count > 0 && customSosigs.ContainsKey(tem))
+                if(tem.OutfitConfig.Count > 0 && LoadedTemplateManager.LoadedSosigs.ContainsKey(tem))
                 {
-                    OutfitConfig outfitConfig = customSosigs[tem].OutfitConfigs.GetRandom();
+                    OutfitConfig outfitConfig = LoadedTemplateManager.LoadedSosigs[tem].OutfitConfigs.GetRandom();
 
                     List<GameObject> clothing = Traverse.Create(___m_sosigPlayerBody).Field("m_curClothes").GetValue<List<GameObject>>();
                     foreach (GameObject item in clothing)
@@ -869,7 +802,7 @@ namespace FistVR
         public static bool SpawnBoxesReplacement(TNH_SupplyPoint __instance, TNH_Manager ___M, List<GameObject> ___m_spawnBoxes)
         {
 
-            CustomCharacter character = customCharDict[___M.C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[___M.C];
             Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(___M).Field("m_curLevel").GetValue());
 
             __instance.SpawnPoints_Boxes.Shuffle();
@@ -917,7 +850,7 @@ namespace FistVR
 
         public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int m_phaseIndex)
         {
-            CustomCharacter character = customCharDict[M.C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[M.C];
             Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
             Phase currPhase = currLevel.HoldPhases[m_phaseIndex];
 
@@ -949,12 +882,12 @@ namespace FistVR
             numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
 
             //Get the custom character data
-            CustomCharacter character = customCharDict[M.C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[M.C];
             Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
             //Set first enemy to be spawned as leader
-            SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)SosigTemplate.SosigIDDict[currPhase.LeaderType]];
+            SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.LeaderType]];
             int enemiesToSpawn = UnityEngine.Random.Range(curPhase.MinEnemies, curPhase.MaxEnemies + 1);
 
             int sosigsSpawned = 0;
@@ -977,7 +910,7 @@ namespace FistVR
                     targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
                 }
 
-                SosigTemplate customTemplate = customSosigs[enemyTemplate];
+                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigs[enemyTemplate];
 
                 Sosig enemy = SpawnEnemy(customTemplate, character, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M.AI_Difficulty, curPhase.IFFUsed, true, targetVector, true);
 
@@ -992,7 +925,7 @@ namespace FistVR
                 TNHTweakerLogger.Log("TNHTWEAKER -- SOSIG SPAWNED", TNHTweakerLogger.LogType.General);
 
                 //At this point, the leader has been spawned, so always set enemy to be regulars
-                enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)SosigTemplate.SosigIDDict[currPhase.EnemyType.GetRandom<string>()]];
+                enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.EnemyType.GetRandom<string>()]];
                 sosigsSpawned += 1;
 
                 vectorIndex += 1;

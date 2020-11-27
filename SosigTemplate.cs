@@ -28,12 +28,6 @@ namespace FistVR
 		[JsonIgnore]
 		public ObjectTable TableDef = new ObjectTable();
 
-		[JsonIgnore]
-		public static int NewID = 30000;
-
-		[JsonIgnore]
-		public static Dictionary<string, int> SosigIDDict = new Dictionary<string, int>();
-
         [JsonIgnore]
         private SosigEnemyTemplate template;
 
@@ -60,13 +54,7 @@ namespace FistVR
 			DroppedLootChance = 0;
 			DroppedObjectPool = new ObjectPool();
 
-
 			this.template = template;
-
-			if (!SosigIDDict.ContainsKey(SosigEnemyID))
-			{
-				SosigIDDict.Add(SosigEnemyID, (int)template.SosigEnemyID);
-			}
 		}
 
 		public SosigEnemyTemplate GetSosigEnemyTemplate()
@@ -75,27 +63,26 @@ namespace FistVR
             {
 				template = (SosigEnemyTemplate)ScriptableObject.CreateInstance(typeof(SosigEnemyTemplate));
 
-                if (!SosigIDDict.ContainsKey(SosigEnemyID))
-                {
-					SosigIDDict.Add(SosigEnemyID, NewID);
-					NewID += 1;
-				}
-
 				template.DisplayName = DisplayName;
 				template.SosigEnemyCategory = SosigEnemyCategory;
-				template.SosigEnemyID = (SosigEnemyID)SosigIDDict[SosigEnemyID];
-				template.EnemyType = (TNH_EnemyType)SosigIDDict[SosigEnemyID];
 				template.SecondaryChance = SecondaryChance;
 				template.TertiaryChance = TertiaryChance;
 
+				Debug.Log("Sosig prefabs");
 				template.SosigPrefabs = SosigPrefabs.Select(o => IM.OD[o]).ToList();
+				Debug.Log("Weapon options");
 				template.WeaponOptions = WeaponOptions.Select(o => IM.OD[o]).ToList();
+				Debug.Log("Weapon options second");
 				template.WeaponOptions_Secondary = WeaponOptionsSecondary.Select(o => IM.OD[o]).ToList();
+				Debug.Log("Weapon options tert");
 				template.WeaponOptions_Tertiary = WeaponOptionsTertiary.Select(o => IM.OD[o]).ToList();
 
+				Debug.Log("configs");
 				template.ConfigTemplates = Configs.Select(o => o.GetConfigTemplate()).ToList();
 				template.ConfigTemplates_Easy = ConfigsEasy.Select(o => o.GetConfigTemplate()).ToList();
+				Debug.Log("outfit");
 				template.OutfitConfig = OutfitConfigs.Select(o => o.GetOutfitConfig()).ToList();
+				Debug.Log("done");
 			}
 
 			return template;

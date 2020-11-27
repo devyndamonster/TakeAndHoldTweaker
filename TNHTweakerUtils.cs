@@ -290,6 +290,7 @@ namespace FistVR
                 {
                     if (!IM.OD.ContainsKey(table.IDOverride[i]))
                     {
+                        Debug.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + table.IDOverride[i]);
                         table.IDOverride.RemoveAt(i);
                         i--;
                     }
@@ -312,6 +313,7 @@ namespace FistVR
                 {
                     if (!IM.OD.ContainsKey(config.Headwear[i]))
                     {
+                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
                         config.Headwear.RemoveAt(i);
                         i -= 1;
                     }
@@ -321,6 +323,7 @@ namespace FistVR
                 {
                     if (!IM.OD.ContainsKey(config.Facewear[i]))
                     {
+                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
                         config.Facewear.RemoveAt(i);
                         i -= 1;
                     }
@@ -330,6 +333,7 @@ namespace FistVR
                 {
                     if (!IM.OD.ContainsKey(config.Eyewear[i]))
                     {
+                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
                         config.Eyewear.RemoveAt(i);
                         i -= 1;
                     }
@@ -339,6 +343,7 @@ namespace FistVR
                 {
                     if (!IM.OD.ContainsKey(config.Torsowear[i]))
                     {
+                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
                         config.Torsowear.RemoveAt(i);
                         i -= 1;
                     }
@@ -348,6 +353,7 @@ namespace FistVR
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear[i]))
                     {
+                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
                         config.Pantswear.RemoveAt(i);
                         i -= 1;
                     }
@@ -357,6 +363,7 @@ namespace FistVR
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear_Lower[i]))
                     {
+                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
                         config.Pantswear_Lower.RemoveAt(i);
                         i -= 1;
                     }
@@ -366,6 +373,7 @@ namespace FistVR
                 {
                     if (!IM.OD.ContainsKey(config.Backpacks[i]))
                     {
+                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
                         config.Backpacks.RemoveAt(i);
                         i -= 1;
                     }
