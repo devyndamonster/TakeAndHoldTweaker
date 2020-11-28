@@ -68,25 +68,40 @@ namespace FistVR
 				template.SecondaryChance = SecondaryChance;
 				template.TertiaryChance = TertiaryChance;
 
-				Debug.Log("Sosig prefabs");
-				template.SosigPrefabs = SosigPrefabs.Select(o => IM.OD[o]).ToList();
-				Debug.Log("Weapon options");
-				template.WeaponOptions = WeaponOptions.Select(o => IM.OD[o]).ToList();
-				Debug.Log("Weapon options second");
-				template.WeaponOptions_Secondary = WeaponOptionsSecondary.Select(o => IM.OD[o]).ToList();
-				Debug.Log("Weapon options tert");
-				template.WeaponOptions_Tertiary = WeaponOptionsTertiary.Select(o => IM.OD[o]).ToList();
-
-				Debug.Log("configs");
 				template.ConfigTemplates = Configs.Select(o => o.GetConfigTemplate()).ToList();
 				template.ConfigTemplates_Easy = ConfigsEasy.Select(o => o.GetConfigTemplate()).ToList();
-				Debug.Log("outfit");
 				template.OutfitConfig = OutfitConfigs.Select(o => o.GetOutfitConfig()).ToList();
-				Debug.Log("done");
 			}
 
 			return template;
         }
+
+		public void DelayedInit()
+        {
+			if(template != null)
+            {
+				template.SosigPrefabs = SosigPrefabs.Select(o => IM.OD[o]).ToList();
+				template.WeaponOptions = WeaponOptions.Select(o => IM.OD[o]).ToList();
+				template.WeaponOptions_Secondary = WeaponOptionsSecondary.Select(o => IM.OD[o]).ToList();
+				template.WeaponOptions_Tertiary = WeaponOptionsTertiary.Select(o => IM.OD[o]).ToList();
+
+				foreach(OutfitConfig outfit in OutfitConfigs)
+                {
+					outfit.DelayedInit();
+                }
+
+				TableDef = new ObjectTable();
+				if(DroppedObjectPool != null)
+                {
+					TableDef.Initialize(DroppedObjectPool.GetObjectTable());
+				}
+				
+				//Add the new sosig template to the global dictionaries
+				ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(template.SosigEnemyID, template);
+				ManagerSingleton<IM>.Instance.odicSosigIDsByCategory[template.SosigEnemyCategory].Add(template.SosigEnemyID);
+				ManagerSingleton<IM>.Instance.odicSosigObjsByCategory[template.SosigEnemyCategory].Add(template);
+			}
+		}
 
     }
 
@@ -352,14 +367,7 @@ namespace FistVR
 			if(template == null)
             {
 				template = (SosigOutfitConfig)ScriptableObject.CreateInstance(typeof(SosigOutfitConfig));
-
-				template.Headwear = Headwear.Select(o => IM.OD[o]).ToList();
-				template.Eyewear = Eyewear.Select(o => IM.OD[o]).ToList();
-				template.Facewear = Facewear.Select(o => IM.OD[o]).ToList();
-				template.Torsowear = Torsowear.Select(o => IM.OD[o]).ToList();
-				template.Pantswear = Pantswear.Select(o => IM.OD[o]).ToList();
-				template.Pantswear_Lower = Pantswear_Lower.Select(o => IM.OD[o]).ToList();
-				template.Backpacks = Backpacks.Select(o => IM.OD[o]).ToList();
+				
 				template.Chance_Headwear = Chance_Headwear;
 				template.Chance_Eyewear = Chance_Eyewear;
 				template.Chance_Facewear = Chance_Facewear;
@@ -371,6 +379,17 @@ namespace FistVR
 
 			return template;
         }
+
+		public void DelayedInit()
+        {
+			template.Headwear = Headwear.Select(o => IM.OD[o]).ToList();
+			template.Eyewear = Eyewear.Select(o => IM.OD[o]).ToList();
+			template.Facewear = Facewear.Select(o => IM.OD[o]).ToList();
+			template.Torsowear = Torsowear.Select(o => IM.OD[o]).ToList();
+			template.Pantswear = Pantswear.Select(o => IM.OD[o]).ToList();
+			template.Pantswear_Lower = Pantswear_Lower.Select(o => IM.OD[o]).ToList();
+			template.Backpacks = Backpacks.Select(o => IM.OD[o]).ToList();
+		}
 
 	}
 }

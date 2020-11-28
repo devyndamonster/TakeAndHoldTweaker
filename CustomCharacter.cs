@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ADepIn;
+using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
@@ -48,6 +49,12 @@ namespace FistVR
         [JsonIgnore]
         private TNH_CharacterDef character;
 
+        [JsonIgnore]
+        private Deli.Mod characterMod;
+
+        [JsonIgnore]
+        private string path;
+
         public CustomCharacter() { }
 
         public CustomCharacter(TNH_CharacterDef character)
@@ -90,10 +97,13 @@ namespace FistVR
             this.character = character;
         }
 
-        public TNH_CharacterDef GetCharacter(int ID, string path, Dictionary<string, Sprite> sprites)
+        public TNH_CharacterDef GetCharacter(int ID, Deli.Mod characterMod, string path, Sprite thumbnail)
         {
             if(character == null)
             {
+                this.characterMod = characterMod;
+                this.path = path;
+
                 character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
                 character.DisplayName = DisplayName;
                 character.CharacterID = (TNH_Char)ID;
@@ -112,7 +122,7 @@ namespace FistVR
                 character.Has_Item_Shield = HasShield;
                 character.ValidAmmoEras = ValidAmmoEras;
                 character.ValidAmmoSets = ValidAmmoSets;
-                character.Picture = TNHTweakerUtils.LoadSprite(path + "/thumb.png");
+                character.Picture = thumbnail;
                 character.Weapon_Primary = PrimaryWeapon.GetLoadoutEntry();
                 character.Weapon_Secondary = SecondaryWeapon.GetLoadoutEntry();
                 character.Weapon_Tertiary = TertiaryWeapon.GetLoadoutEntry();
@@ -122,13 +132,25 @@ namespace FistVR
                 character.Item_Shield = Shield.GetLoadoutEntry();
                 character.RequireSightTable = RequireSightTable.GetObjectTable();
                 character.EquipmentPool = (EquipmentPoolDef)ScriptableObject.CreateInstance(typeof(EquipmentPoolDef));
-                character.EquipmentPool.Entries = EquipmentPools.Select(o => o.GetPoolEntry(sprites, path)).ToList();
+                character.EquipmentPool.Entries = EquipmentPools.Select(o => o.GetPoolEntry()).ToList();
+
                 character.Progressions = new List<TNH_Progression>();
                 character.Progressions.Add((TNH_Progression)ScriptableObject.CreateInstance(typeof(TNH_Progression)));
-                character.Progressions[0].Levels = Levels.Select(o => o.GetLevel()).ToList();
+                character.Progressions[0].Levels = new List<TNH_Progression.Level>();
+                foreach (Level level in Levels)
+                {
+                    character.Progressions[0].Levels.Add(level.GetLevel());
+                }
+                //character.Progressions[0].Levels = Levels.Select(o => o.GetLevel()).ToList();
+
                 character.Progressions_Endless = new List<TNH_Progression>();
                 character.Progressions_Endless.Add((TNH_Progression)ScriptableObject.CreateInstance(typeof(TNH_Progression)));
-                character.Progressions_Endless[0].Levels = LevelsEndless.Select(o => o.GetLevel()).ToList();
+                character.Progressions_Endless[0].Levels = new List<TNH_Progression.Level>();
+                foreach (Level level in LevelsEndless)
+                {
+                    character.Progressions_Endless[0].Levels.Add(level.GetLevel());
+                }
+                //character.Progressions_Endless[0].Levels = LevelsEndless.Select(o => o.GetLevel()).ToList();
             }
 
             return character;
@@ -158,6 +180,22 @@ namespace FistVR
             }
 
             return null;
+        }
+
+        public void DelayedInit()
+        {
+            PrimaryWeapon.DelayedInit();
+            SecondaryWeapon.DelayedInit();
+            TertiaryWeapon.DelayedInit();
+            PrimaryItem.DelayedInit();
+            SecondaryItem.DelayedInit();
+            TertiaryItem.DelayedInit();
+            Shield.DelayedInit();
+
+            foreach(EquipmentPool pool in EquipmentPools)
+            {
+                pool.DelayedInit(characterMod, path);
+            }
         }
 
     }
@@ -190,7 +228,7 @@ namespace FistVR
             this.pool = pool;
         }
 
-        public EquipmentPoolDef.PoolEntry GetPoolEntry(Dictionary<string, Sprite> sprites, string path)
+        public EquipmentPoolDef.PoolEntry GetPoolEntry()
         {
             if(pool == null)
             {
@@ -202,19 +240,29 @@ namespace FistVR
                 pool.MaxLevelAppears = MaxLevelAppears;
                 pool.Rarity = Rarity;
                 pool.TableDef = Table.GetObjectTable();
-
-                if (sprites.ContainsKey(Table.IconName))
-                {
-                    pool.TableDef.Icon = sprites[Table.IconName];
-                }
-                else
-                {
-                    pool.TableDef.Icon = TNHTweakerUtils.LoadSprite(path + "/" + Table.IconName);
-                }
             }
 
             return pool;
         }
+
+        public void DelayedInit(Deli.Mod characterMod, string path)
+        {
+            if (pool != null)
+            {
+                if (LoadedTemplateManager.DefaultIconSprites.ContainsKey(Table.IconName))
+                {
+                    pool.TableDef.Icon = LoadedTemplateManager.DefaultIconSprites[Table.IconName];
+                }
+                else
+                {
+                    //Load the table icon from the character mod
+                    path += "/" + Table.IconName;
+                    Option<Texture2D> imageContent = characterMod.Resources.Get<Texture2D>(path);
+                    pool.TableDef.Icon = TNHTweakerUtils.LoadSprite(imageContent.Expect("TNHTweaker -- Failed to load equipment pool icon!"));
+                }
+            }
+        }
+
     }
 
     public class ObjectPool
@@ -358,18 +406,23 @@ namespace FistVR
                 loadout.Num_Mags_SL_Clips = NumMags;
                 loadout.Num_Rounds = NumRounds;
                 loadout.TableDefs = Tables.Select(o => o.GetObjectTable()).ToList();
+            }
 
+            return loadout;
+        }
+
+        public void DelayedInit()
+        {
+            if (loadout != null)
+            {
                 loadout.ListOverride = new List<FVRObject>();
                 foreach(string item in ListOverride)
                 {
                     if (IM.OD.ContainsKey(item)) loadout.ListOverride.Add(IM.OD[item]);
                 }
-
+                
                 if(AmmoOverride != null && IM.OD.ContainsKey(AmmoOverride)) loadout.AmmoObjectOverride = IM.OD[AmmoOverride];
-
             }
-
-            return loadout;
         }
     }
 
@@ -418,8 +471,15 @@ namespace FistVR
                 level = new TNH_Progression.Level();
                 level.NumOverrideTokensForHold = NumOverrideTokensForHold;
                 level.TakeChallenge = TakeChallenge.GetTakeChallenge();
+
                 level.HoldChallenge = (TNH_HoldChallenge)ScriptableObject.CreateInstance(typeof(TNH_HoldChallenge));
-                level.HoldChallenge.Phases = HoldPhases.Select(o => o.GetPhase()).ToList();
+                level.HoldChallenge.Phases = new List<TNH_HoldChallenge.Phase>();
+                foreach(Phase phase in HoldPhases)
+                {
+                    level.HoldChallenge.Phases.Add(phase.GetPhase());
+                }
+                //level.HoldChallenge.Phases = HoldPhases.Select(o => o.GetPhase()).ToList();
+
                 level.SupplyChallenge = SupplyChallenge.GetTakeChallenge();
                 level.PatrolChallenge = (TNH_PatrolChallenge)ScriptableObject.CreateInstance(typeof(TNH_PatrolChallenge));
                 level.PatrolChallenge.Patrols = Patrols.Select(o => o.GetPatrol()).ToList();
@@ -473,7 +533,17 @@ namespace FistVR
             {
                 takeChallenge = (TNH_TakeChallenge)ScriptableObject.CreateInstance(typeof(TNH_TakeChallenge));
                 takeChallenge.TurretType = TurretType;
-                takeChallenge.GID = SosigEnemyID.None;
+
+                //Try to get the necessary SosigEnemyIDs
+                if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType))
+                {
+                    takeChallenge.GID = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType];
+                }
+                else
+                {
+                    takeChallenge.GID = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), EnemyType);
+                }
+
                 takeChallenge.NumTurrets = NumTurrets;
                 takeChallenge.NumGuards = NumGuards;
                 takeChallenge.IFFUsed = IFFUsed;
@@ -481,7 +551,6 @@ namespace FistVR
 
             return takeChallenge;
         }
-
     }
 
     public class Phase
@@ -539,8 +608,6 @@ namespace FistVR
                 phase.Encryption = Encryption;
                 phase.MinTargets = MinTargets;
                 phase.MaxTargets = MaxTargets;
-                phase.EType = SosigEnemyID.None;
-                phase.LType = SosigEnemyID.None;
                 phase.MinEnemies = MinEnemies;
                 phase.MaxEnemies = MaxEnemies;
                 phase.MaxEnemiesAlive = MaxEnemiesAlive;
@@ -549,11 +616,30 @@ namespace FistVR
                 phase.ScanTime = ScanTime;
                 phase.WarmUp = WarmupTime;
                 phase.IFFUsed = IFFUsed;
+
+                //Try to get the necessary SosigEnemyIDs
+                if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
+                {
+                    phase.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
+                }
+                else
+                {
+                    phase.EType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), EnemyType[0]);
+                }
+
+                if (LoadedTemplateManager.SosigIDDict.ContainsKey(LeaderType))
+                {
+                    phase.LType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[LeaderType];
+                }
+                else
+                {
+                    phase.LType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), LeaderType);
+                }
+                
             }
 
             return phase;
         }
-
     }
 
     public class Patrol
@@ -602,8 +688,26 @@ namespace FistVR
             if(patrol == null)
             {
                 patrol = new TNH_PatrolChallenge.Patrol();
-                patrol.EType = SosigEnemyID.None;
-                patrol.LType = SosigEnemyID.None;
+
+                //Try to get the necessary SosigEnemyIDs
+                if (LoadedTemplateManager.SosigIDDict.ContainsKey(EnemyType[0]))
+                {
+                    patrol.EType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[EnemyType[0]];
+                }
+                else
+                {
+                    patrol.EType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), EnemyType[0]);
+                }
+
+                if (LoadedTemplateManager.SosigIDDict.ContainsKey(LeaderType))
+                {
+                    patrol.LType = (SosigEnemyID)LoadedTemplateManager.SosigIDDict[LeaderType];
+                }
+                else
+                {
+                    patrol.LType = (SosigEnemyID)Enum.Parse(typeof(SosigEnemyID), LeaderType);
+                }
+
                 patrol.PatrolSize = PatrolSize;
                 patrol.MaxPatrols = MaxPatrols;
                 patrol.MaxPatrols_LimitedAmmo = MaxPatrolsLimited;

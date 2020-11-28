@@ -102,11 +102,11 @@ namespace FistVR
         }
 
 
-        public static Dictionary<string, Sprite> GetAllIcons(TNH_CharacterDatabase database)
+        public static Dictionary<string, Sprite> GetAllIcons(List<TNH_CharacterDef> characters)
         {
             Dictionary<string, Sprite> icons = new Dictionary<string, Sprite>();
 
-            foreach(TNH_CharacterDef character in database.Characters)
+            foreach(TNH_CharacterDef character in characters)
             {
                 foreach(EquipmentPoolDef.PoolEntry pool in character.EquipmentPool.Entries)
                 {
@@ -135,7 +135,7 @@ namespace FistVR
             return false;
         }
 
-        public static void CreateDefaultCharacterFiles(TNH_CharacterDatabase database, string path)
+        public static void CreateDefaultCharacterFiles(List<TNH_CharacterDef> characters, string path)
         {
 
             try
@@ -147,7 +147,7 @@ namespace FistVR
                     Directory.CreateDirectory(path);
                 }
                 
-                foreach (TNH_CharacterDef charDef in database.Characters)
+                foreach (TNH_CharacterDef charDef in characters)
                 {
                     if (File.Exists(path + "/" + charDef.DisplayName + ".json"))
                     {
@@ -177,7 +177,7 @@ namespace FistVR
             }
         }
 
-        public static void CreateDefaultSosigTemplateFiles(string path)
+        public static void CreateDefaultSosigTemplateFiles(List<SosigEnemyTemplate> sosigs, string path)
         {
             try
             {
@@ -188,7 +188,7 @@ namespace FistVR
                     Directory.CreateDirectory(path);
                 }
 
-                foreach (SosigEnemyTemplate template in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Values)
+                foreach (SosigEnemyTemplate template in sosigs)
                 {
                     if (File.Exists(path + "/" + template.SosigEnemyID + ".json"))
                     {
@@ -419,6 +419,11 @@ namespace FistVR
             return sprite;
         }
 
+        public static Sprite LoadSprite(Texture2D spriteTexture, float pixelsPerUnit = 100f)
+        {
+            return Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), pixelsPerUnit);
+        }
+
         public static Texture2D LoadTexture(string FilePath)
         {
             // Load a PNG or JPG file from disk to a Texture2D
@@ -620,11 +625,6 @@ namespace FistVR
         public Vector2 GetVector2()
         {
             v = new Vector2(x,y);
-            
-            Debug.Log("Getting vector: " + v);
-            Debug.Log("Initial X: " + x);
-            Debug.Log("Initial Y: " + y);
-
             return v;
         }
     }

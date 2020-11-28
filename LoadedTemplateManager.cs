@@ -9,8 +9,12 @@ namespace FistVR
     public static class LoadedTemplateManager
     {
 
-        public static Dictionary<TNH_CharacterDef, CustomCharacter> LoadedCharacters = new Dictionary<TNH_CharacterDef, CustomCharacter>();
-        public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigs = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
+        public static Dictionary<TNH_CharacterDef, CustomCharacter> LoadedCharactersDict = new Dictionary<TNH_CharacterDef, CustomCharacter>();
+        public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
+        public static List<CustomCharacter> CustomCharacters = new List<CustomCharacter>();
+        public static List<TNH_CharacterDef> DefaultCharacters = new List<TNH_CharacterDef>();
+        public static List<SosigTemplate> CustomSosigs = new List<SosigTemplate>();
+        public static List<SosigEnemyTemplate> DefaultSosigs = new List<SosigEnemyTemplate>();
         public static Dictionary<string, int> SosigIDDict = new Dictionary<string, int>();
         public static int NewSosigID = 30000;
         public static int NewCharacterID = 30;
@@ -41,13 +45,9 @@ namespace FistVR
             realTemplate.SosigEnemyID = (SosigEnemyID)SosigIDDict[template.SosigEnemyID];
             realTemplate.EnemyType = (TNH_EnemyType)SosigIDDict[template.SosigEnemyID];
 
-            //Add the new sosig template to the global dictionaries
-            ManagerSingleton<IM>.Instance.odicSosigObjsByID.Add(realTemplate.SosigEnemyID, realTemplate);
-            ManagerSingleton<IM>.Instance.odicSosigIDsByCategory[realTemplate.SosigEnemyCategory].Add(realTemplate.SosigEnemyID);
-            ManagerSingleton<IM>.Instance.odicSosigObjsByCategory[realTemplate.SosigEnemyCategory].Add(realTemplate);
-
             //Finally add the templates to our global dictionary
-            LoadedSosigs.Add(realTemplate, template);
+            CustomSosigs.Add(template);
+            LoadedSosigsDict.Add(realTemplate, template);
 
             TNHTweakerLogger.Log("TNHTweaker -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
         }
@@ -69,15 +69,17 @@ namespace FistVR
             }
 
             //Since the real template already had a valid SosigEnemyID, we can skip the part where we reassign them
-            LoadedSosigs.Add(realTemplate, template);
+            DefaultSosigs.Add(realTemplate);
+            LoadedSosigsDict.Add(realTemplate, template);
 
             TNHTweakerLogger.Log("TNHTweaker -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
         }
 
 
-        public static void AddCharacterTemplate(CustomCharacter template, string path)
+        public static void AddCharacterTemplate(CustomCharacter template, Deli.Mod mod, string path, Sprite thumbnail)
         {
-            LoadedCharacters.Add(template.GetCharacter(NewCharacterID, path, DefaultIconSprites), template);
+            CustomCharacters.Add(template);
+            LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, mod, path, thumbnail), template);
             NewCharacterID += 1;
 
             TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
@@ -85,7 +87,8 @@ namespace FistVR
 
         public static void AddCharacterTemplate(TNH_CharacterDef realTemplate)
         {
-            LoadedCharacters.Add(realTemplate, new CustomCharacter(realTemplate));
+            DefaultCharacters.Add(realTemplate);
+            LoadedCharactersDict.Add(realTemplate, new CustomCharacter(realTemplate));
 
             TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + realTemplate.DisplayName, TNHTweakerLogger.LogType.File);
         }

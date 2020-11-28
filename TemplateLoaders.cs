@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using Valve.Newtonsoft.Json;
+using Valve.Newtonsoft.Json.Converters;
 
 namespace FistVR
 {
@@ -33,22 +35,28 @@ namespace FistVR
     {
         public void LoadAsset(IServiceKernel kernel, Mod mod, string path)
         {
-            if (!Directory.Exists(path))
-            {
-                Debug.LogError("TNHTweaker -- Character mod path was not a folder! Please ensure that your character mod is a folder containing a 'character.json' and 'thumb.png' file");
-                return;
-            }
-
+            
             string templatePath = path + "/character.json";
-            Option<Option<CustomCharacter>> content = mod.Resources.Get<Option<CustomCharacter>>(templatePath);
+            Option<Option<CustomCharacter>> characterContent = mod.Resources.Get<Option<CustomCharacter>>(templatePath);
+            CustomCharacter template = characterContent.Flatten().Expect("TNHTweaker -- Failed to read custom character template! Character will not be loaded");
 
-            Option<CustomCharacter> flattened = content.Flatten();
-
-            CustomCharacter template = flattened.Expect("Failed to read custom character template!");
+            string imagePath = path + "/thumb.png";
+            Option<Texture2D> imageContent = mod.Resources.Get<Texture2D>(imagePath);
+            Sprite thumbnail = TNHTweakerUtils.LoadSprite(imageContent.Expect("TNHTweaker -- Failed to get character thumbnail! Character will not be loaded"));
 
             TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
 
-            LoadedTemplateManager.AddCharacterTemplate(template, path);
+            LoadedTemplateManager.AddCharacterTemplate(template, mod, path, thumbnail);
         }
     }
+
+    internal class JsonAssetReaderEntry : IEntryModule<JsonAssetReaderEntry>
+    {
+        public void Load(IServiceKernel kernel)
+        {
+            kernel.BindJson<CustomCharacter>();
+            kernel.BindJson<SosigTemplate>();
+        }
+    }
+
 }

@@ -12,13 +12,13 @@ using System.Linq;
 using BepInEx.Logging;
 using System.IO.IsolatedStorage;
 using Valve.Newtonsoft.Json;
+using Deli;
 
 namespace FistVR
 {
     [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "0.1.3.1")]
-    public class TNHTweaker : BaseUnityPlugin
+    public class TNHTweaker : DeliMod
     {
-
         private static ConfigEntry<bool> printCharacters;
         private static ConfigEntry<bool> logPatrols;
         private static ConfigEntry<bool> logFileReads;
@@ -34,7 +34,6 @@ namespace FistVR
 
         private void Awake()
         {
-
             Debug.Log("Hello World (from TNH Tweaker)");
 
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
@@ -48,27 +47,27 @@ namespace FistVR
         {
             Debug.Log("TNHTWEAKER -- GETTING CONFIG FILE");
 
-            cacheCompatibleMagazines = Config.Bind("General",
+            cacheCompatibleMagazines = BaseMod.Config.Bind("General",
                                     "CacheCompatibleMagazines",
                                     false,
                                     "If true, guns will be able to spawn with any compatible mag in TNH (Eg. by default the VSS cannot spawn with 30rnd magazines)");
 
-            allowLog = Config.Bind("Debug",
+            allowLog = BaseMod.Config.Bind("Debug",
                                     "EnableLogging",
                                     false,
                                     "Set to true to enable logging");
 
-            printCharacters = Config.Bind("Debug",
+            printCharacters = BaseMod.Config.Bind("Debug",
                                          "PrintCharacterInfo",
                                          false,
                                          "Decide if should print all character info");
 
-            logPatrols = Config.Bind("Debug",
+            logPatrols = BaseMod.Config.Bind("Debug",
                                     "LogPatrolSpawns",
                                     false,
                                     "If true, patrols that spawn will have log output");
 
-            logFileReads = Config.Bind("Debug",
+            logFileReads = BaseMod.Config.Bind("Debug",
                                     "LogFileReads",
                                     false,
                                     "If true, reading from a file will log the reading process");
@@ -95,6 +94,14 @@ namespace FistVR
             }
         }
 
+        [HarmonyPatch(typeof(IM), "GenerateItemDBs")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPostfix]
+        public static void DelayedItemInit()
+        {
+            //Debug.Log("TNHTweaker -- Performing delayed init for all loaded characters and sosigs");
+
+        }
+
 
         [HarmonyPatch(typeof(TNH_UIManager), "Start")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
@@ -102,23 +109,45 @@ namespace FistVR
         {
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
-            Debug.Log("Entering TNH Scene!");
-            TNHTweakerLogger.Log("Entering TNH Scene!", TNHTweakerLogger.LogType.File);
-
             //Perform first time setup of all files
             if (!filesBuilt)
             {
                 TNHTweakerLogger.Log("TNHTweaker -- Performing TNH Initialization", TNHTweakerLogger.LogType.File);
 
+                //Load all of the default templates into our dictionaries
                 LoadDefaultSosigs();
                 LoadDefaultCharacters(___CharDatabase.Characters);
-                TNHTweakerUtils.CreateSosigIDFile(OutputFilePath);
-                TNHTweakerUtils.CreateDefaultSosigTemplateFiles(OutputFilePath);
-                TNHTweakerUtils.CreateDefaultCharacterFiles(___CharDatabase, OutputFilePath);
-                LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(___CharDatabase);
+                LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
+
+                //Remove all objects that havn't been loaded
+                foreach (SosigTemplate template in LoadedTemplateManager.CustomSosigs)
+                {
+                    TNHTweakerUtils.RemoveUnloadedObjectIDs(template);
+                }
+
+                foreach (CustomCharacter template in LoadedTemplateManager.CustomCharacters)
+                {
+                    TNHTweakerUtils.RemoveUnloadedObjectIDs(template.GetCharacter());
+                }
+
+
+                //Perform the delayed init for all custom loaded characters and sosigs
+                foreach (CustomCharacter character in LoadedTemplateManager.CustomCharacters)
+                {
+                    character.DelayedInit();
+                }
+                foreach (SosigTemplate sosig in LoadedTemplateManager.CustomSosigs)
+                {
+                    sosig.DelayedInit();
+                }
+
+                //Create files relevant for character creation
+                TNHTweakerUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, OutputFilePath);
+                TNHTweakerUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, OutputFilePath);
                 TNHTweakerUtils.CreateIconIDFile(OutputFilePath, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
                 TNHTweakerUtils.CreateObjectIDFile(OutputFilePath);
-
+                TNHTweakerUtils.CreateSosigIDFile(OutputFilePath);
+                
                 if (cacheCompatibleMagazines.Value)
                 {
                     TNHTweakerUtils.LoadMagazineCache(OutputFilePath);
@@ -126,7 +155,7 @@ namespace FistVR
             }
             
             //Load all characters into the UI
-            foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharacters.Keys)
+            foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharactersDict.Keys)
             {
                 if (!___Categories[(int)character.Group].Characters.Contains(character.CharacterID))
                 {
@@ -160,21 +189,6 @@ namespace FistVR
             }
         }
 
-        [HarmonyPatch(typeof(TNH_Manager), "InitTables")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPrefix]
-        public static bool BeginTNH(TNH_CharacterDef ___C)
-        {
-            TNHTweakerLogger.Log("TNHTweaker -- Removing unloaded objectIDs from character", TNHTweakerLogger.LogType.File);
-            TNHTweakerUtils.RemoveUnloadedObjectIDs(___C);
-
-            TNHTweakerLogger.Log("TNHTweaker -- Removing unloaded objectIDs from all sosigs", TNHTweakerLogger.LogType.File);
-            foreach (SosigTemplate template in LoadedTemplateManager.LoadedSosigs.Values)
-            {
-                TNHTweakerUtils.RemoveUnloadedObjectIDs(template);
-            }
-
-            return true;
-        }
 
         [HarmonyPatch(typeof(TNH_Manager), "InitTables")] // Specify target method with HarmonyPatch attribute
         [HarmonyPostfix]
@@ -311,7 +325,7 @@ namespace FistVR
 
             int PatrolSize = Mathf.Clamp(patrol.PatrolSize, 0, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense.Count);
 
-            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[instance.C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[instance.C];
             Level currLevel = character.GetCurrentLevel(level);
             Patrol currPatrol = currLevel.GetPatrol(patrol);
 
@@ -342,7 +356,7 @@ namespace FistVR
                 }
 
 
-                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigs[template];
+                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
                 FVRObject droppedObject = instance.Prefab_HealthPickupMinor;
 
                 //If squad is set to swarm, the first point they path to should be the players current position
@@ -365,12 +379,6 @@ namespace FistVR
                     sosig.Links[1].RegisterSpawnOnDestroy(droppedObject);
                 }
 
-                //Handle sosig dropping custom loot
-                if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
-                {
-                    sosig.Links[2].RegisterSpawnOnDestroy(customTemplate.TableDef.GetRandomObject());
-                }
-
                 squad.Squad.Add(sosig);
             }
 
@@ -384,7 +392,7 @@ namespace FistVR
         public static void BeforeSetTake(TNH_CharacterDef ___C)
         {
             spawnedBossIndexes.Clear();
-            preventOutfitFunctionality = LoadedTemplateManager.LoadedCharacters[___C].ForceDisableOutfitFunctionality;
+            preventOutfitFunctionality = LoadedTemplateManager.LoadedCharactersDict[___C].ForceDisableOutfitFunctionality;
         }
 
 
@@ -394,7 +402,7 @@ namespace FistVR
         {
             TNHTweakerLogger.Log("TNHTWEAKER -- ADDING ADDITIONAL SUPPLY POINTS", TNHTweakerLogger.LogType.General);
 
-            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[___C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[___C];
             Level currLevel = character.GetCurrentLevel(___m_curLevel);
 
             List <TNH_SupplyPoint> possiblePoints = new List<TNH_SupplyPoint>(___SupplyPoints);
@@ -435,18 +443,13 @@ namespace FistVR
             for(int i = 0; i < ___T.NumGuards && i < ___SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
+                Debug.Log("Take challenge sosig ID : " + ___T.GID);
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
-                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigs[template];
+                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING TAKE GROUP AT " + transform.position, TNHTweakerLogger.LogType.Patrol);
 
-                Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharacters[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
-
-                //Handle sosig dropping custom loot
-                if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
-                {
-                    enemy.Links[2].RegisterSpawnOnDestroy(customTemplate.TableDef.GetRandomObject());
-                }
+                Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharactersDict[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
 
                 ___m_activeSosigs.Add(enemy);
             }
@@ -486,17 +489,11 @@ namespace FistVR
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
-                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigs[template];
+                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING SUPPLY GROUP AT " + transform.position, TNHTweakerLogger.LogType.Patrol);
 
-                Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharacters[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
-
-                //Handle sosig dropping custom loot
-                if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
-                {
-                    enemy.Links[2].RegisterSpawnOnDestroy(customTemplate.TableDef.GetRandomObject());
-                }
+                Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharactersDict[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
 
                 ___m_activeSosigs.Add(enemy);
             }
@@ -651,6 +648,12 @@ namespace FistVR
             }
             sosigComponent.SetGuardInvestigateDistanceThreshold(25f);
 
+            //Handle sosig dropping custom loot
+            if (UnityEngine.Random.value < template.DroppedLootChance)
+            {
+                sosigComponent.Links[2].RegisterSpawnOnDestroy(template.TableDef.GetRandomObject());
+            }
+
             return sosigComponent;
         }
 
@@ -664,9 +667,9 @@ namespace FistVR
             GM.Options.ControlOptions.MBClothing = tem.SosigEnemyID;
             if(tem.SosigEnemyID != SosigEnemyID.None)
             {
-                if(tem.OutfitConfig.Count > 0 && LoadedTemplateManager.LoadedSosigs.ContainsKey(tem))
+                if(tem.OutfitConfig.Count > 0 && LoadedTemplateManager.LoadedSosigsDict.ContainsKey(tem))
                 {
-                    OutfitConfig outfitConfig = LoadedTemplateManager.LoadedSosigs[tem].OutfitConfigs.GetRandom();
+                    OutfitConfig outfitConfig = LoadedTemplateManager.LoadedSosigsDict[tem].OutfitConfigs.GetRandom();
 
                     List<GameObject> clothing = Traverse.Create(___m_sosigPlayerBody).Field("m_curClothes").GetValue<List<GameObject>>();
                     foreach (GameObject item in clothing)
@@ -802,7 +805,7 @@ namespace FistVR
         public static bool SpawnBoxesReplacement(TNH_SupplyPoint __instance, TNH_Manager ___M, List<GameObject> ___m_spawnBoxes)
         {
 
-            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[___M.C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[___M.C];
             Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(___M).Field("m_curLevel").GetValue());
 
             __instance.SpawnPoints_Boxes.Shuffle();
@@ -850,7 +853,7 @@ namespace FistVR
 
         public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int m_phaseIndex)
         {
-            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[M.C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
             Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
             Phase currPhase = currLevel.HoldPhases[m_phaseIndex];
 
@@ -882,7 +885,7 @@ namespace FistVR
             numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
 
             //Get the custom character data
-            CustomCharacter character = LoadedTemplateManager.LoadedCharacters[M.C];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
             Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
@@ -910,15 +913,9 @@ namespace FistVR
                     targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
                 }
 
-                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigs[enemyTemplate];
+                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[enemyTemplate];
 
                 Sosig enemy = SpawnEnemy(customTemplate, character, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M.AI_Difficulty, curPhase.IFFUsed, true, targetVector, true);
-
-                //Handle sosig dropping custom loot
-                if (UnityEngine.Random.value < customTemplate.DroppedLootChance)
-                {
-                    enemy.Links[2].RegisterSpawnOnDestroy(customTemplate.TableDef.GetRandomObject());
-                }
 
                 ActiveSosigs.Add(enemy);
 
