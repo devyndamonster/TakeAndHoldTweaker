@@ -50,6 +50,9 @@ namespace FistVR
         private TNH_CharacterDef character;
 
         [JsonIgnore]
+        private ObjectTable requiredSightsTable;
+
+        [JsonIgnore]
         private Deli.Mod characterMod;
 
         [JsonIgnore]
@@ -130,7 +133,7 @@ namespace FistVR
                 character.Item_Secondary = SecondaryItem.GetLoadoutEntry();
                 character.Item_Tertiary = TertiaryItem.GetLoadoutEntry();
                 character.Item_Shield = Shield.GetLoadoutEntry();
-                character.RequireSightTable = RequireSightTable.GetObjectTable();
+                character.RequireSightTable = RequireSightTable.GetObjectTableDef();
                 character.EquipmentPool = (EquipmentPoolDef)ScriptableObject.CreateInstance(typeof(EquipmentPoolDef));
                 character.EquipmentPool.Entries = EquipmentPools.Select(o => o.GetPoolEntry()).ToList();
 
@@ -182,19 +185,33 @@ namespace FistVR
             return null;
         }
 
-        public void DelayedInit()
+        public ObjectTable GetRequiredSightsTable()
         {
-            PrimaryWeapon.DelayedInit();
-            SecondaryWeapon.DelayedInit();
-            TertiaryWeapon.DelayedInit();
-            PrimaryItem.DelayedInit();
-            SecondaryItem.DelayedInit();
-            TertiaryItem.DelayedInit();
-            Shield.DelayedInit();
+            return requiredSightsTable;
+        }
 
+        public void DelayedInit(bool isCustom)
+        {
+            if (isCustom)
+            {
+                PrimaryWeapon.DelayedInit();
+                SecondaryWeapon.DelayedInit();
+                TertiaryWeapon.DelayedInit();
+                PrimaryItem.DelayedInit();
+                SecondaryItem.DelayedInit();
+                TertiaryItem.DelayedInit();
+                Shield.DelayedInit();
+            }
+
+            if(RequireSightTable != null)
+            {
+                requiredSightsTable = new ObjectTable();
+                requiredSightsTable.Initialize(RequireSightTable.GetObjectTableDef());
+            }
+            
             foreach(EquipmentPool pool in EquipmentPools)
             {
-                pool.DelayedInit(characterMod, path);
+                pool.DelayedInit(characterMod, path, isCustom);
             }
         }
 
@@ -203,12 +220,13 @@ namespace FistVR
     public class EquipmentPool
     {
         public EquipmentPoolDef.PoolEntry.PoolEntryType Type;
+        public string IconName;
         public int TokenCost;
         public int TokenCostLimited;
         public int MinLevelAppears;
         public int MaxLevelAppears;
         public float Rarity;
-        public ObjectPool Table;
+        public List<ObjectPool> Tables;
 
         [JsonIgnore]
         private EquipmentPoolDef.PoolEntry pool;
@@ -218,12 +236,14 @@ namespace FistVR
         public EquipmentPool(EquipmentPoolDef.PoolEntry pool)
         {
             Type = pool.Type;
+            IconName = pool.TableDef.Icon.name;
             TokenCost = pool.TokenCost;
             TokenCostLimited = pool.TokenCost_Limited;
             MinLevelAppears = pool.MinLevelAppears;
             MaxLevelAppears = pool.MaxLevelAppears;
             Rarity = pool.Rarity;
-            Table = new ObjectPool(pool.TableDef);
+            Tables = new List<ObjectPool>();
+            Tables.Add(new ObjectPool(pool.TableDef));
 
             this.pool = pool;
         }
@@ -239,27 +259,39 @@ namespace FistVR
                 pool.MinLevelAppears = MinLevelAppears;
                 pool.MaxLevelAppears = MaxLevelAppears;
                 pool.Rarity = Rarity;
-                pool.TableDef = Table.GetObjectTable();
+                pool.TableDef = Tables[0].GetObjectTableDef();
             }
 
             return pool;
         }
 
-        public void DelayedInit(Deli.Mod characterMod, string path)
+        
+
+        public void DelayedInit(Deli.Mod characterMod, string path, bool isCustom)
         {
             if (pool != null)
             {
-                if (LoadedTemplateManager.DefaultIconSprites.ContainsKey(Table.IconName))
+                //If the character is a custom character, then it's icons need to be set
+                if (isCustom)
                 {
-                    pool.TableDef.Icon = LoadedTemplateManager.DefaultIconSprites[Table.IconName];
+                    if (LoadedTemplateManager.DefaultIconSprites.ContainsKey(IconName))
+                    {
+                        pool.TableDef.Icon = LoadedTemplateManager.DefaultIconSprites[IconName];
+                    }
+                    else
+                    {
+                        //Load the table icon from the character mod
+                        path += "/" + IconName;
+                        Option<Texture2D> imageContent = characterMod.Resources.Get<Texture2D>(path);
+                        pool.TableDef.Icon = TNHTweakerUtils.LoadSprite(imageContent.Expect("TNHTweaker -- Failed to load equipment pool icon!"));
+                    }
                 }
-                else
+
+                foreach(ObjectPool table in Tables)
                 {
-                    //Load the table icon from the character mod
-                    path += "/" + Table.IconName;
-                    Option<Texture2D> imageContent = characterMod.Resources.Get<Texture2D>(path);
-                    pool.TableDef.Icon = TNHTweakerUtils.LoadSprite(imageContent.Expect("TNHTweaker -- Failed to load equipment pool icon!"));
+                    table.DelayedInit();
                 }
+                
             }
         }
 
@@ -267,12 +299,16 @@ namespace FistVR
 
     public class ObjectPool
     {
-        public string IconName;
         public FVRObject.ObjectCategory Category;
+        public int ItemsToSpawn;
         public int MinAmmoCapacity;
         public int MaxAmmoCapacity;
+        public int NumMagsSpawned;
+        public int NumRoundsSpawned;
+        public float BespokeAttachmentChance;
         public int RequiredExactCapacity;
         public bool IsBlanked;
+        public bool IsCompatibleMagazine;
         public bool SpawnsInSmallCase;
         public bool SpawnsInLargeCase;
         public bool UseIDOverride;
@@ -297,16 +333,23 @@ namespace FistVR
         [JsonIgnore]
         private ObjectTableDef objectTableDef;
 
+        [JsonIgnore]
+        private ObjectTable objectTable;
+
         public ObjectPool() { }
 
         public ObjectPool(ObjectTableDef objectTableDef)
         {
-            IconName = "Not Used";
             Category = objectTableDef.Category;
+            ItemsToSpawn = 1;
             MinAmmoCapacity = objectTableDef.MinAmmoCapacity;
             MaxAmmoCapacity = objectTableDef.MaxAmmoCapacity;
+            NumMagsSpawned = 3;
+            NumRoundsSpawned = 8;
+            BespokeAttachmentChance = 0.5f;
             RequiredExactCapacity = objectTableDef.RequiredExactCapacity;
             IsBlanked = objectTableDef.IsBlanked;
+            IsCompatibleMagazine = false;
             SpawnsInSmallCase = objectTableDef.SpawnsInSmallCase;
             SpawnsInLargeCase = objectTableDef.SpawnsInLargeCase;
             UseIDOverride = objectTableDef.UseIDListOverride;
@@ -331,7 +374,7 @@ namespace FistVR
             this.objectTableDef = objectTableDef;
         }
 
-        public ObjectTableDef GetObjectTable()
+        public ObjectTableDef GetObjectTableDef()
         {
             if(objectTableDef == null)
             {
@@ -363,6 +406,21 @@ namespace FistVR
                 objectTableDef.ThrownDamageTypes = ThrownDamageTypes;
             }
             return objectTableDef;
+        }
+
+        public ObjectTable GetObjectTable()
+        {
+            return objectTable;
+        }
+
+        public void DelayedInit()
+        {
+            objectTable = new ObjectTable();
+
+            if (!IsCompatibleMagazine)
+            {
+                objectTable.Initialize(GetObjectTableDef());
+            }
         }
     }
 
@@ -405,7 +463,7 @@ namespace FistVR
                 loadout = new TNH_CharacterDef.LoadoutEntry();
                 loadout.Num_Mags_SL_Clips = NumMags;
                 loadout.Num_Rounds = NumRounds;
-                loadout.TableDefs = Tables.Select(o => o.GetObjectTable()).ToList();
+                loadout.TableDefs = Tables.Select(o => o.GetObjectTableDef()).ToList();
             }
 
             return loadout;

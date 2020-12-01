@@ -102,13 +102,13 @@ namespace FistVR
         }
 
 
-        public static Dictionary<string, Sprite> GetAllIcons(List<TNH_CharacterDef> characters)
+        public static Dictionary<string, Sprite> GetAllIcons(List<CustomCharacter> characters)
         {
             Dictionary<string, Sprite> icons = new Dictionary<string, Sprite>();
 
-            foreach(TNH_CharacterDef character in characters)
+            foreach(CustomCharacter character in characters)
             {
-                foreach(EquipmentPoolDef.PoolEntry pool in character.EquipmentPool.Entries)
+                foreach(EquipmentPoolDef.PoolEntry pool in character.GetCharacter().EquipmentPool.Entries)
                 {
                     if (!icons.ContainsKey(pool.TableDef.Icon.name))
                     {
@@ -135,7 +135,7 @@ namespace FistVR
             return false;
         }
 
-        public static void CreateDefaultCharacterFiles(List<TNH_CharacterDef> characters, string path)
+        public static void CreateDefaultCharacterFiles(List<CustomCharacter> characters, string path)
         {
 
             try
@@ -147,7 +147,7 @@ namespace FistVR
                     Directory.CreateDirectory(path);
                 }
                 
-                foreach (TNH_CharacterDef charDef in characters)
+                foreach (CustomCharacter charDef in characters)
                 {
                     if (File.Exists(path + "/" + charDef.DisplayName + ".json"))
                     {
@@ -157,10 +157,8 @@ namespace FistVR
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(path + "/" + charDef.DisplayName + ".json"))
                     {
-                        TNHTweakerLogger.Log("TNHTWEAKER -- CREATING CHARACTER OBJECT", TNHTweakerLogger.LogType.File);
-                        CustomCharacter character = new CustomCharacter(charDef);
                         TNHTweakerLogger.Log("TNHTWEAKER -- SERIALIZING", TNHTweakerLogger.LogType.File);
-                        string characterString = JsonConvert.SerializeObject(character, Formatting.Indented, new StringEnumConverter());
+                        string characterString = JsonConvert.SerializeObject(charDef, Formatting.Indented, new StringEnumConverter());
                         //TNHTweakerLogger.Log(characterString, TNHTweakerLogger.LogType.File);
                         sw.WriteLine(characterString);
                         sw.Close();
@@ -303,7 +301,7 @@ namespace FistVR
         {
             if (template.DroppedObjectPool != null)
             {
-                RemoveUnloadedObjectIDs(template.DroppedObjectPool.GetObjectTable());
+                RemoveUnloadedObjectIDs(template.DroppedObjectPool.GetObjectTableDef());
             }
             
             //Loop through all outfit configs and remove any clothing objects that don't exist
@@ -440,6 +438,64 @@ namespace FistVR
                     return Tex2D;                 // If data = readable -> return texture
             }
             return null;                     // Return null if load failed
+        }
+
+
+        public static FVRObject GetMagazineForEquipped()
+        {
+            List<FVRObject> heldGuns = new List<FVRObject>();
+
+            FVRInteractiveObject rightHandObject = GM.CurrentMovementManager.Hands[0].CurrentInteractable;
+            FVRInteractiveObject leftHandObject = GM.CurrentMovementManager.Hands[1].CurrentInteractable;
+
+            if(rightHandObject is FVRFireArm && (rightHandObject as FVRFireArm).ObjectWrapper != null)
+            {
+                heldGuns.Add((rightHandObject as FVRFireArm).ObjectWrapper);
+            }
+            if (leftHandObject is FVRFireArm && (leftHandObject as FVRFireArm).ObjectWrapper != null)
+            {
+                heldGuns.Add((leftHandObject as FVRFireArm).ObjectWrapper);
+            }
+
+            foreach(FVRQuickBeltSlot slot in GM.CurrentPlayerBody.QuickbeltSlots)
+            {
+                if (slot.CurObject is FVRFireArm && (slot.CurObject as FVRFireArm).ObjectWrapper != null)
+                {
+                    FVRObject firearm = (slot.CurObject as FVRFireArm).ObjectWrapper;
+
+                    if(firearm.CompatibleClips.Count > 0 || firearm.CompatibleMagazines.Count > 0 || firearm.CompatibleSpeedLoaders.Count > 0)
+                    {
+                        heldGuns.Add(firearm);
+                    }
+                }
+
+                else if (slot.CurObject is PlayerBackPack && (slot.CurObject as PlayerBackPack).ObjectWrapper != null)
+                {
+                    foreach (FVRQuickBeltSlot backpackSlot in GM.CurrentPlayerBody.QuickbeltSlots)
+                    {
+                        if (backpackSlot.CurObject is FVRFireArm && (backpackSlot.CurObject as FVRFireArm).ObjectWrapper != null)
+                        {
+                            FVRObject firearm = (backpackSlot.CurObject as FVRFireArm).ObjectWrapper;
+
+                            if (firearm.CompatibleClips.Count > 0 || firearm.CompatibleMagazines.Count > 0 || firearm.CompatibleSpeedLoaders.Count > 0)
+                            {
+                                heldGuns.Add(firearm);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(heldGuns.Count > 0)
+            {
+                FVRObject firearm = heldGuns.GetRandom();
+
+                if (firearm.CompatibleMagazines.Count > 0) return firearm.CompatibleMagazines.GetRandom();
+                else if (firearm.CompatibleClips.Count > 0) return firearm.CompatibleClips.GetRandom();
+                else return firearm.CompatibleSpeedLoaders.GetRandom();
+            }
+
+            return null;
         }
 
         

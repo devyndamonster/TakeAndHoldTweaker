@@ -130,11 +130,16 @@ namespace FistVR
                     TNHTweakerUtils.RemoveUnloadedObjectIDs(template.GetCharacter());
                 }
 
+                //Perform the delayed init for default characters
+                foreach (CustomCharacter character in LoadedTemplateManager.DefaultCharacters)
+                {
+                    character.DelayedInit(false);
+                }
 
                 //Perform the delayed init for all custom loaded characters and sosigs
                 foreach (CustomCharacter character in LoadedTemplateManager.CustomCharacters)
                 {
-                    character.DelayedInit();
+                    character.DelayedInit(true);
                 }
                 foreach (SosigTemplate sosig in LoadedTemplateManager.CustomSosigs)
                 {
@@ -245,7 +250,6 @@ namespace FistVR
 
             return index;
         }
-
 
         [HarmonyPatch(typeof(TNH_Manager), "GenerateValidPatrol")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
@@ -986,6 +990,230 @@ namespace FistVR
             return false;
         }
 
+
+        [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool ButtonClickedReplacement(int i,
+            TNH_ObjectConstructor __instance,
+            EquipmentPoolDef ___m_pool,
+            int ___m_curLevel,
+            ref int ___m_selectedEntry,
+            ref int ___m_numTokensSelected,
+            bool ___allowEntry,
+            List<EquipmentPoolDef.PoolEntry> ___m_poolEntries,
+            List<int> ___m_poolAddedCost,
+            GameObject ___m_spawnedCase)
+        {
+            Traverse constructorTraverse = Traverse.Create(__instance);
+
+            constructorTraverse.Method("UpdateRerollButtonState", false).GetValue();
+
+            if (!___allowEntry)
+            {
+                return false;
+            }
+            
+            if(__instance.State == TNH_ObjectConstructor.ConstructorState.EntryList)
+            {
+
+                int cost = ___m_poolEntries[i].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[i];
+                if(__instance.M.GetNumTokens() >= cost)
+                {
+                    constructorTraverse.Method("SetState", TNH_ObjectConstructor.ConstructorState.Confirm, i).GetValue();
+                    SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Select, __instance.transform.position);
+                }
+                else
+                {
+                    SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Fail, __instance.transform.position);
+                }
+            }
+
+            else if(__instance.State == TNH_ObjectConstructor.ConstructorState.Confirm)
+            {
+
+                if (i == 0)
+                {
+                    constructorTraverse.Method("SetState", TNH_ObjectConstructor.ConstructorState.EntryList, 0).GetValue();
+                    ___m_selectedEntry = -1;
+                    SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Back, __instance.transform.position);
+                }
+                else if(i == 2)
+                {
+                    int cost = ___m_poolEntries[___m_selectedEntry].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[___m_selectedEntry];
+                    if (__instance.M.GetNumTokens() >= cost)
+                    {
+
+                        if ((!___m_poolEntries[___m_selectedEntry].TableDef.SpawnsInSmallCase && !___m_poolEntries[___m_selectedEntry].TableDef.SpawnsInSmallCase) || ___m_spawnedCase == null)
+                        {
+
+                            AnvilManager.Run(SpawnObjectAtConstructor(___m_poolEntries[___m_selectedEntry], __instance, constructorTraverse));
+                            ___m_numTokensSelected = 0;
+                            __instance.M.SubtractTokens(cost);
+                            SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Spawn, __instance.transform.position);
+
+                            if (__instance.M.C.UsesPurchasePriceIncrement)
+                            {
+                                ___m_poolAddedCost[___m_selectedEntry] += 1;
+                            }
+
+                            constructorTraverse.Method("SetState", TNH_ObjectConstructor.ConstructorState.EntryList, 0).GetValue();
+                            ___m_selectedEntry = -1;
+                        }
+
+                        else
+                        {
+                            SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Fail, __instance.transform.position);
+                        }
+                    }
+                    else
+                    {
+                        SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Fail, __instance.transform.position);
+                    }
+                }
+            }
+
+            return false;
+        }
+
+
+        private static IEnumerator SpawnObjectAtConstructor(EquipmentPoolDef.PoolEntry entry, TNH_ObjectConstructor constructor, Traverse constructorTraverse)
+        {
+            constructorTraverse.Field("allowEntry").SetValue(false);
+            EquipmentPool pool = LoadedTemplateManager.EquipmentPoolDictionary[entry];
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[constructor.M.C];
+            List<GameObject> trackedObjects = (List<GameObject>)(constructorTraverse.Field("m_trackedObjects").GetValue());
+
+            if(pool.Tables[0].SpawnsInLargeCase || pool.Tables[0].SpawnsInSmallCase)
+            {
+                GameObject caseFab = constructor.M.Prefab_WeaponCaseLarge;
+                if (pool.Tables[0].SpawnsInSmallCase) caseFab = constructor.M.Prefab_WeaponCaseSmall;
+
+                FVRObject item = pool.Tables[0].GetObjectTable().GetRandomObject();
+                GameObject itemCase = constructor.M.SpawnWeaponCase(caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, pool.Tables[0].NumMagsSpawned, pool.Tables[0].NumRoundsSpawned, pool.Tables[0].MinAmmoCapacity, pool.Tables[0].MaxAmmoCapacity);
+
+                constructorTraverse.Field("m_spawnedCase").SetValue(itemCase);
+                itemCase.GetComponent<TNH_WeaponCrate>().M = constructor.M;
+            }
+
+            else
+            {
+                int mainSpawnCount = 0;
+                int requiredSpawnCount = 0;
+                int ammoSpawnCount = 0;
+                int objectSpawnCount = 0;
+
+                for (int tableIndex = 0; tableIndex < pool.Tables.Count; tableIndex++)
+                {
+                    ObjectPool table = pool.Tables[tableIndex];
+
+                    for(int itemIndex = 0; itemIndex < table.ItemsToSpawn; itemIndex++)
+                    {
+                        FVRObject mainObject;
+
+                        if (table.IsCompatibleMagazine)
+                        {
+                            mainObject = TNHTweakerUtils.GetMagazineForEquipped();
+                            if(mainObject == null)
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            mainObject = table.GetObjectTable().GetRandomObject();
+                        }
+
+                        Transform primarySpawn = constructor.SpawnPoint_Object;
+                        Transform requiredSpawn = constructor.SpawnPoint_Object;
+                        Transform ammoSpawn = constructor.SpawnPoint_Mag;
+
+                        if (mainObject.Category == FVRObject.ObjectCategory.Firearm)
+                        {
+                            primarySpawn = constructor.SpawnPoints_GunsSize[mainObject.TagFirearmSize - FVRObject.OTagFirearmSize.Pocket];
+                            requiredSpawn = constructor.SpawnPoint_Grenade;
+                            mainSpawnCount += 1;
+                        }
+                        else if (mainObject.Category == FVRObject.ObjectCategory.Explosive || mainObject.Category == FVRObject.ObjectCategory.Thrown)
+                        {
+                            primarySpawn = constructor.SpawnPoint_Grenade;
+                        }
+                        else if (mainObject.Category == FVRObject.ObjectCategory.MeleeWeapon)
+                        {
+                            primarySpawn = constructor.SpawnPoint_Melee;
+                        }
+
+                        //Spawn the main object
+                        yield return mainObject.GetGameObjectAsync();
+                        GameObject spawnedObject = Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * 0.2f * mainSpawnCount, primarySpawn.rotation);
+                        trackedObjects.Add(spawnedObject);
+
+                        //Spawn any required objects
+                        for (int j = 0; j < mainObject.RequiredSecondaryPieces.Count; j++)
+                        {
+                            yield return mainObject.RequiredSecondaryPieces[j].GetGameObjectAsync();
+                            GameObject requiredItem = Instantiate(mainObject.RequiredSecondaryPieces[j].GetGameObject(), requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
+                            trackedObjects.Add(requiredItem);
+                            requiredSpawnCount += 1;
+                        }
+
+                        //If this object has compatible ammo object, then we should spawn those
+                        FVRObject ammoObject = mainObject.GetRandomAmmoObject(mainObject, character.ValidAmmoEras, table.MinAmmoCapacity, table.MaxAmmoCapacity, character.ValidAmmoSets);
+                        if (ammoObject != null)
+                        {
+                            int spawnCount = table.NumMagsSpawned;
+
+                            if (ammoObject.Category == FVRObject.ObjectCategory.Cartridge)
+                            {
+                                ammoSpawn = constructor.SpawnPoint_Ammo;
+                                spawnCount = table.NumRoundsSpawned;
+                            }
+
+                            yield return ammoObject.GetGameObjectAsync();
+
+                            for (int j = 0; j < spawnCount; j++)
+                            {
+                                GameObject spawnedAmmo = Instantiate(ammoObject.GetGameObject(), ammoSpawn.position + -ammoSpawn.right * 0.15f * ammoSpawnCount + ammoSpawn.up * 0.15f * j, ammoSpawn.rotation);
+                                trackedObjects.Add(spawnedAmmo);
+                            }
+
+                            ammoSpawnCount += 1;
+                        }
+
+                        //If this object equires picatinny sights, we should try to spawn one
+                        if (mainObject.RequiresPicatinnySight && character.GetRequiredSightsTable() != null)
+                        {
+                            FVRObject sight = character.GetRequiredSightsTable().GetRandomObject();
+                            yield return sight.GetGameObjectAsync();
+                            GameObject spawnedSight = Instantiate(sight.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                            trackedObjects.Add(spawnedSight);
+
+                            for (int j = 0; j < sight.RequiredSecondaryPieces.Count; j++)
+                            {
+                                yield return sight.RequiredSecondaryPieces[j].GetGameObjectAsync();
+                                GameObject spawnedRequired = Instantiate(sight.RequiredSecondaryPieces[j].GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
+                                trackedObjects.Add(spawnedRequired);
+                            }
+
+                            objectSpawnCount += 1;
+                        }
+
+                        //If this object has bespoke attachments we'll try to spawn one
+                        else if (mainObject.BespokeAttachments.Count > 0 && UnityEngine.Random.value < table.BespokeAttachmentChance)
+                        {
+                            FVRObject bespoke = mainObject.BespokeAttachments.GetRandom();
+                            yield return bespoke.GetGameObjectAsync();
+                            GameObject bespokeObject = Instantiate(bespoke.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                            trackedObjects.Add(bespokeObject);
+
+                            objectSpawnCount += 1;
+                        }
+                    }
+                }
+            }
+
+            constructorTraverse.Field("allowEntry").SetValue(true);
+            yield break;
+        }
 
 
         [HarmonyPatch(typeof(TNH_SupplyPoint), "Configure")] // Specify target method with HarmonyPatch attribute

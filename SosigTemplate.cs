@@ -93,7 +93,7 @@ namespace FistVR
 				TableDef = new ObjectTable();
 				if(DroppedObjectPool != null)
                 {
-					TableDef.Initialize(DroppedObjectPool.GetObjectTable());
+					TableDef.Initialize(DroppedObjectPool.GetObjectTableDef());
 				}
 				
 				//Add the new sosig template to the global dictionaries

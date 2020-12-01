@@ -11,8 +11,9 @@ namespace FistVR
 
         public static Dictionary<TNH_CharacterDef, CustomCharacter> LoadedCharactersDict = new Dictionary<TNH_CharacterDef, CustomCharacter>();
         public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
+        public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = new Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool>();
         public static List<CustomCharacter> CustomCharacters = new List<CustomCharacter>();
-        public static List<TNH_CharacterDef> DefaultCharacters = new List<TNH_CharacterDef>();
+        public static List<CustomCharacter> DefaultCharacters = new List<CustomCharacter>();
         public static List<SosigTemplate> CustomSosigs = new List<SosigTemplate>();
         public static List<SosigEnemyTemplate> DefaultSosigs = new List<SosigEnemyTemplate>();
         public static Dictionary<string, int> SosigIDDict = new Dictionary<string, int>();
@@ -80,6 +81,12 @@ namespace FistVR
         {
             CustomCharacters.Add(template);
             LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, mod, path, thumbnail), template);
+
+            foreach(EquipmentPool pool in template.EquipmentPools)
+            {
+                EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);
+            }
+
             NewCharacterID += 1;
 
             TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
@@ -87,8 +94,19 @@ namespace FistVR
 
         public static void AddCharacterTemplate(TNH_CharacterDef realTemplate)
         {
-            DefaultCharacters.Add(realTemplate);
-            LoadedCharactersDict.Add(realTemplate, new CustomCharacter(realTemplate));
+            CustomCharacter template = new CustomCharacter(realTemplate);
+
+            DefaultCharacters.Add(template);
+            LoadedCharactersDict.Add(realTemplate, template);
+
+            foreach (EquipmentPool pool in template.EquipmentPools)
+            {
+                //Must check for this, since default characters can have references to the same pools
+                if (!EquipmentPoolDictionary.ContainsKey(pool.GetPoolEntry()))
+                {
+                    EquipmentPoolDictionary.Add(pool.GetPoolEntry(), pool);
+                }
+            }
 
             TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + realTemplate.DisplayName, TNHTweakerLogger.LogType.File);
         }
