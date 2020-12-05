@@ -12,11 +12,15 @@ namespace FistVR
         public static Dictionary<TNH_CharacterDef, CustomCharacter> LoadedCharactersDict = new Dictionary<TNH_CharacterDef, CustomCharacter>();
         public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
         public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = new Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool>();
+        public static Dictionary<string, SavedGunSerializable> LoadedVaultFiles = new Dictionary<string, SavedGunSerializable>();
+        public static Dictionary<PanelType, Sprite> PanelSprites = new Dictionary<PanelType, Sprite>();
         public static List<CustomCharacter> CustomCharacters = new List<CustomCharacter>();
         public static List<CustomCharacter> DefaultCharacters = new List<CustomCharacter>();
         public static List<SosigTemplate> CustomSosigs = new List<SosigTemplate>();
         public static List<SosigEnemyTemplate> DefaultSosigs = new List<SosigEnemyTemplate>();
         public static Dictionary<string, int> SosigIDDict = new Dictionary<string, int>();
+        public static Dictionary<FireArmMagazineType, List<MagazineDataTemplate>> LoadedMagazines = new Dictionary<FireArmMagazineType, List<MagazineDataTemplate>>();
+
         public static int NewSosigID = 30000;
         public static int NewCharacterID = 30;
 
@@ -111,5 +115,15 @@ namespace FistVR
             TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + realTemplate.DisplayName, TNHTweakerLogger.LogType.File);
         }
 
+        public static void AddVaultFile(SavedGunSerializable template)
+        {
+            LoadedVaultFiles.Add(template.FileName, template);
+        }
+
+
     }
+
+
+    
+
 }

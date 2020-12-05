@@ -194,6 +194,8 @@ namespace FistVR
         {
             if (isCustom)
             {
+                TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
+
                 PrimaryWeapon.DelayedInit();
                 SecondaryWeapon.DelayedInit();
                 TertiaryWeapon.DelayedInit();
@@ -336,6 +338,9 @@ namespace FistVR
         [JsonIgnore]
         private ObjectTable objectTable;
 
+        [JsonIgnore]
+        private List<string> objects = new List<string>();
+
         public ObjectPool() { }
 
         public ObjectPool(ObjectTableDef objectTableDef)
@@ -413,13 +418,22 @@ namespace FistVR
             return objectTable;
         }
 
+        public List<string> GetObjects()
+        {
+            return objects;
+        }
+
         public void DelayedInit()
         {
             objectTable = new ObjectTable();
 
-            if (!IsCompatibleMagazine)
+            if (!IsCompatibleMagazine && !UseIDOverride)
             {
                 objectTable.Initialize(GetObjectTableDef());
+                foreach(FVRObject obj in objectTable.Objs)
+                {
+                    objects.Add(obj.ItemID);
+                }
             }
         }
     }
@@ -487,13 +501,19 @@ namespace FistVR
     public class Level
     {
         public int NumOverrideTokensForHold;
-        public int AdditionalSupplyPoints;
+        public int MinSupplyPoints;
+        public int MaxSupplyPoints;
+        public int MinConstructors;
+        public int MaxConstructors;
+        public int MinPanels;
+        public int MaxPanels;
         public int MinBoxesSpawned;
         public int MaxBoxesSpawned;
         public int MinTokensPerSupply;
         public int MaxTokensPerSupply;
         public float BoxTokenChance;
         public float BoxHealthChance;
+        public List<PanelType> PossiblePanelTypes;
         public TakeChallenge TakeChallenge;
         public List<Phase> HoldPhases;
         public TakeChallenge SupplyChallenge;
@@ -511,7 +531,16 @@ namespace FistVR
             SupplyChallenge = new TakeChallenge(level.TakeChallenge);
             HoldPhases = level.HoldChallenge.Phases.Select(o => new Phase(o)).ToList();
             Patrols = level.PatrolChallenge.Patrols.Select(o => new Patrol(o)).ToList();
-            AdditionalSupplyPoints = 0;
+            PossiblePanelTypes = new List<PanelType>();
+            PossiblePanelTypes.Add(PanelType.AmmoReloader);
+            PossiblePanelTypes.Add(PanelType.MagDuplicator);
+            PossiblePanelTypes.Add(PanelType.Recycler);
+            MinConstructors = 1;
+            MaxConstructors = 1;
+            MinPanels = 1;
+            MaxPanels = 1;
+            MinSupplyPoints = 2;
+            MaxSupplyPoints = 3;
             MinBoxesSpawned = 2;
             MaxBoxesSpawned = 4;
             MinTokensPerSupply = 1;

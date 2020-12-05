@@ -50,12 +50,31 @@ namespace FistVR
         }
     }
 
+    [QuickNamedBind("VaultFile")]
+    public class VaultFileLoader : IAssetLoader
+    {
+        public void LoadAsset(IServiceKernel kernel, Mod mod, string path)
+        {
+
+            Option<Option<SavedGunSerializable>> content = mod.Resources.Get<Option<SavedGunSerializable>>(path);
+
+            Option<SavedGunSerializable> flattened = content.Flatten();
+
+            SavedGunSerializable template = flattened.Expect("Failed to read vault file!");
+
+            TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + template.FileName, TNHTweakerLogger.LogType.File);
+
+            LoadedTemplateManager.AddVaultFile(template);
+        }
+    }
+
     internal class JsonAssetReaderEntry : IEntryModule<JsonAssetReaderEntry>
     {
         public void Load(IServiceKernel kernel)
         {
             kernel.BindJson<CustomCharacter>();
             kernel.BindJson<SosigTemplate>();
+            kernel.BindJson<SavedGunSerializable>();
         }
     }
 

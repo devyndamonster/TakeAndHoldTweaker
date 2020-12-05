@@ -56,6 +56,10 @@
     <Reference Include="Deli">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\plugins\Deli\Deli.dll</HintPath>
     </Reference>
+    <Reference Include="ES2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\h3vr_Data\Managed\ES2.dll</HintPath>
+    </Reference>
     <Reference Include="System">
       <Private>True</Private>
     </Reference>
@@ -80,6 +84,10 @@
       <HintPath>Libs\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\h3vr_Data\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
     <Reference Include="Valve.Newtonsoft.Json">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\h3vr_Data\Managed\Valve.Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -90,6 +98,8 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="LoadedTemplateManager.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="ObjectPanelWrapper.cs" />
+    <Compile Include="SavedGunSerializable.cs" />
     <Compile Include="TemplateLoaders.cs" />
     <Compile Include="SosigTemplate.cs" />
     <Compile Include="TNHTweakerUtils.cs" />

@@ -216,81 +216,149 @@ namespace FistVR
             }
         }
 
-        public static void RemoveUnloadedObjectIDs(TNH_CharacterDef character)
+        public static void CreateJsonVaultFiles(string path)
         {
-            if (character.Has_Weapon_Primary)
+            try
             {
-                foreach (ObjectTableDef table in character.Weapon_Primary.TableDefs)
+                path = path + "/VaultFiles";
+
+                if (!Directory.Exists(path))
                 {
-                    RemoveUnloadedObjectIDs(table);
+                    Directory.CreateDirectory(path);
+                }
+
+                string[] vaultFiles = ES2.GetFiles(string.Empty, "*.txt");
+                List<SavedGunSerializable> savedGuns = new List<SavedGunSerializable>();
+                foreach(string name in vaultFiles)
+                {
+                    try
+                    {
+                        if (ES2.Exists(name))
+                        {
+                            using (ES2Reader reader = ES2Reader.Create(name))
+                            {
+                                savedGuns.Add(new SavedGunSerializable(reader.Read<SavedGun>("SavedGun")));
+                            }
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        Debug.LogError("Vault File could not be loaded");
+                    }
+                }
+                
+                foreach (SavedGunSerializable savedGun in savedGuns)
+                {
+                    if (File.Exists(path + "/" + savedGun.FileName + ".json"))
+                    {
+                        File.Delete(path + "/" + savedGun.FileName + ".json");
+                    }
+
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(path + "/" + savedGun.FileName + ".json"))
+                    {
+                        string characterString = JsonConvert.SerializeObject(savedGun, Formatting.Indented, new StringEnumConverter());
+                        sw.WriteLine(characterString);
+                        sw.Close();
+                    }
                 }
             }
 
-            if (character.Has_Weapon_Secondary)
+            catch (Exception ex)
             {
-                foreach (ObjectTableDef table in character.Weapon_Secondary.TableDefs)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.Has_Weapon_Tertiary)
-            {
-                foreach (ObjectTableDef table in character.Weapon_Tertiary.TableDefs)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.Has_Item_Primary)
-            {
-                foreach (ObjectTableDef table in character.Item_Primary.TableDefs)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.Has_Item_Secondary)
-            {
-                foreach (ObjectTableDef table in character.Item_Secondary.TableDefs)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.Has_Item_Tertiary)
-            {
-                foreach (ObjectTableDef table in character.Item_Tertiary.TableDefs)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.Has_Item_Shield)
-            {
-                foreach (ObjectTableDef table in character.Item_Shield.TableDefs)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            foreach (EquipmentPoolDef.PoolEntry pool in character.EquipmentPool.Entries)
-            {
-                RemoveUnloadedObjectIDs(pool.TableDef);
+                Debug.LogError(ex.ToString());
             }
         }
 
-        public static void RemoveUnloadedObjectIDs(ObjectTableDef table)
+        public static void RemoveUnloadedObjectIDs(CustomCharacter character)
         {
+            if (character.HasPrimaryWeapon)
+            {
+                foreach (ObjectPool table in character.PrimaryWeapon.Tables)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.HasSecondaryWeapon)
+            {
+                foreach (ObjectPool table in character.SecondaryWeapon.Tables)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.HasTertiaryWeapon)
+            {
+                foreach (ObjectPool table in character.TertiaryWeapon.Tables)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.HasPrimaryItem)
+            {
+                foreach (ObjectPool table in character.PrimaryItem.Tables)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.HasSecondaryItem)
+            {
+                foreach (ObjectPool table in character.SecondaryItem.Tables)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.HasTertiaryItem)
+            {
+                foreach (ObjectPool table in character.TertiaryItem.Tables)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            if (character.HasShield)
+            {
+                foreach (ObjectPool table in character.Shield.Tables)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+
+            foreach (EquipmentPool pool in character.EquipmentPools)
+            {
+                foreach(ObjectPool table in pool.Tables)
+                {
+                    RemoveUnloadedObjectIDs(table);
+                }
+            }
+        }
+
+        public static void RemoveUnloadedObjectIDs(ObjectPool pool)
+        {
+            ObjectTableDef table = pool.GetObjectTableDef();
+
             if (table.UseIDListOverride)
             {
                 for (int i = 0; i < table.IDOverride.Count; i++)
                 {
                     if (!IM.OD.ContainsKey(table.IDOverride[i]))
                     {
+                        if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(table.IDOverride[i]))
+                        {
+                            pool.GetObjects().Add(table.IDOverride[i]);
+                        }
+
                         Debug.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + table.IDOverride[i]);
                         table.IDOverride.RemoveAt(i);
                         i--;
+                    }
+                    else
+                    {
+                        pool.GetObjects().Add(table.IDOverride[i]);
                     }
                 }
             }
@@ -301,7 +369,7 @@ namespace FistVR
         {
             if (template.DroppedObjectPool != null)
             {
-                RemoveUnloadedObjectIDs(template.DroppedObjectPool.GetObjectTableDef());
+                RemoveUnloadedObjectIDs(template.DroppedObjectPool);
             }
             
             //Loop through all outfit configs and remove any clothing objects that don't exist
@@ -533,6 +601,7 @@ namespace FistVR
                     if (magComp != null)
                     {
                         magazineCache.MagazineObjects.Add(magComp);
+                        magazineCache.AddMagazineData(magComp);
                     }
                 }
 
@@ -581,6 +650,8 @@ namespace FistVR
 
                 }
 
+                LoadedTemplateManager.LoadedMagazines = magazineCache.MagazineData;
+
                 //Create the cache file 
                 using (StreamWriter sw = File.CreateText(path))
                 {
@@ -611,6 +682,8 @@ namespace FistVR
                         firearm.MinCapacityRelated = entry.MinAmmo;
                     }
                 }
+
+                LoadedTemplateManager.LoadedMagazines = magazineCache.MagazineData;
             }
 
             CacheLoaded = true;
@@ -658,7 +731,140 @@ namespace FistVR
 
             return cacheValid;
         }
+
+
+        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Transform spawnPoint)
+        {
+            List<GameObject> toDealWith = new List<GameObject>();
+            List<GameObject> toMoveToTrays = new List<GameObject>();
+            FVRFireArm myGun = null;
+            FVRFireArmMagazine myMagazine = null;
+            List<int> validIndexes = new List<int>();
+            Dictionary<GameObject, SavedGunComponent> dicGO = new Dictionary<GameObject, SavedGunComponent>();
+            Dictionary<int, GameObject> dicByIndex = new Dictionary<int, GameObject>();
+            List<AnvilCallback<GameObject>> callbackList = new List<AnvilCallback<GameObject>>();
+
+            SavedGun gun = savedGun.GetSavedGun();
+
+            for (int i = 0; i < gun.Components.Count; i++)
+            {
+                callbackList.Add(IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync());
+            }
+            yield return callbackList;
+            for (int j = 0; j < gun.Components.Count; j++)
+            {
+                GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(callbackList[j].Result);
+                dicGO.Add(gameObject, gun.Components[j]);
+                dicByIndex.Add(gun.Components[j].Index, gameObject);
+                if (gun.Components[j].isFirearm)
+                {
+                    myGun = gameObject.GetComponent<FVRFireArm>();
+                    validIndexes.Add(j);
+                    gameObject.transform.position = spawnPoint.position;
+                    gameObject.transform.rotation = Quaternion.identity;
+                }
+                else if (gun.Components[j].isMagazine)
+                {
+                    myMagazine = gameObject.GetComponent<FVRFireArmMagazine>();
+                    validIndexes.Add(j);
+                    if (myMagazine != null)
+                    {
+                        gameObject.transform.position = myGun.GetMagMountPos(myMagazine.IsBeltBox).position;
+                        gameObject.transform.rotation = myGun.GetMagMountPos(myMagazine.IsBeltBox).rotation;
+                        myMagazine.Load(myGun);
+                        myMagazine.IsInfinite = false;
+                    }
+                }
+                else if (gun.Components[j].isAttachment)
+                {
+                    toDealWith.Add(gameObject);
+                }
+                else
+                {
+                    toMoveToTrays.Add(gameObject);
+                    if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Count > 0)
+                    {
+                        Debug.Log("Loading round set to speedloader");
+                        Speedloader component = gameObject.GetComponent<Speedloader>();
+                        component.ReloadSpeedLoaderWithList(gun.LoadedRoundsInMag);
+                    }
+                    else if (gameObject.GetComponent<FVRFireArmClip>() != null && gun.LoadedRoundsInMag.Count > 0)
+                    {
+                        Debug.Log("Loading round set to clip");
+                        FVRFireArmClip component2 = gameObject.GetComponent<FVRFireArmClip>();
+                        component2.ReloadClipWithList(gun.LoadedRoundsInMag);
+                    }
+                }
+                gameObject.GetComponent<FVRPhysicalObject>().ConfigureFromFlagDic(gun.Components[j].Flags);
+            }
+            if (myGun.Magazine != null && gun.LoadedRoundsInMag.Count > 0)
+            {
+                Debug.Log("Loading round set to magazine");
+                myGun.Magazine.ReloadMagWithList(gun.LoadedRoundsInMag);
+                myGun.Magazine.IsInfinite = false;
+            }
+            int BreakIterator = 200;
+            while (toDealWith.Count > 0 && BreakIterator > 0)
+            {
+                BreakIterator--;
+                for (int k = toDealWith.Count - 1; k >= 0; k--)
+                {
+                    SavedGunComponent savedGunComponent = dicGO[toDealWith[k]];
+                    if (validIndexes.Contains(savedGunComponent.ObjectAttachedTo))
+                    {
+                        GameObject gameObject2 = toDealWith[k];
+                        FVRFireArmAttachment component3 = gameObject2.GetComponent<FVRFireArmAttachment>();
+                        FVRFireArmAttachmentMount mount = GetMount(dicByIndex[savedGunComponent.ObjectAttachedTo], savedGunComponent.MountAttachedTo);
+                        gameObject2.transform.rotation = Quaternion.LookRotation(savedGunComponent.OrientationForward, savedGunComponent.OrientationUp);
+                        gameObject2.transform.position = GetPositionRelativeToGun(savedGunComponent, myGun.transform);
+                        if (component3.CanScaleToMount && mount.CanThisRescale())
+                        {
+                            component3.ScaleToMount(mount);
+                        }
+                        component3.AttachToMount(mount, false);
+                        if (component3 is Suppressor)
+                        {
+                            (component3 as Suppressor).AutoMountWell();
+                        }
+                        validIndexes.Add(savedGunComponent.Index);
+                        toDealWith.RemoveAt(k);
+                    }
+                }
+            }
+            int trayIndex = 0;
+            int itemIndex = 0;
+            for (int l = 0; l < toMoveToTrays.Count; l++)
+            {
+                toMoveToTrays[l].transform.position = spawnPoint.position + (float)itemIndex * 0.1f * Vector3.up;
+                toMoveToTrays[l].transform.rotation = spawnPoint.rotation;
+                itemIndex++;
+                trayIndex++;
+                if (trayIndex > 2)
+                {
+                    trayIndex = 0;
+                }
+            }
+            myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
+            myGun.SetFromFlagList(gun.SavedFlags);
+            myGun.transform.rotation = spawnPoint.rotation;
+            yield break;
+        }
+
+        public static FVRFireArmAttachmentMount GetMount(GameObject obj, int index)
+        {
+            return obj.GetComponent<FVRPhysicalObject>().AttachmentMounts[index];
+        }
+
+        public static Vector3 GetPositionRelativeToGun(SavedGunComponent data, Transform gun)
+        {
+            Vector3 a = gun.position;
+            a += gun.up * data.PosOffset.y;
+            a += gun.right * data.PosOffset.x;
+            return a + gun.forward * data.PosOffset.z;
+        }
     }
+
+    
 
 
     public class Vector2Serializable
@@ -681,6 +887,32 @@ namespace FistVR
         public Vector2 GetVector2()
         {
             v = new Vector2(x,y);
+            return v;
+        }
+    }
+
+    public class Vector3Serializable
+    {
+        public float x;
+        public float y;
+        public float z;
+
+        [JsonIgnore]
+        private Vector3 v;
+
+        public Vector3Serializable() { }
+
+        public Vector3Serializable(Vector3 v)
+        {
+            x = v.x;
+            y = v.y;
+            z = v.z;
+            this.v = v;
+        }
+
+        public Vector3 GetVector3()
+        {
+            v = new Vector3(x, y, z);
             return v;
         }
     }
