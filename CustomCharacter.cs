@@ -171,15 +171,49 @@ namespace FistVR
             return character;
         }
 
-        public Level GetCurrentLevel(TNH_Progression.Level level)
+        public Level GetCurrentLevel(TNH_Progression.Level currLevel)
         {
-            if (Levels.Select(o => o.GetLevel()).Contains(level))
+            foreach(Level level in Levels)
             {
-                return Levels.Find(o => o.GetLevel().Equals(level));
+                if (level.GetLevel().Equals(currLevel))
+                {
+                    return level;
+                }
             }
-            else if(LevelsEndless.Select(o => o.GetLevel()).Contains(level))
+
+            foreach (Level level in LevelsEndless)
             {
-                return LevelsEndless.Find(o => o.GetLevel().Equals(level));
+                if (level.GetLevel().Equals(currLevel))
+                {
+                    return level;
+                }
+            }
+
+            return null;
+        }
+
+        public Phase GetCurrentPhase(TNH_HoldChallenge.Phase currPhase)
+        {
+            foreach(Level level in Levels)
+            {
+                foreach(Phase phase in level.HoldPhases)
+                {
+                    if (phase.GetPhase().Equals(currPhase))
+                    {
+                        return phase;
+                    }
+                }
+            }
+
+            foreach (Level level in LevelsEndless)
+            {
+                foreach (Phase phase in level.HoldPhases)
+                {
+                    if (phase.GetPhase().Equals(currPhase))
+                    {
+                        return phase;
+                    }
+                }
             }
 
             return null;
@@ -214,6 +248,16 @@ namespace FistVR
             foreach(EquipmentPool pool in EquipmentPools)
             {
                 pool.DelayedInit(characterMod, path, isCustom);
+            }
+
+            for(int i = 0; i < Levels.Count; i++)
+            {
+                Levels[i].DelayedInit(isCustom, i);
+            }
+
+            for (int i = 0; i < LevelsEndless.Count; i++)
+            {
+                LevelsEndless[i].DelayedInit(isCustom, i);
             }
         }
 
@@ -293,7 +337,6 @@ namespace FistVR
                 {
                     table.DelayedInit();
                 }
-                
             }
         }
 
@@ -535,6 +578,7 @@ namespace FistVR
             PossiblePanelTypes.Add(PanelType.AmmoReloader);
             PossiblePanelTypes.Add(PanelType.MagDuplicator);
             PossiblePanelTypes.Add(PanelType.Recycler);
+            PossiblePanelTypes.Add(PanelType.MagUpgrader);
             MinConstructors = 1;
             MaxConstructors = 1;
             MinPanels = 1;
@@ -584,6 +628,21 @@ namespace FistVR
             }
 
             return null;
+        }
+
+        public void DelayedInit(bool isCustom, int levelIndex)
+        {
+            //If this is a level for a default character, we should try to replicate the vanilla layout
+            if (!isCustom)
+            {
+                MaxSupplyPoints = Mathf.Clamp(levelIndex, 1, 3);
+                MinSupplyPoints = Mathf.Clamp(levelIndex, 1, 2);
+
+                foreach (Phase phase in HoldPhases)
+                {
+                    phase.DelayedInit(isCustom);
+                }
+            }
         }
     }
 
@@ -642,9 +701,11 @@ namespace FistVR
 
     public class Phase
     {
-        public TNH_EncryptionType Encryption;
+        public List<TNH_EncryptionType> Encryptions;
         public int MinTargets;
         public int MaxTargets;
+        public int MinTargetsLimited;
+        public int MaxTargetsLimited;
         public List<string> EnemyType;
         public string LeaderType;
         public int MinEnemies;
@@ -666,9 +727,12 @@ namespace FistVR
 
         public Phase(TNH_HoldChallenge.Phase phase)
         {
-            Encryption = phase.Encryption;
+            Encryptions = new List<TNH_EncryptionType>();
+            Encryptions.Add(phase.Encryption);
             MinTargets = phase.MinTargets;
             MaxTargets = phase.MaxTargets;
+            MinTargetsLimited = 1;
+            MaxTargetsLimited = 1;
             EnemyType = new List<string>();
             EnemyType.Add(phase.EType.ToString());
             LeaderType = phase.LType.ToString();
@@ -692,7 +756,7 @@ namespace FistVR
             if(phase == null)
             {
                 phase = new TNH_HoldChallenge.Phase();
-                phase.Encryption = Encryption;
+                phase.Encryption = Encryptions[0];
                 phase.MinTargets = MinTargets;
                 phase.MaxTargets = MaxTargets;
                 phase.MinEnemies = MinEnemies;
@@ -726,6 +790,18 @@ namespace FistVR
             }
 
             return phase;
+        }
+
+        public void DelayedInit(bool isCustom)
+        {
+            if (!isCustom)
+            {
+                if(Encryptions[0] == TNH_EncryptionType.Static)
+                {
+                    MinTargetsLimited = 3;
+                    MaxTargetsLimited = 3;
+                }
+            }
         }
     }
 

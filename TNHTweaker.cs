@@ -561,7 +561,7 @@ namespace FistVR
                 }
 
                 //If the valid panel was an ammo resupply, and we aren't limited, then we swap it for something else
-                if(panelType == PanelType.AmmoReloader && point.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking && panelTypes.Count > 0)
+                if(panelType == PanelType.MagDuplicator && point.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking && panelTypes.Count > 0)
                 {
                     panelType = panelTypes.GetRandom();
                     panelTypes.Remove(panelType);
@@ -786,16 +786,54 @@ namespace FistVR
 
         [HarmonyPatch(typeof(TNH_HoldPoint), "IdentifyEncryption")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
-        public static bool SpawnEncryptionReplacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase)
+        public static bool IdentifyEncryptionReplacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase)
         {
-            if(___m_curPhase.MaxTargets <= 0)
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
+            Phase currentPhase = character.GetCurrentPhase(___m_curPhase);
+            Traverse holdTraverse = Traverse.Create(__instance);
+
+            //If we shouldnt spawn any targets, we exit out early
+            if ((currentPhase.MaxTargets < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ||
+                (currentPhase.MaxTargetsLimited < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo))
             {
-                Traverse.Create(__instance).Method("CompletePhase").GetValue();
+                holdTraverse.Method("CompletePhase").GetValue();
                 return false;
             }
 
-            return true;
+            holdTraverse.Field("m_state").SetValue(TNH_HoldPoint.HoldState.Hacking);
+            holdTraverse.Field("m_tickDownToFailure").SetValue(120f);
+            __instance.M.EnqueueEncryptionLine(currentPhase.Encryptions[0]);
+            holdTraverse.Method("DeleteAllActiveWarpIns").GetValue();
+            SpawnEncryptionReplacement(__instance, currentPhase);
+            holdTraverse.Field("m_systemNode").Method("SetNodeMode", TNH_HoldPointSystemNode.SystemNodeMode.Indentified).GetValue();
+
+            return false;
         }
+
+
+        public static void SpawnEncryptionReplacement(TNH_HoldPoint holdPoint, Phase currentPhase)
+        {
+            int numTargets;
+            if (holdPoint.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
+            {
+                numTargets = UnityEngine.Random.Range(currentPhase.MinTargetsLimited, currentPhase.MaxTargetsLimited + 1);
+            }
+            else
+            {
+                numTargets = UnityEngine.Random.Range(currentPhase.MinTargets, currentPhase.MaxTargets + 1);
+            }
+
+            List<FVRObject> encryptions = currentPhase.Encryptions.Select(o => holdPoint.M.GetEncryptionPrefab(o)).ToList();
+            for(int i = 0; i < numTargets && i < holdPoint.SpawnPoints_Targets.Count; i++)
+            {
+                GameObject gameObject = Instantiate(encryptions[i % encryptions.Count].GetGameObject(), holdPoint.SpawnPoints_Targets[i].position, holdPoint.SpawnPoints_Targets[i].rotation);
+                TNH_EncryptionTarget encryption = gameObject.GetComponent<TNH_EncryptionTarget>();
+                encryption.SetHoldPoint(holdPoint);
+                holdPoint.RegisterNewTarget(encryption);
+            }
+        }
+
+
 
 
         public static Sosig SpawnEnemy(SosigTemplate template, CustomCharacter character, Transform spawnLocation, TNHModifier_AIDifficulty difficulty, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
@@ -1296,7 +1334,7 @@ namespace FistVR
                 GameObject caseFab = constructor.M.Prefab_WeaponCaseLarge;
                 if (pool.Tables[0].SpawnsInSmallCase) caseFab = constructor.M.Prefab_WeaponCaseSmall;
 
-                FVRObject item = pool.Tables[0].GetObjectTable().GetRandomObject();
+                FVRObject item = IM.OD[pool.Tables[0].GetObjects().GetRandom()];
                 GameObject itemCase = constructor.M.SpawnWeaponCase(caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, pool.Tables[0].NumMagsSpawned, pool.Tables[0].NumRoundsSpawned, pool.Tables[0].MinAmmoCapacity, pool.Tables[0].MaxAmmoCapacity);
 
                 constructorTraverse.Field("m_spawnedCase").SetValue(itemCase);
