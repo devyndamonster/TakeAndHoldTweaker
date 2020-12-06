@@ -38,16 +38,12 @@ namespace FistVR
 
             original.OCIcon.Image.sprite = LoadedTemplateManager.PanelSprites[PanelType.MagUpgrader];
             original.OCIcon.Sprite_Cancel = LoadedTemplateManager.PanelSprites[PanelType.MagUpgrader];
-
-            GameObject newImage = Instantiate(original.OCIcon.Image.gameObject, original.OCIcon.Image.transform.position + Vector3.up * 0.5f, original.OCIcon.Image.transform.rotation);
-            Canvas canvas = original.OCIcon.Image.GetComponentInParent<Canvas>();
-            newImage.transform.SetParent(canvas.transform);
         }
 
 
         public void ButtonPressed()
         {
-            if(upgradeMag == null || storedCost > original.M.GetNumTokens())
+            if(upgradeMag == null || storedCost > original.M.GetNumTokens() || upgradeMag.ItemID == detectedMag.ObjectWrapper.ItemID)
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
@@ -59,6 +55,7 @@ namespace FistVR
                 original.M.SubtractTokens(storedCost);
                 original.M.Increment(10, false);
                 Instantiate(upgradeMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+                Destroy(detectedMag.gameObject);
             }
         }
 
@@ -105,7 +102,7 @@ namespace FistVR
 
         private void SetCost()
         {
-            if(upgradeMag != null)
+            if(upgradeMag != null && detectedMag != null && detectedMag.ObjectWrapper.ItemID != upgradeMag.ItemID)
             {
                 storedCost = 1;
                 original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Item, original.OCIcon.Sprite_Accept, storedCost);
