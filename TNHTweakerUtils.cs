@@ -270,6 +270,34 @@ namespace FistVR
             }
         }
 
+
+        public static List<string> GetMagazineCacheBlacklist(string path)
+        {
+            List<string> blacklist = new List<string>();
+
+            try
+            {
+                path = path + "/MagazineCacheBlacklist.txt";
+
+                if (!File.Exists(path))
+                {
+                    File.CreateText(path);
+                }
+                else
+                {
+                    blacklist.AddRange(File.ReadAllLines(path).Select(o => o.Trim()));
+                }
+            }
+
+            catch (Exception ex)
+            {
+                Debug.LogError(ex.ToString());
+            }
+
+            return blacklist;
+        }
+
+
         public static void RemoveUnloadedObjectIDs(CustomCharacter character)
         {
             if (character.HasPrimaryWeapon)
@@ -509,7 +537,7 @@ namespace FistVR
         }
 
 
-        public static FVRObject GetMagazineForEquipped()
+        public static FVRObject GetMagazineForEquipped(int minCapacity = 0, int maxCapacity = 9999)
         {
             List<FVRObject> heldGuns = new List<FVRObject>();
 
@@ -558,7 +586,12 @@ namespace FistVR
             {
                 FVRObject firearm = heldGuns.GetRandom();
 
-                if (firearm.CompatibleMagazines.Count > 0) return firearm.CompatibleMagazines.GetRandom();
+                if (firearm.CompatibleMagazines.Count > 0)
+                {
+                    List<MagazineDataTemplate> validMagazines = GetMagazinesWithinCapacity(minCapacity, maxCapacity, firearm);
+                    if (validMagazines.Count > 0) return IM.OD[validMagazines.GetRandom().ObjectID];
+                    else return IM.OD[GetSmallestCapacityMagazine(firearm).ObjectID];
+                }
                 else if (firearm.CompatibleClips.Count > 0) return firearm.CompatibleClips.GetRandom();
                 else return firearm.CompatibleSpeedLoaders.GetRandom();
             }
@@ -566,22 +599,57 @@ namespace FistVR
             return null;
         }
 
+        public static List<MagazineDataTemplate> GetMagazinesWithinCapacity(int minCapacity, int maxCapacity, FVRObject firearm)
+        {
+            List<MagazineDataTemplate> validMagazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[o.ItemID]).ToList();
+
+            for(int i = 0; i < validMagazines.Count; i++)
+            {
+                if(validMagazines[i].Capacity < minCapacity || validMagazines[i].Capacity > maxCapacity)
+                {
+                    validMagazines.RemoveAt(i);
+                    i -= 1;
+                }
+            }
+
+            return validMagazines;
+        }
+
+        public static MagazineDataTemplate GetSmallestCapacityMagazine(FVRObject firearm)
+        {
+            List<MagazineDataTemplate> magazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[firearm.ItemID]).ToList();
+            if (magazines.Count == 0) return null;
+
+            MagazineDataTemplate smallestMagazine = magazines[0];
+            foreach(MagazineDataTemplate magazine in magazines)
+            {
+                if(magazine.Capacity < smallestMagazine.Capacity)
+                {
+                    smallestMagazine = magazine;
+                }
+            }
+
+            return smallestMagazine;
+        }
+
         
         public static void LoadMagazineCache(string path)
         {
             CompatibleMagazineCache magazineCache = null;
 
-            path = path + "/CachedCompatibleMags.json";
+            string cachePath = path + "/CachedCompatibleMags.json";
+
+            List<string> blacklist = GetMagazineCacheBlacklist(path);
 
             //If the cache exists, we load it and check it's validity
-            if (File.Exists(path))
+            if (File.Exists(cachePath))
             {
-                string cacheJson = File.ReadAllText(path);
+                string cacheJson = File.ReadAllText(cachePath);
                 magazineCache = JsonConvert.DeserializeObject<CompatibleMagazineCache>(cacheJson);
 
                 if (!IsMagazineCacheValid(magazineCache))
                 {
-                    File.Delete(path);
+                    File.Delete(cachePath);
                     magazineCache = null;
                 }
             }
@@ -589,27 +657,52 @@ namespace FistVR
             //If the magazine cache file didn't exist, or wasn't valid, we must build a new one
             if (magazineCache == null)
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- BUILDING NEW MAGAZINE CACHE", TNHTweakerLogger.LogType.File);
+                Debug.Log("TNHTWEAKER -- Building new magazine cache -- This may take a while!");
                 magazineCache = new CompatibleMagazineCache();
 
-                //Load all of the magazines into the cache
-                foreach (FVRObject magazine in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine])
-                {
-                    FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
-                    magazineCache.Magazines.Add(magazine.ItemID);
 
-                    if (magComp != null)
+                //Load all of the magazines into the cache
+                Debug.Log("TNHTWEAKER -- Loading all magazines");
+                DateTime start = DateTime.Now;
+                List<FVRObject> magazines = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine];
+                for (int i = 0; i < magazines.Count; i++)
+                {
+
+                    if((DateTime.Now - start).TotalSeconds > 2)
                     {
-                        magazineCache.MagazineObjects.Add(magComp);
-                        magazineCache.AddMagazineData(magComp);
+                        start = DateTime.Now;
+                        Debug.Log("-- " + (i * 100 / magazines.Count) + "% --");
+                    }
+
+                    FVRObject magazine = magazines[i];
+                    if (!magazineCache.Magazines.Contains(magazine.ItemID))
+                    {
+                        FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
+                        magazineCache.Magazines.Add(magazine.ItemID);
+
+                        if (magComp != null)
+                        {
+                            magazineCache.MagazineObjects.Add(magComp);
+                            magazineCache.AddMagazineData(magComp);
+                        }
                     }
                 }
 
                 //Load all firearms into the cache
-                foreach (FVRObject firearm in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm])
+                Debug.Log("TNHTWEAKER -- Applying compatible magazines to firearms");
+                List<FVRObject> firearms = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm];
+                for (int i = 0; i < firearms.Count; i++)
                 {
-                    FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
+                    if ((DateTime.Now - start).TotalSeconds > 2)
+                    {
+                        start = DateTime.Now;
+                        Debug.Log("-- " + (i * 100 / firearms.Count) + "% --");
+                    }
 
+                    FVRObject firearm = firearms[i];
+                    if (blacklist.Contains(firearm.ItemID)) continue;
+
+                    FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
                     magazineCache.Firearms.Add(firearm.ItemID);
 
                     if (firearmComp == null)
@@ -644,16 +737,32 @@ namespace FistVR
                             firearm.CompatibleMagazines.Add(magazine.ObjectWrapper);
                             magazineCache.Entries.Last().CompatibleMagazines.Add(magazine.ObjectWrapper.ItemID);
                             
-                            TNHTweakerLogger.Log("TNHTWEAKER -- ADDED COMPATIBLE MAGAZINE (" + magazine.ObjectWrapper.ItemID + ") TO FIREARM (" + firearm.ItemID + ")", TNHTweakerLogger.LogType.File);
+                            //TNHTweakerLogger.Log("TNHTWEAKER -- ADDED COMPATIBLE MAGAZINE (" + magazine.ObjectWrapper.ItemID + ") TO FIREARM (" + firearm.ItemID + ")", TNHTweakerLogger.LogType.File);
                         }
                     }
 
                 }
 
-                LoadedTemplateManager.LoadedMagazines = magazineCache.MagazineData;
+                //Load all of this data into the template manager
+                LoadedTemplateManager.LoadedMagazineTypeDict = magazineCache.MagazineData;
+                foreach(List<MagazineDataTemplate> magList in LoadedTemplateManager.LoadedMagazineTypeDict.Values)
+                {
+                    foreach (MagazineDataTemplate template in magList)
+                    {
+                        if (!LoadedTemplateManager.LoadedMagazineDict.ContainsKey(template.ObjectID))
+                        {
+                            LoadedTemplateManager.LoadedMagazineDict.Add(template.ObjectID, template);
+                        }
+
+                        else
+                        {
+                            Debug.LogWarning("TNHTWEAKER -- Attempted to add duplicate magazine : " + template.ObjectID);
+                        }
+                    }
+                }
 
                 //Create the cache file 
-                using (StreamWriter sw = File.CreateText(path))
+                using (StreamWriter sw = File.CreateText(cachePath))
                 {
                     string cacheString = JsonConvert.SerializeObject(magazineCache, Formatting.Indented, new StringEnumConverter());
                     sw.WriteLine(cacheString);
@@ -664,10 +773,12 @@ namespace FistVR
             //If the cache is valid, we can just load each entry from the cache
             else
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- LOADING EXISTING MAGAZINE CACHE", TNHTweakerLogger.LogType.File);
+                Debug.Log("TNHTWEAKER -- Loading existing magazine cache");
 
                 foreach (MagazineCacheEntry entry in magazineCache.Entries)
                 {
+                    if (blacklist.Contains(entry.FirearmID)) continue;
+
                     if (IM.OD.ContainsKey(entry.FirearmID))
                     {
                         FVRObject firearm = IM.OD[entry.FirearmID];
@@ -683,7 +794,22 @@ namespace FistVR
                     }
                 }
 
-                LoadedTemplateManager.LoadedMagazines = magazineCache.MagazineData;
+                LoadedTemplateManager.LoadedMagazineTypeDict = magazineCache.MagazineData;
+                foreach (List<MagazineDataTemplate> magList in LoadedTemplateManager.LoadedMagazineTypeDict.Values)
+                {
+                    foreach (MagazineDataTemplate template in magList)
+                    {
+                        if (!LoadedTemplateManager.LoadedMagazineDict.ContainsKey(template.ObjectID))
+                        {
+                            LoadedTemplateManager.LoadedMagazineDict.Add(template.ObjectID, template);
+                        }
+
+                        else
+                        {
+                            Debug.LogWarning("TNHTWEAKER -- Attempted to add duplicate magazine : " + template.ObjectID);
+                        }
+                    }
+                }
             }
 
             CacheLoaded = true;

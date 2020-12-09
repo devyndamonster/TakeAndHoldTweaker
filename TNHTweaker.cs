@@ -17,7 +17,7 @@ using ADepIn;
 
 namespace FistVR
 {
-    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "0.1.3.1")]
+    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "0.1.4.0")]
     public class TNHTweaker : DeliMod
     {
         private static ConfigEntry<bool> printCharacters;
@@ -52,9 +52,11 @@ namespace FistVR
         private void LoadPanelSprites()
         {
             Option<Texture2D> magUpgradeContent = BaseMod.Resources.Get<Texture2D>("mag_upgrade.png");
-            Debug.Log("Panel Image Loaded!");
             LoadedTemplateManager.PanelSprites.Add(PanelType.MagUpgrader, TNHTweakerUtils.LoadSprite(magUpgradeContent.Expect("TNHTweaker -- Failed to load Mag Upgrader icon!")));
-            Debug.Log("Sprite Loaded : " + LoadedTemplateManager.PanelSprites[PanelType.MagUpgrader].name);
+
+            Option<Texture2D> fullAutoContent = BaseMod.Resources.Get<Texture2D>("full_auto.png");
+            LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, TNHTweakerUtils.LoadSprite(fullAutoContent.Expect("TNHTweaker -- Failed to load Full Auto Adder icon!")));
+
         }
 
         private void LoadConfigFile()
@@ -424,13 +426,29 @@ namespace FistVR
 
         public static void ClearAllPanels()
         {
+            Debug.Log("Destroying constructors");
             while (SpawnedConstructors.Count > 0)
             {
-                SpawnedConstructors[0].GetComponent<TNH_ObjectConstructor>().ClearCase();
-                Destroy(SpawnedConstructors[0]);
+                try
+                {
+                    TNH_ObjectConstructor constructor = SpawnedConstructors[0].GetComponent<TNH_ObjectConstructor>();
+
+                    if(constructor != null)
+                    {
+                        constructor.ClearCase();
+                    }
+
+                    Destroy(SpawnedConstructors[0]);
+                }
+                catch
+                {
+                    Debug.LogWarning("Failed to destroy constructor! It's likely that the constructor is already destroyed, so everything is probably just fine :)");
+                }
+                
                 SpawnedConstructors.RemoveAt(0);
             }
 
+            Debug.Log("Destroying panels");
             while (SpawnedPanels.Count > 0)
             {
                 Destroy(SpawnedPanels[0]);
@@ -544,10 +562,16 @@ namespace FistVR
 
             int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
 
-            for(int i = startingIndex; i < startingIndex + numPanels && i < point.SpawnPoints_Panels.Count && panelTypes.Count > 0; i++)
+            
+            if (point.M.EquipmentMode != TNHSetting_EquipmentMode.LimitedAmmo || !isFirst)
+            {
+                panelTypes.Remove(PanelType.AmmoReloader);
+            }
+
+            for (int i = startingIndex; i < startingIndex + numPanels && i < point.SpawnPoints_Panels.Count && panelTypes.Count > 0; i++)
             {
                 //If this is the first panel, and it's limited, we should ensure that it is an ammo resupply
-                if (point.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo && i == startingIndex && isFirst)
+                if (panelTypes.Contains(PanelType.AmmoReloader) && point.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo && i == startingIndex && isFirst)
                 {
                     panelType = PanelType.AmmoReloader;
                     panelTypes.Remove(PanelType.AmmoReloader);
@@ -591,8 +615,15 @@ namespace FistVR
                     panel.AddComponent(typeof(MagUpgrader));
                 }
 
+                else if (panelType == PanelType.AddFullAuto)
+                {
+                    Debug.Log("Spawning Full Auto Adder!");
+                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel.AddComponent(typeof(FullAutoEnabler));
+                }
+
                 //If we spawned a panel, add it to the global list
-                if(panel != null)
+                if (panel != null)
                 {
                     SpawnedPanels.Add(panel);
                 }
@@ -802,7 +833,9 @@ namespace FistVR
 
             holdTraverse.Field("m_state").SetValue(TNH_HoldPoint.HoldState.Hacking);
             holdTraverse.Field("m_tickDownToFailure").SetValue(120f);
+
             __instance.M.EnqueueEncryptionLine(currentPhase.Encryptions[0]);
+            
             holdTraverse.Method("DeleteAllActiveWarpIns").GetValue();
             SpawnEncryptionReplacement(__instance, currentPhase);
             holdTraverse.Field("m_systemNode").Method("SetNodeMode", TNH_HoldPointSystemNode.SystemNodeMode.Indentified).GetValue();
@@ -1362,7 +1395,7 @@ namespace FistVR
 
                         if (table.IsCompatibleMagazine)
                         {
-                            mainObject = TNHTweakerUtils.GetMagazineForEquipped();
+                            mainObject = TNHTweakerUtils.GetMagazineForEquipped(table.MinAmmoCapacity, table.MaxAmmoCapacity);
                             if(mainObject == null)
                             {
                                 break;
@@ -1483,6 +1516,13 @@ namespace FistVR
             if (upgraderPanel != null)
             {
                 upgraderPanel.ButtonPressed();
+                return false;
+            }
+
+            FullAutoEnabler fullAutoPanel = __instance.GetComponent<FullAutoEnabler>();
+            if(fullAutoPanel != null)
+            {
+                fullAutoPanel.ButtonPressed();
                 return false;
             }
 

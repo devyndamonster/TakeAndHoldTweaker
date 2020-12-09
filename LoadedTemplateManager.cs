@@ -19,7 +19,8 @@ namespace FistVR
         public static List<SosigTemplate> CustomSosigs = new List<SosigTemplate>();
         public static List<SosigEnemyTemplate> DefaultSosigs = new List<SosigEnemyTemplate>();
         public static Dictionary<string, int> SosigIDDict = new Dictionary<string, int>();
-        public static Dictionary<FireArmMagazineType, List<MagazineDataTemplate>> LoadedMagazines = new Dictionary<FireArmMagazineType, List<MagazineDataTemplate>>();
+        public static Dictionary<FireArmMagazineType, List<MagazineDataTemplate>> LoadedMagazineTypeDict = new Dictionary<FireArmMagazineType, List<MagazineDataTemplate>>();
+        public static Dictionary<string, MagazineDataTemplate> LoadedMagazineDict = new Dictionary<string, MagazineDataTemplate>();
 
         public static int NewSosigID = 30000;
         public static int NewCharacterID = 30;
