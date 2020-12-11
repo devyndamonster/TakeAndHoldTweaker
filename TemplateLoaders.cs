@@ -36,11 +36,11 @@ namespace FistVR
         public void LoadAsset(IServiceKernel kernel, Mod mod, string path)
         {
             
-            string templatePath = path + "/character.json";
+            string templatePath = path + "character.json";
             Option<Option<CustomCharacter>> characterContent = mod.Resources.Get<Option<CustomCharacter>>(templatePath);
             CustomCharacter template = characterContent.Flatten().Expect("TNHTweaker -- Failed to read custom character template! Character will not be loaded");
 
-            string imagePath = path + "/thumb.png";
+            string imagePath = path + "thumb.png";
             Option<Texture2D> imageContent = mod.Resources.Get<Texture2D>(imagePath);
             Sprite thumbnail = TNHTweakerUtils.LoadSprite(imageContent.Expect("TNHTweaker -- Failed to get character thumbnail! Character will not be loaded"));
 

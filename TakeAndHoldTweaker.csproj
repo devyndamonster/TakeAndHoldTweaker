@@ -53,8 +53,12 @@
     <Reference Include="BepInEx.Harmony">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\core\BepInEx.Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="Deli">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\plugins\Deli\Deli.dll</HintPath>
+    <Reference Include="Deli, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\patchers\Deli\Deli.dll</HintPath>
+    </Reference>
+    <Reference Include="Deli.Runtime">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\plugins\Deli\Deli.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="ES2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

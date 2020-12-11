@@ -47,6 +47,29 @@ namespace FistVR
             return gun;
         }
 
+        public bool AllComponentsLoaded()
+        {
+            foreach(SavedGunComponentSerializable component in Components)
+            {
+                if (!IM.OD.ContainsKey(component.ObjectID))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public FVRObject GetGunObject()
+        {
+            foreach(SavedGunComponentSerializable component in Components)
+            {
+                if (component.IsFirearm) return IM.OD[component.ObjectID];
+            }
+
+            return null;
+        }
+
     }
 
 

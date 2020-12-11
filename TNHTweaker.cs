@@ -18,7 +18,7 @@ using ADepIn;
 namespace FistVR
 {
     [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "0.1.4.0")]
-    public class TNHTweaker : DeliMod
+    public class TNHTweaker : DeliBehaviour
     {
         private static ConfigEntry<bool> printCharacters;
         private static ConfigEntry<bool> logPatrols;
@@ -51,10 +51,10 @@ namespace FistVR
 
         private void LoadPanelSprites()
         {
-            Option<Texture2D> magUpgradeContent = BaseMod.Resources.Get<Texture2D>("mag_upgrade.png");
+            Option<Texture2D> magUpgradeContent = Source.Resources.Get<Texture2D>("mag_upgrade.png");
             LoadedTemplateManager.PanelSprites.Add(PanelType.MagUpgrader, TNHTweakerUtils.LoadSprite(magUpgradeContent.Expect("TNHTweaker -- Failed to load Mag Upgrader icon!")));
 
-            Option<Texture2D> fullAutoContent = BaseMod.Resources.Get<Texture2D>("full_auto.png");
+            Option<Texture2D> fullAutoContent = Source.Resources.Get<Texture2D>("full_auto.png");
             LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, TNHTweakerUtils.LoadSprite(fullAutoContent.Expect("TNHTweaker -- Failed to load Full Auto Adder icon!")));
 
         }
@@ -63,27 +63,27 @@ namespace FistVR
         {
             Debug.Log("TNHTWEAKER -- GETTING CONFIG FILE");
 
-            cacheCompatibleMagazines = BaseMod.Config.Bind("General",
+            cacheCompatibleMagazines = Source.Config.Bind("General",
                                     "CacheCompatibleMagazines",
                                     false,
                                     "If true, guns will be able to spawn with any compatible mag in TNH (Eg. by default the VSS cannot spawn with 30rnd magazines)");
 
-            allowLog = BaseMod.Config.Bind("Debug",
+            allowLog = Source.Config.Bind("Debug",
                                     "EnableLogging",
                                     false,
                                     "Set to true to enable logging");
 
-            printCharacters = BaseMod.Config.Bind("Debug",
+            printCharacters = Source.Config.Bind("Debug",
                                          "PrintCharacterInfo",
                                          false,
                                          "Decide if should print all character info");
 
-            logPatrols = BaseMod.Config.Bind("Debug",
+            logPatrols = Source.Config.Bind("Debug",
                                     "LogPatrolSpawns",
                                     false,
                                     "If true, patrols that spawn will have log output");
 
-            logFileReads = BaseMod.Config.Bind("Debug",
+            logFileReads = Source.Config.Bind("Debug",
                                     "LogFileReads",
                                     false,
                                     "If true, reading from a file will log the reading process");
@@ -135,12 +135,7 @@ namespace FistVR
                 LoadDefaultCharacters(___CharDatabase.Characters);
                 LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
 
-                //Remove all objects that havn't been loaded
-                foreach (SosigTemplate template in LoadedTemplateManager.CustomSosigs)
-                {
-                    TNHTweakerUtils.RemoveUnloadedObjectIDs(template);
-                }
-
+                
                 //Perform the delayed init for default characters
                 foreach (CustomCharacter character in LoadedTemplateManager.DefaultCharacters)
                 {
@@ -980,9 +975,20 @@ namespace FistVR
             sosigComponent.SetGuardInvestigateDistanceThreshold(25f);
 
             //Handle sosig dropping custom loot
-            if (UnityEngine.Random.value < template.DroppedLootChance)
+            if (UnityEngine.Random.value < template.DroppedLootChance && template.DroppedObjectPool != null)
             {
-                sosigComponent.Links[2].RegisterSpawnOnDestroy(template.TableDef.GetRandomObject());
+                string spawnedObject = template.DroppedObjectPool.GetObjects().GetRandom();
+
+                if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(spawnedObject))
+                {
+                    Debug.LogWarning("TNHTweaker -- Tried to add vaulted gun to sosigs dropped items, but spawning of vaulted items not supported yet! Nothing will be dropped!");
+                }
+
+                else
+                {
+                    sosigComponent.Links[2].RegisterSpawnOnDestroy(IM.OD[spawnedObject]);
+                }
+                
             }
 
             return sosigComponent;
@@ -1388,6 +1394,7 @@ namespace FistVR
                     for(int itemIndex = 0; itemIndex < table.ItemsToSpawn; itemIndex++)
                     {
                         FVRObject mainObject;
+                        SavedGunSerializable vaultFile = null;
 
                         Transform primarySpawn = constructor.SpawnPoint_Object;
                         Transform requiredSpawn = constructor.SpawnPoint_Object;
@@ -1396,21 +1403,17 @@ namespace FistVR
                         if (table.IsCompatibleMagazine)
                         {
                             mainObject = TNHTweakerUtils.GetMagazineForEquipped(table.MinAmmoCapacity, table.MaxAmmoCapacity);
-                            if(mainObject == null)
-                            {
-                                break;
-                            }
+                            if (mainObject == null) break;
                         }
+
                         else
                         {
-                            Debug.Log("Objects count: " + table.GetObjects().Count);
                             string item = table.GetObjects().GetRandom();
 
                             if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(item))
                             {
-                                AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(LoadedTemplateManager.LoadedVaultFiles[item], primarySpawn));
-                                mainSpawnCount += 1;
-                                break;
+                                vaultFile = LoadedTemplateManager.LoadedVaultFiles[item];
+                                mainObject = vaultFile.GetGunObject();
                             }
 
                             else
@@ -1419,6 +1422,7 @@ namespace FistVR
                             }
                         }
 
+                        //Assign spawn points based on the type of item we are spawning
                         if (mainObject.Category == FVRObject.ObjectCategory.Firearm)
                         {
                             primarySpawn = constructor.SpawnPoints_GunsSize[mainObject.TagFirearmSize - FVRObject.OTagFirearmSize.Pocket];
@@ -1434,11 +1438,20 @@ namespace FistVR
                             primarySpawn = constructor.SpawnPoint_Melee;
                         }
 
-                        //Spawn the main object
-                        yield return mainObject.GetGameObjectAsync();
-                        GameObject spawnedObject = Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * 0.2f * mainSpawnCount, primarySpawn.rotation);
-                        trackedObjects.Add(spawnedObject);
 
+                        //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
+                        if (vaultFile != null)
+                        {
+                            AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(vaultFile, primarySpawn, trackedObjects));
+                        }
+                        else
+                        {
+                            yield return mainObject.GetGameObjectAsync();
+                            GameObject spawnedObject = Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * 0.2f * mainSpawnCount, primarySpawn.rotation);
+                            trackedObjects.Add(spawnedObject);
+                        }
+
+                        
                         //Spawn any required objects
                         for (int j = 0; j < mainObject.RequiredSecondaryPieces.Count; j++)
                         {
@@ -1447,6 +1460,7 @@ namespace FistVR
                             trackedObjects.Add(requiredItem);
                             requiredSpawnCount += 1;
                         }
+
 
                         //If this object has compatible ammo object, then we should spawn those
                         FVRObject ammoObject = mainObject.GetRandomAmmoObject(mainObject, character.ValidAmmoEras, table.MinAmmoCapacity, table.MaxAmmoCapacity, character.ValidAmmoSets);
@@ -1470,6 +1484,7 @@ namespace FistVR
 
                             ammoSpawnCount += 1;
                         }
+
 
                         //If this object equires picatinny sights, we should try to spawn one
                         if (mainObject.RequiresPicatinnySight && character.GetRequiredSightsTable() != null)

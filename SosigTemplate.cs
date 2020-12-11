@@ -25,9 +25,6 @@ namespace FistVR
 		public float DroppedLootChance;
 		public ObjectPool DroppedObjectPool;
 
-		[JsonIgnore]
-		public ObjectTable TableDef = new ObjectTable();
-
         [JsonIgnore]
         private SosigEnemyTemplate template;
 
@@ -80,6 +77,8 @@ namespace FistVR
         {
 			if(template != null)
             {
+				TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
+
 				template.SosigPrefabs = SosigPrefabs.Select(o => IM.OD[o]).ToList();
 				template.WeaponOptions = WeaponOptions.Select(o => IM.OD[o]).ToList();
 				template.WeaponOptions_Secondary = WeaponOptionsSecondary.Select(o => IM.OD[o]).ToList();
@@ -90,10 +89,9 @@ namespace FistVR
 					outfit.DelayedInit();
                 }
 
-				TableDef = new ObjectTable();
 				if(DroppedObjectPool != null)
                 {
-					TableDef.Initialize(DroppedObjectPool.GetObjectTableDef());
+					DroppedObjectPool.DelayedInit();
 				}
 				
 				//Add the new sosig template to the global dictionaries

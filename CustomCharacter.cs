@@ -226,28 +226,29 @@ namespace FistVR
 
         public void DelayedInit(bool isCustom)
         {
-            if (isCustom)
-            {
-                TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
-
-                PrimaryWeapon.DelayedInit();
-                SecondaryWeapon.DelayedInit();
-                TertiaryWeapon.DelayedInit();
-                PrimaryItem.DelayedInit();
-                SecondaryItem.DelayedInit();
-                TertiaryItem.DelayedInit();
-                Shield.DelayedInit();
-            }
-
+            if (!PrimaryWeapon.DelayedInit(isCustom)) HasPrimaryWeapon = false;
+            if (!SecondaryWeapon.DelayedInit(isCustom)) HasSecondaryWeapon = false;
+            if (!TertiaryWeapon.DelayedInit(isCustom)) HasTertiaryWeapon = false;
+            if (!PrimaryItem.DelayedInit(isCustom)) HasPrimaryItem = false;
+            if (!SecondaryItem.DelayedInit(isCustom)) HasSecondaryItem = false;
+            if (!TertiaryItem.DelayedInit(isCustom)) HasTertiaryItem = false;
+            if (!Shield.DelayedInit(isCustom)) HasShield = false;
+            
             if(RequireSightTable != null)
             {
                 requiredSightsTable = new ObjectTable();
                 requiredSightsTable.Initialize(RequireSightTable.GetObjectTableDef());
             }
             
-            foreach(EquipmentPool pool in EquipmentPools)
+            for(int i = 0; i < EquipmentPools.Count; i++)
             {
-                pool.DelayedInit(characterMod, path, isCustom);
+                EquipmentPool pool = EquipmentPools[i];
+                if(!pool.DelayedInit(characterMod, path, isCustom)){
+                    Debug.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
+                    EquipmentPools.RemoveAt(i);
+                    character.EquipmentPool.Entries.RemoveAt(i);
+                    i-=1;
+                }
             }
 
             for(int i = 0; i < Levels.Count; i++)
@@ -313,7 +314,7 @@ namespace FistVR
 
         
 
-        public void DelayedInit(Deli.Mod characterMod, string path, bool isCustom)
+        public bool DelayedInit(Deli.Mod characterMod, string path, bool isCustom)
         {
             if (pool != null)
             {
@@ -327,17 +328,25 @@ namespace FistVR
                     else
                     {
                         //Load the table icon from the character mod
-                        path += "/" + IconName;
+                        path += IconName;
                         Option<Texture2D> imageContent = characterMod.Resources.Get<Texture2D>(path);
                         pool.TableDef.Icon = TNHTweakerUtils.LoadSprite(imageContent.Expect("TNHTweaker -- Failed to load equipment pool icon!"));
                     }
                 }
 
+                bool allTablesValid = true;
                 foreach(ObjectPool table in Tables)
                 {
-                    table.DelayedInit();
+                    if (!table.DelayedInit())
+                    {
+                        allTablesValid = false;
+                    }
                 }
+
+                return allTablesValid;
             }
+
+            return false;
         }
 
     }
@@ -466,10 +475,15 @@ namespace FistVR
             return objects;
         }
 
-        public void DelayedInit()
+        /// <summary>
+        /// Fills out the object table and removes any unloaded items
+        /// </summary>
+        /// <returns> Returns true if valid, and false if empty </returns>
+        public bool DelayedInit()
         {
-            objectTable = new ObjectTable();
+            TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
 
+            objectTable = new ObjectTable();
             if (!IsCompatibleMagazine && !UseIDOverride)
             {
                 objectTable.Initialize(GetObjectTableDef());
@@ -478,6 +492,8 @@ namespace FistVR
                     objects.Add(obj.ItemID);
                 }
             }
+
+            return objects.Count != 0;
         }
     }
 
@@ -526,18 +542,36 @@ namespace FistVR
             return loadout;
         }
 
-        public void DelayedInit()
+        public bool DelayedInit(bool isCustom)
         {
             if (loadout != null)
             {
-                loadout.ListOverride = new List<FVRObject>();
-                foreach(string item in ListOverride)
+                for(int i = 0; i < Tables.Count; i++)
                 {
-                    if (IM.OD.ContainsKey(item)) loadout.ListOverride.Add(IM.OD[item]);
+                    ObjectPool pool = Tables[i];
+                    if (!pool.DelayedInit())
+                    {
+                        Tables.RemoveAt(i);
+                        loadout.TableDefs.RemoveAt(i);
+                        i -= 1;
+                    }
+                }
+
+                if (isCustom)
+                {
+                    loadout.ListOverride = new List<FVRObject>();
+                    foreach (string item in ListOverride)
+                    {
+                        if (IM.OD.ContainsKey(item)) loadout.ListOverride.Add(IM.OD[item]);
+                    }
+
+                    if (AmmoOverride != null && IM.OD.ContainsKey(AmmoOverride)) loadout.AmmoObjectOverride = IM.OD[AmmoOverride];
                 }
                 
-                if(AmmoOverride != null && IM.OD.ContainsKey(AmmoOverride)) loadout.AmmoObjectOverride = IM.OD[AmmoOverride];
+                return Tables.Count != 0 || loadout.ListOverride.Count != 0;
             }
+
+            return false;
         }
     }
 

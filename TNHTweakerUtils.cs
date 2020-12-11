@@ -233,11 +233,14 @@ namespace FistVR
                 {
                     try
                     {
-                        if (ES2.Exists(name))
+                        if (name.Contains("DONTREMOVETHISPARTOFFILENAMEV02a"))
                         {
-                            using (ES2Reader reader = ES2Reader.Create(name))
+                            if (ES2.Exists(name))
                             {
-                                savedGuns.Add(new SavedGunSerializable(reader.Read<SavedGun>("SavedGun")));
+                                using (ES2Reader reader = ES2Reader.Create(name))
+                                {
+                                    savedGuns.Add(new SavedGunSerializable(reader.Read<SavedGun>("SavedGun")));
+                                }
                             }
                         }
                     }
@@ -355,14 +358,6 @@ namespace FistVR
                     RemoveUnloadedObjectIDs(table);
                 }
             }
-
-            foreach (EquipmentPool pool in character.EquipmentPools)
-            {
-                foreach(ObjectPool table in pool.Tables)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
         }
 
         public static void RemoveUnloadedObjectIDs(ObjectPool pool)
@@ -375,15 +370,30 @@ namespace FistVR
                 {
                     if (!IM.OD.ContainsKey(table.IDOverride[i]))
                     {
+
+                        //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
                         if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(table.IDOverride[i]))
                         {
-                            pool.GetObjects().Add(table.IDOverride[i]);
+                            if (LoadedTemplateManager.LoadedVaultFiles[table.IDOverride[i]].AllComponentsLoaded())
+                            {
+                                pool.GetObjects().Add(table.IDOverride[i]);
+                            }
+
+                            else
+                            {
+                                Debug.LogWarning("TNHTweaker -- Vaulted gun in table does not have all components loaded, removing it! VaultID : " + table.IDOverride[i]);
+                            }
                         }
 
-                        Debug.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + table.IDOverride[i]);
+                        else
+                        {
+                            Debug.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + table.IDOverride[i]);
+                        }
+
                         table.IDOverride.RemoveAt(i);
                         i--;
                     }
+
                     else
                     {
                         pool.GetObjects().Add(table.IDOverride[i]);
@@ -395,10 +405,6 @@ namespace FistVR
 
         public static void RemoveUnloadedObjectIDs(SosigTemplate template)
         {
-            if (template.DroppedObjectPool != null)
-            {
-                RemoveUnloadedObjectIDs(template.DroppedObjectPool);
-            }
             
             //Loop through all outfit configs and remove any clothing objects that don't exist
             foreach (OutfitConfig config in template.OutfitConfigs)
@@ -859,7 +865,7 @@ namespace FistVR
         }
 
 
-        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Transform spawnPoint)
+        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Transform spawnPoint, List<GameObject> trackedObjects)
         {
             List<GameObject> toDealWith = new List<GameObject>();
             List<GameObject> toMoveToTrays = new List<GameObject>();
@@ -880,6 +886,9 @@ namespace FistVR
             for (int j = 0; j < gun.Components.Count; j++)
             {
                 GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(callbackList[j].Result);
+
+                trackedObjects.Add(gameObject);
+
                 dicGO.Add(gameObject, gun.Components[j]);
                 dicByIndex.Add(gun.Components[j].Index, gameObject);
                 if (gun.Components[j].isFirearm)
