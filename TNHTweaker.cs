@@ -24,7 +24,6 @@ namespace FistVR
         private static ConfigEntry<bool> logPatrols;
         private static ConfigEntry<bool> logFileReads;
         private static ConfigEntry<bool> allowLog;
-        private static ConfigEntry<bool> cacheCompatibleMagazines;
 
         private static string OutputFilePath;
 
@@ -61,12 +60,7 @@ namespace FistVR
 
         private void LoadConfigFile()
         {
-            Debug.Log("TNHTWEAKER -- GETTING CONFIG FILE");
-
-            cacheCompatibleMagazines = Source.Config.Bind("General",
-                                    "CacheCompatibleMagazines",
-                                    false,
-                                    "If true, guns will be able to spawn with any compatible mag in TNH (Eg. by default the VSS cannot spawn with 30rnd magazines)");
+            Debug.Log("TNHTweaker -- Getting config file");
 
             allowLog = Source.Config.Bind("Debug",
                                     "EnableLogging",
@@ -88,15 +82,10 @@ namespace FistVR
                                     false,
                                     "If true, reading from a file will log the reading process");
 
-            //TNHTweakerLogger.LogGeneral = allowLog.Value;
-            //TNHTweakerLogger.LogCharacter = printCharacters.Value;
-            //TNHTweakerLogger.LogPatrol = logPatrols.Value;
-            //TNHTweakerLogger.LogFile = logFileReads.Value;
-
-            TNHTweakerLogger.LogGeneral = true;
-            TNHTweakerLogger.LogCharacter = true;
-            TNHTweakerLogger.LogPatrol = true;
-            TNHTweakerLogger.LogFile = true;
+            TNHTweakerLogger.LogGeneral = allowLog.Value;
+            TNHTweakerLogger.LogCharacter = printCharacters.Value;
+            TNHTweakerLogger.LogPatrol = logPatrols.Value;
+            TNHTweakerLogger.LogFile = logFileReads.Value;
 
         }
 
@@ -128,31 +117,36 @@ namespace FistVR
             //Perform first time setup of all files
             if (!filesBuilt)
             {
-                TNHTweakerLogger.Log("TNHTweaker -- Performing TNH Initialization", TNHTweakerLogger.LogType.File);
+                Debug.Log("TNHTweaker -- Performing TNH Initialization");
 
                 //Load all of the default templates into our dictionaries
                 LoadDefaultSosigs();
                 LoadDefaultCharacters(___CharDatabase.Characters);
                 LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
 
-                
+
                 //Perform the delayed init for default characters
+                Debug.Log("TNHTweaker -- Delayed Init of default characters");
                 foreach (CustomCharacter character in LoadedTemplateManager.DefaultCharacters)
                 {
                     character.DelayedInit(false);
                 }
 
                 //Perform the delayed init for all custom loaded characters and sosigs
+                Debug.Log("TNHTweaker -- Delayed Init of custom characters");
                 foreach (CustomCharacter character in LoadedTemplateManager.CustomCharacters)
                 {
                     character.DelayedInit(true);
                 }
+
+                Debug.Log("TNHTweaker -- Delayed Init of custom sosigs");
                 foreach (SosigTemplate sosig in LoadedTemplateManager.CustomSosigs)
                 {
                     sosig.DelayedInit();
                 }
 
                 //Create files relevant for character creation
+                Debug.Log("TNHTweaker -- Creating character creation files");
                 TNHTweakerUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, OutputFilePath);
                 TNHTweakerUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, OutputFilePath);
                 TNHTweakerUtils.CreateIconIDFile(OutputFilePath, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
@@ -160,10 +154,7 @@ namespace FistVR
                 TNHTweakerUtils.CreateSosigIDFile(OutputFilePath);
                 TNHTweakerUtils.CreateJsonVaultFiles(OutputFilePath);
                 
-                if (cacheCompatibleMagazines.Value)
-                {
-                    TNHTweakerUtils.LoadMagazineCache(OutputFilePath);
-                }
+                TNHTweakerUtils.LoadMagazineCache(OutputFilePath);
             }
             
             //Load all characters into the UI

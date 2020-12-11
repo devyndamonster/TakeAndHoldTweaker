@@ -55,7 +55,7 @@ namespace FistVR
             CustomSosigs.Add(template);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
+            TNHTweakerLogger.Log("TNHTweaker -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.Character);
         }
 
 
@@ -78,7 +78,7 @@ namespace FistVR
             DefaultSosigs.Add(realTemplate);
             LoadedSosigsDict.Add(realTemplate, template);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
+            TNHTweakerLogger.Log("TNHTweaker -- Sosig added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.Character);
         }
 
 
@@ -94,7 +94,7 @@ namespace FistVR
 
             NewCharacterID += 1;
 
-            TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
+            TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.Character);
         }
 
         public static void AddCharacterTemplate(TNH_CharacterDef realTemplate)
@@ -113,7 +113,7 @@ namespace FistVR
                 }
             }
 
-            TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + realTemplate.DisplayName, TNHTweakerLogger.LogType.File);
+            TNHTweakerLogger.Log("TNHTweaker -- Character added successfuly : " + realTemplate.DisplayName, TNHTweakerLogger.LogType.Character);
         }
 
         public static void AddVaultFile(SavedGunSerializable template)

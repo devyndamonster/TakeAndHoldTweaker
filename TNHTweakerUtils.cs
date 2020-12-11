@@ -112,7 +112,7 @@ namespace FistVR
                 {
                     if (!icons.ContainsKey(pool.TableDef.Icon.name))
                     {
-                        TNHTweakerLogger.Log("TNHTWEAKER -- ICON FOUND (" + pool.TableDef.Icon.name + ")", TNHTweakerLogger.LogType.Character);
+                        TNHTweakerLogger.Log("TNHTweaker -- Icon found (" + pool.TableDef.Icon.name + ")", TNHTweakerLogger.LogType.Character);
                         icons.Add(pool.TableDef.Icon.name, pool.TableDef.Icon);
                     }
                 }
@@ -140,6 +140,8 @@ namespace FistVR
 
             try
             {
+                TNHTweakerLogger.Log("TNHTweaker -- Creating default character template files", TNHTweakerLogger.LogType.File);
+
                 path = path + "/DefaultCharacters";
 
                 if (!Directory.Exists(path))
@@ -157,16 +159,12 @@ namespace FistVR
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(path + "/" + charDef.DisplayName + ".json"))
                     {
-                        TNHTweakerLogger.Log("TNHTWEAKER -- SERIALIZING", TNHTweakerLogger.LogType.File);
                         string characterString = JsonConvert.SerializeObject(charDef, Formatting.Indented, new StringEnumConverter());
                         //TNHTweakerLogger.Log(characterString, TNHTweakerLogger.LogType.File);
                         sw.WriteLine(characterString);
                         sw.Close();
-                        TNHTweakerLogger.Log("TNHTWEAKER -- LOADED CHARACTER:", TNHTweakerLogger.LogType.File);
                     }
                 }
-
-                TNHTweakerLogger.Log("TNHTWEAKER -- FINISHED LOADING DEFAULT CHARACTERS", TNHTweakerLogger.LogType.File);
             }
 
             catch (Exception ex)
@@ -179,6 +177,8 @@ namespace FistVR
         {
             try
             {
+                TNHTweakerLogger.Log("TNHTweaker -- Creating default sosig template files", TNHTweakerLogger.LogType.File);
+
                 path = path + "/DefaultSosigTemplates";
 
                 if (!Directory.Exists(path))
@@ -196,18 +196,14 @@ namespace FistVR
                     // Create a new file     
                     using (StreamWriter sw = File.CreateText(path + "/" + template.SosigEnemyID + ".json"))
                     {
-                        TNHTweakerLogger.Log("TNHTWEAKER -- CREATING SOSIG TEMPLATE OBJECT", TNHTweakerLogger.LogType.File);
                         SosigTemplate sosig = new SosigTemplate(template);
-                        TNHTweakerLogger.Log("TNHTWEAKER -- SERIALIZING", TNHTweakerLogger.LogType.File);
                         string characterString = JsonConvert.SerializeObject(sosig, Formatting.Indented, new StringEnumConverter());
                         //TNHTweakerLogger.Log(characterString, TNHTweakerLogger.LogType.File);
                         sw.WriteLine(characterString);
                         sw.Close();
-                        TNHTweakerLogger.Log("TNHTWEAKER -- LOADED SOSIG:", TNHTweakerLogger.LogType.File);
                     }
                 }
 
-                TNHTweakerLogger.Log("TNHTWEAKER -- FINISHED LOADING DEFAULT SOSIG TEMPLATES", TNHTweakerLogger.LogType.File);
             }
 
             catch (Exception ex)
@@ -663,12 +659,12 @@ namespace FistVR
             //If the magazine cache file didn't exist, or wasn't valid, we must build a new one
             if (magazineCache == null)
             {
-                Debug.Log("TNHTWEAKER -- Building new magazine cache -- This may take a while!");
+                Debug.Log("TNHTweaker -- Building new magazine cache -- This may take a while!");
                 magazineCache = new CompatibleMagazineCache();
 
 
                 //Load all of the magazines into the cache
-                Debug.Log("TNHTWEAKER -- Loading all magazines");
+                Debug.Log("TNHTweaker -- Loading all magazines");
                 DateTime start = DateTime.Now;
                 List<FVRObject> magazines = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine];
                 for (int i = 0; i < magazines.Count; i++)
@@ -695,7 +691,7 @@ namespace FistVR
                 }
 
                 //Load all firearms into the cache
-                Debug.Log("TNHTWEAKER -- Applying compatible magazines to firearms");
+                Debug.Log("TNHTweaker -- Applying compatible magazines to firearms");
                 List<FVRObject> firearms = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm];
                 for (int i = 0; i < firearms.Count; i++)
                 {
@@ -742,8 +738,6 @@ namespace FistVR
                             magazineCache.Entries.Last().MinAmmo = firearm.MinCapacityRelated;
                             firearm.CompatibleMagazines.Add(magazine.ObjectWrapper);
                             magazineCache.Entries.Last().CompatibleMagazines.Add(magazine.ObjectWrapper.ItemID);
-                            
-                            //TNHTweakerLogger.Log("TNHTWEAKER -- ADDED COMPATIBLE MAGAZINE (" + magazine.ObjectWrapper.ItemID + ") TO FIREARM (" + firearm.ItemID + ")", TNHTweakerLogger.LogType.File);
                         }
                     }
 
@@ -762,7 +756,7 @@ namespace FistVR
 
                         else
                         {
-                            Debug.LogWarning("TNHTWEAKER -- Attempted to add duplicate magazine : " + template.ObjectID);
+                            Debug.LogWarning("TNHTweaker -- Attempted to add duplicate magazine : " + template.ObjectID);
                         }
                     }
                 }
@@ -779,7 +773,7 @@ namespace FistVR
             //If the cache is valid, we can just load each entry from the cache
             else
             {
-                Debug.Log("TNHTWEAKER -- Loading existing magazine cache");
+                Debug.Log("TNHTweaker -- Loading existing magazine cache");
 
                 foreach (MagazineCacheEntry entry in magazineCache.Entries)
                 {
@@ -812,7 +806,7 @@ namespace FistVR
 
                         else
                         {
-                            Debug.LogWarning("TNHTWEAKER -- Attempted to add duplicate magazine : " + template.ObjectID);
+                            Debug.LogWarning("TNHTweaker -- Attempted to add duplicate magazine : " + template.ObjectID);
                         }
                     }
                 }
@@ -847,7 +841,7 @@ namespace FistVR
             {
                 if (!magazineCache.Magazines.Contains(mag))
                 {
-                    TNHTweakerLogger.Log("TNHTWEAKER -- MAGAZINE NOT FOUND IN CACHE: " + mag, TNHTweakerLogger.LogType.File);
+                    Debug.LogWarning("TNHTweaker -- Magazine not found in cache: " + mag);
                     cacheValid = false;
                 }
             }
@@ -855,12 +849,11 @@ namespace FistVR
             {
                 if (!magazineCache.Firearms.Contains(firearm))
                 {
-                    TNHTweakerLogger.Log("TNHTWEAKER -- FIREARM NOT FOUND IN CACHE: " + firearm, TNHTweakerLogger.LogType.File);
+                    Debug.LogWarning("TNHTweaker -- Firearm not found in cache: " + firearm);
                     cacheValid = false;
                 }
             }
             
-
             return cacheValid;
         }
 
@@ -919,13 +912,11 @@ namespace FistVR
                     toMoveToTrays.Add(gameObject);
                     if (gameObject.GetComponent<Speedloader>() != null && gun.LoadedRoundsInMag.Count > 0)
                     {
-                        Debug.Log("Loading round set to speedloader");
                         Speedloader component = gameObject.GetComponent<Speedloader>();
                         component.ReloadSpeedLoaderWithList(gun.LoadedRoundsInMag);
                     }
                     else if (gameObject.GetComponent<FVRFireArmClip>() != null && gun.LoadedRoundsInMag.Count > 0)
                     {
-                        Debug.Log("Loading round set to clip");
                         FVRFireArmClip component2 = gameObject.GetComponent<FVRFireArmClip>();
                         component2.ReloadClipWithList(gun.LoadedRoundsInMag);
                     }
@@ -934,7 +925,6 @@ namespace FistVR
             }
             if (myGun.Magazine != null && gun.LoadedRoundsInMag.Count > 0)
             {
-                Debug.Log("Loading round set to magazine");
                 myGun.Magazine.ReloadMagWithList(gun.LoadedRoundsInMag);
                 myGun.Magazine.IsInfinite = false;
             }

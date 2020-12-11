@@ -226,13 +226,48 @@ namespace FistVR
 
         public void DelayedInit(bool isCustom)
         {
-            if (!PrimaryWeapon.DelayedInit(isCustom)) HasPrimaryWeapon = false;
-            if (!SecondaryWeapon.DelayedInit(isCustom)) HasSecondaryWeapon = false;
-            if (!TertiaryWeapon.DelayedInit(isCustom)) HasTertiaryWeapon = false;
-            if (!PrimaryItem.DelayedInit(isCustom)) HasPrimaryItem = false;
-            if (!SecondaryItem.DelayedInit(isCustom)) HasSecondaryItem = false;
-            if (!TertiaryItem.DelayedInit(isCustom)) HasTertiaryItem = false;
-            if (!Shield.DelayedInit(isCustom)) HasShield = false;
+            if (!PrimaryWeapon.DelayedInit(isCustom))
+            {
+                Debug.LogWarning("TNHTweaker -- Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                HasPrimaryWeapon = false;
+                character.Has_Weapon_Primary = false;
+            }
+            if (!SecondaryWeapon.DelayedInit(isCustom))
+            {
+                Debug.LogWarning("TNHTweaker -- Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                HasSecondaryWeapon = false;
+                character.Has_Weapon_Secondary = false;
+            }
+            if (!TertiaryWeapon.DelayedInit(isCustom))
+            {
+                Debug.LogWarning("TNHTweaker -- Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                HasTertiaryWeapon = false;
+                character.Has_Weapon_Tertiary = false;
+            }
+            if (!PrimaryItem.DelayedInit(isCustom))
+            {
+                Debug.LogWarning("TNHTweaker -- Primary starting item had no pools to spawn from, and will not spawn equipment!");
+                HasPrimaryItem = false;
+                character.Has_Item_Primary = false;
+            }
+            if (!SecondaryItem.DelayedInit(isCustom))
+            {
+                Debug.LogWarning("TNHTweaker -- Secondary starting item had no pools to spawn from, and will not spawn equipment!");
+                HasSecondaryItem = false;
+                character.Has_Item_Secondary = false;
+            }
+            if (!TertiaryItem.DelayedInit(isCustom))
+            {
+                Debug.LogWarning("TNHTweaker -- Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
+                HasTertiaryItem = false;
+                character.Has_Item_Tertiary = false;
+            }
+            if (!Shield.DelayedInit(isCustom))
+            {
+                Debug.LogWarning("TNHTweaker -- Shield starting item had no pools to spawn from, and will not spawn equipment!");
+                HasShield = false;
+                character.Has_Item_Shield = false;
+            }
             
             if(RequireSightTable != null)
             {
