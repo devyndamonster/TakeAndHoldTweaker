@@ -14,8 +14,7 @@ namespace FistVR
         Recycler,
         AmmoReloader,
         MagUpgrader,
-        AddFullAuto,
-        HigherFireRate
+        AddFullAuto
     }
 
     public class MagUpgrader : MonoBehaviour
@@ -182,14 +181,14 @@ namespace FistVR
         {
             if ((detectedHandgun == null && detectedClosedBolt == null && detectedOpenBolt == null) || storedCost > original.M.GetNumTokens())
             {
-                Debug.Log("Can't add full auto!");
+                //Debug.Log("Can't add full auto!");
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
 
             else
             {
-                Debug.Log("Adding full auto!");
+                //Debug.Log("Adding full auto!");
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(storedCost);
                 original.M.Increment(10, false);
@@ -223,7 +222,7 @@ namespace FistVR
 
             if(gun.FireSelectorModes != null)
             {
-                Debug.Log("Fire Selector options before addition:");
+                //Debug.Log("Fire Selector options before addition:");
                 foreach (Handgun.FireSelectorMode mode in gun.FireSelectorModes)
                 {
                     Debug.Log(mode.ModeType);
@@ -232,7 +231,7 @@ namespace FistVR
             
             if (gun.FireSelectorModes == null || gun.FireSelectorModes.Length == 0)
             {
-                Debug.Log("Handgun did not have any fire selector modes, so we're adding defaults");
+                //Debug.Log("Handgun did not have any fire selector modes, so we're adding defaults");
 
                 Handgun.FireSelectorMode single = new Handgun.FireSelectorMode();
                 single.SelectorPosition = 0;
@@ -242,29 +241,29 @@ namespace FistVR
             }
             else
             {
-                Debug.Log("Handgun had atleast one fire selector mode, Adding full auto");
+                //Debug.Log("Handgun had atleast one fire selector mode, Adding full auto");
                 List<Handgun.FireSelectorMode> modes = new List<Handgun.FireSelectorMode>(gun.FireSelectorModes);
                 modes.Add(fullAuto);
                 gun.FireSelectorModes = modes.ToArray();
 
-                Debug.Log("Array count: " + gun.FireSelectorModes.Length + ", List count: " + modes.Count);
+                //Debug.Log("Array count: " + gun.FireSelectorModes.Length + ", List count: " + modes.Count);
             }
 
-            Debug.Log("Fire Selector options after adding full auto:");
+            //Debug.Log("Fire Selector options after adding full auto:");
             foreach (Handgun.FireSelectorMode mode in gun.FireSelectorModes)
             {
-                Debug.Log(mode.ModeType);
+                //Debug.Log(mode.ModeType);
             }
             
             if (!gun.HasFireSelector)
             {
-                Debug.Log("Handgun was not originally configured to have fire selector. Configuring");
+                //Debug.Log("Handgun was not originally configured to have fire selector. Configuring");
 
                 gun.HasFireSelector = true;
 
                 if (gun.HasSafety)
                 {
-                    Debug.Log("Using safety object as fire selector");
+                    //Debug.Log("Using safety object as fire selector");
                     gun.FireSelectorAxis = gun.SafetyAxis;
                     gun.FireSelectorInterpStyle = gun.Safety_Interp;
                     gun.FireSelector = gun.Safety;
@@ -272,14 +271,14 @@ namespace FistVR
 
                 else if (gun.FireSelector == null)
                 {
-                    Debug.Log("Creating dummy game object for fire selector");
+                    //Debug.Log("Creating dummy game object for fire selector");
                     gun.FireSelector = Instantiate(new GameObject(), gun.GameObject.transform).transform;
                 }
             }
 
             if (gun.HasSafety)
             {
-                Debug.Log("Handgun originally had a safety, so we're removing that");
+                //Debug.Log("Handgun originally had a safety, so we're removing that");
                 //gun.SetSafetyState(false);
                 //gun.FireSelectorModes = gun.FireSelectorModes.Where(o => o.ModeType != Handgun.FireSelectorModeType.Safe).ToArray();
                 gun.AudioClipSet.FireSelector = gun.AudioClipSet.Safety;
@@ -294,20 +293,20 @@ namespace FistVR
             fullAuto.ModeType = ClosedBoltWeapon.FireSelectorModeType.FullAuto;
             fullAuto.SelectorPosition = 0;
 
-            Debug.Log("Adding full auto to closed bolt");
+            //Debug.Log("Adding full auto to closed bolt");
 
             if (gun.FireSelector_Modes != null)
             {
-                Debug.Log("Fire Selector options before addition:");
+                //Debug.Log("Fire Selector options before addition:");
                 foreach (ClosedBoltWeapon.FireSelectorMode mode in gun.FireSelector_Modes)
                 {
-                    Debug.Log(mode.ModeType);
+                    //Debug.Log(mode.ModeType);
                 }
             }
 
             if (gun.FireSelector_Modes == null || gun.FireSelector_Modes.Length == 0)
             {
-                Debug.Log("Gun did not have fire selector, adding full");
+                //Debug.Log("Gun did not have fire selector, adding full");
 
                 ClosedBoltWeapon.FireSelectorMode single = new ClosedBoltWeapon.FireSelectorMode();
                 single.ModeType = ClosedBoltWeapon.FireSelectorModeType.Single;
@@ -317,7 +316,7 @@ namespace FistVR
             }
             else
             {
-                Debug.Log("Gun had fire selector, adding full");
+                //Debug.Log("Gun had fire selector, adding full");
                 List<ClosedBoltWeapon.FireSelectorMode> modes = new List<ClosedBoltWeapon.FireSelectorMode>(gun.FireSelector_Modes);
                 modes.Add(fullAuto);
                 gun.FireSelector_Modes = modes.ToArray();
@@ -330,20 +329,20 @@ namespace FistVR
             fullAuto.ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
             fullAuto.SelectorPosition = 0;
 
-            Debug.Log("Adding full auto to open bolt");
+            //Debug.Log("Adding full auto to open bolt");
 
             if (gun.FireSelector_Modes != null)
             {
-                Debug.Log("Fire Selector options before addition:");
+                //Debug.Log("Fire Selector options before addition:");
                 foreach (OpenBoltReceiver.FireSelectorMode mode in gun.FireSelector_Modes)
                 {
-                    Debug.Log(mode.ModeType);
+                    //Debug.Log(mode.ModeType);
                 }
             }
 
             if (gun.FireSelector_Modes == null || gun.FireSelector_Modes.Length == 0)
             {
-                Debug.Log("Gun did not have fire selector, adding full");
+                //Debug.Log("Gun did not have fire selector, adding full");
 
                 OpenBoltReceiver.FireSelectorMode single = new OpenBoltReceiver.FireSelectorMode();
                 single.ModeType = OpenBoltReceiver.FireSelectorModeType.Single;
@@ -353,7 +352,7 @@ namespace FistVR
             }
             else
             {
-                Debug.Log("Gun had fire selector, adding full");
+                //Debug.Log("Gun had fire selector, adding full");
                 List<OpenBoltReceiver.FireSelectorMode> modes = new List<OpenBoltReceiver.FireSelectorMode>(gun.FireSelector_Modes);
                 modes.Add(fullAuto);
                 gun.FireSelector_Modes = modes.ToArray();
@@ -387,7 +386,7 @@ namespace FistVR
                     {
                         if(handgun.FireSelectorModes == null || !handgun.FireSelectorModes.Any(o => o.ModeType == Handgun.FireSelectorModeType.FullAuto))
                         {
-                            Debug.Log("Hand gun detected!");
+                            //Debug.Log("Hand gun detected!");
                             detectedHandgun = handgun;
                             SetCost();
                             return;
@@ -399,7 +398,7 @@ namespace FistVR
                     {
                         if(closedBolt.FireSelector_Modes == null || !closedBolt.FireSelector_Modes.Any(o => o.ModeType == ClosedBoltWeapon.FireSelectorModeType.FullAuto))
                         {
-                            Debug.Log("Closed bolt detected!");
+                            //Debug.Log("Closed bolt detected!");
                             detectedClosedBolt = closedBolt;
                             SetCost();
                             return;
@@ -411,7 +410,7 @@ namespace FistVR
                     {
                         if(openBolt.FireSelector_Modes == null || !openBolt.FireSelector_Modes.Any(o => o.ModeType == OpenBoltReceiver.FireSelectorModeType.FullAuto))
                         {
-                            Debug.Log("Open bolt detected!");
+                            //Debug.Log("Open bolt detected!");
                             detectedOpenBolt = openBolt;
                             SetCost();
                             return;

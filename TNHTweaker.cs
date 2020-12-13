@@ -412,7 +412,7 @@ namespace FistVR
 
         public static void ClearAllPanels()
         {
-            Debug.Log("Destroying constructors");
+            //Debug.Log("Destroying constructors");
             while (SpawnedConstructors.Count > 0)
             {
                 try
@@ -434,7 +434,7 @@ namespace FistVR
                 SpawnedConstructors.RemoveAt(0);
             }
 
-            Debug.Log("Destroying panels");
+            //Debug.Log("Destroying panels");
             while (SpawnedPanels.Count > 0)
             {
                 Destroy(SpawnedPanels[0]);
@@ -601,14 +601,14 @@ namespace FistVR
 
                 else if (panelType == PanelType.MagUpgrader)
                 {
-                    Debug.Log("Spawning Mag Upgrader!");
+                    //Debug.Log("Spawning Mag Upgrader!");
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(MagUpgrader));
                 }
 
                 else if (panelType == PanelType.AddFullAuto)
                 {
-                    Debug.Log("Spawning Full Auto Adder!");
+                    //Debug.Log("Spawning Full Auto Adder!");
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(FullAutoEnabler));
                 }
@@ -772,7 +772,7 @@ namespace FistVR
             for(int i = 0; i < ___T.NumGuards && i < ___SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = ___SpawnPoints_Sosigs_Defense[i];
-                Debug.Log("Take challenge sosig ID : " + ___T.GID);
+                //Debug.Log("Take challenge sosig ID : " + ___T.GID);
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
                 SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
 

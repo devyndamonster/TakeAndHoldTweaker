@@ -799,14 +799,14 @@ namespace FistVR
                 {
                     foreach (MagazineDataTemplate template in magList)
                     {
-                        if (!LoadedTemplateManager.LoadedMagazineDict.ContainsKey(template.ObjectID))
+                        if (!LoadedTemplateManager.LoadedMagazineDict.ContainsKey(template.ObjectID) && IM.OD.ContainsKey(template.ObjectID))
                         {
                             LoadedTemplateManager.LoadedMagazineDict.Add(template.ObjectID, template);
                         }
 
                         else
                         {
-                            Debug.LogWarning("TNHTweaker -- Attempted to add duplicate magazine : " + template.ObjectID);
+                            Debug.LogWarning("TNHTweaker -- Magazine was either not loaded or already in magazine dictionary! It will not be added! : " + template.ObjectID);
                         }
                     }
                 }
