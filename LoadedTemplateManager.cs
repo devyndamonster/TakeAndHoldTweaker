@@ -118,7 +118,10 @@ namespace FistVR
 
         public static void AddVaultFile(SavedGunSerializable template)
         {
-            LoadedVaultFiles.Add(template.FileName, template);
+            if (!LoadedVaultFiles.ContainsKey(template.FileName))
+            {
+                LoadedVaultFiles.Add(template.FileName, template);
+            }
         }
 
 

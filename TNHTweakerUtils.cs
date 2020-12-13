@@ -649,7 +649,7 @@ namespace FistVR
                 string cacheJson = File.ReadAllText(cachePath);
                 magazineCache = JsonConvert.DeserializeObject<CompatibleMagazineCache>(cacheJson);
 
-                if (!IsMagazineCacheValid(magazineCache))
+                if (!IsMagazineCacheValid(magazineCache, blacklist))
                 {
                     File.Delete(cachePath);
                     magazineCache = null;
@@ -821,7 +821,7 @@ namespace FistVR
         /// </summary>
         /// <param name="magazineCache"></param>
         /// <returns></returns>
-        public static bool IsMagazineCacheValid(CompatibleMagazineCache magazineCache)
+        public static bool IsMagazineCacheValid(CompatibleMagazineCache magazineCache, List<string> blacklist)
         {
             bool cacheValid = true;
 
@@ -847,7 +847,7 @@ namespace FistVR
             }
             foreach (string firearm in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Select(f => f.ItemID))
             {
-                if (!magazineCache.Firearms.Contains(firearm))
+                if (!magazineCache.Firearms.Contains(firearm) && !blacklist.Contains(firearm))
                 {
                     Debug.LogWarning("TNHTweaker -- Firearm not found in cache: " + firearm);
                     cacheValid = false;

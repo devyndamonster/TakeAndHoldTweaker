@@ -549,15 +549,20 @@ namespace FistVR
             int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
 
             
-            if (point.M.EquipmentMode != TNHSetting_EquipmentMode.LimitedAmmo || !isFirst)
+            if (!isFirst)
             {
                 panelTypes.Remove(PanelType.AmmoReloader);
             }
 
+            if(point.M.EquipmentMode != TNHSetting_EquipmentMode.LimitedAmmo)
+            {
+                panelTypes.Remove(PanelType.MagDuplicator);
+            }
+
             for (int i = startingIndex; i < startingIndex + numPanels && i < point.SpawnPoints_Panels.Count && panelTypes.Count > 0; i++)
             {
-                //If this is the first panel, and it's limited, we should ensure that it is an ammo resupply
-                if (panelTypes.Contains(PanelType.AmmoReloader) && point.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo && i == startingIndex && isFirst)
+                //If this is the first panel, we should ensure that it is an ammo resupply
+                if (panelTypes.Contains(PanelType.AmmoReloader) && i == startingIndex && isFirst)
                 {
                     panelType = PanelType.AmmoReloader;
                     panelTypes.Remove(PanelType.AmmoReloader);
