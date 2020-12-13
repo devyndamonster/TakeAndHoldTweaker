@@ -704,8 +704,12 @@ namespace FistVR
             //If this is a level for a default character, we should try to replicate the vanilla layout
             if (!isCustom)
             {
-                MaxSupplyPoints = Mathf.Clamp(levelIndex, 1, 3);
-                MinSupplyPoints = Mathf.Clamp(levelIndex, 1, 2);
+
+
+                MaxSupplyPoints = Mathf.Clamp(levelIndex + 1, 1, 3);
+                MinSupplyPoints = Mathf.Clamp(levelIndex + 1, 1, 3);
+
+
 
                 foreach (Phase phase in HoldPhases)
                 {
