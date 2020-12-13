@@ -491,7 +491,7 @@ namespace FistVR
             for (int i = 0; i < numSupplyPoints; i++)
             {
                 TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointsIndexes[i]];
-                ConfigureSupplyPoint(supplyPoint, level, i==0);
+                ConfigureSupplyPoint(supplyPoint, level, i);
                 TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                 supplyPoint.SetContact(contact);
             }
@@ -504,7 +504,7 @@ namespace FistVR
             return false;
         }
 
-        public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, bool isFirst)
+        public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, int supplyIndex)
         {
             TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point", TNHTweakerLogger.LogType.Character);
 
@@ -520,7 +520,8 @@ namespace FistVR
 
             SpawnSupplyConstructor(supplyPoint, numConstructors);
 
-            SpawnSecondarySupplyPanel(supplyPoint, level, numConstructors, isFirst);
+            level.PossiblePanelTypes.Shuffle();
+            SpawnSecondarySupplyPanel(supplyPoint, level, numConstructors, supplyIndex);
 
             SpawnSupplyBoxes(supplyPoint, level);
 
@@ -539,24 +540,22 @@ namespace FistVR
             }
         }
         
-        public static void SpawnSecondarySupplyPanel(TNH_SupplyPoint point, Level level, int startingIndex, bool isFirst)
+        public static void SpawnSecondarySupplyPanel(TNH_SupplyPoint point, Level level, int startingPanelIndex, int supplyIndex)
         {
             PanelType panelType;
             List<PanelType> panelTypes = new List<PanelType>(level.PossiblePanelTypes);
 
-            if (panelTypes.Count == 0) return;
-
-            int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
-
-            if(point.M.EquipmentMode != TNHSetting_EquipmentMode.LimitedAmmo)
+            if (point.M.EquipmentMode != TNHSetting_EquipmentMode.LimitedAmmo)
             {
                 panelTypes.Remove(PanelType.MagDuplicator);
             }
 
-            for (int i = startingIndex; i < startingIndex + numPanels && i < point.SpawnPoints_Panels.Count && panelTypes.Count > 0; i++)
+            int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
+
+            for (int i = startingPanelIndex; i < startingPanelIndex + numPanels && i < point.SpawnPoints_Panels.Count && panelTypes.Count > 0; i++)
             {
                 //If this is the first panel, we should ensure that it is an ammo resupply
-                if (panelTypes.Contains(PanelType.AmmoReloader) && point.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo && i == startingIndex && isFirst)
+                if (panelTypes.Contains(PanelType.AmmoReloader) && point.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo && i == startingPanelIndex && supplyIndex == 0)
                 {
                     panelType = PanelType.AmmoReloader;
                     panelTypes.Remove(PanelType.AmmoReloader);
@@ -565,15 +564,9 @@ namespace FistVR
                 //Otherwise we just select a random panel from valid panels
                 else
                 {
-                    panelType = panelTypes.GetRandom();
-                    panelTypes.Remove(panelType);
-                }
-
-                //If the valid panel was an ammo resupply, and we aren't limited, then we swap it for something else
-                if(panelType == PanelType.MagDuplicator && point.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking && panelTypes.Count > 0)
-                {
-                    panelType = panelTypes.GetRandom();
-                    panelTypes.Remove(panelType);
+                    if (supplyIndex > panelTypes.Count) supplyIndex = 0;
+                    panelType = panelTypes[supplyIndex];
+                    supplyIndex += 1;
                 }
 
                 GameObject panel = null;

@@ -794,22 +794,25 @@ namespace FistVR
                     }
                 }
 
-                LoadedTemplateManager.LoadedMagazineTypeDict = magazineCache.MagazineData;
-                foreach (List<MagazineDataTemplate> magList in LoadedTemplateManager.LoadedMagazineTypeDict.Values)
+                foreach(KeyValuePair<FireArmMagazineType, List<MagazineDataTemplate>> entry in magazineCache.MagazineData)
                 {
-                    foreach (MagazineDataTemplate template in magList)
+                    for(int i = 0; i < entry.Value.Count; i++)
                     {
-                        if (!LoadedTemplateManager.LoadedMagazineDict.ContainsKey(template.ObjectID) && IM.OD.ContainsKey(template.ObjectID))
+                        if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
                         {
-                            LoadedTemplateManager.LoadedMagazineDict.Add(template.ObjectID, template);
+                            Debug.LogWarning("TNHTweaker -- Magazine in cache was not loaded : " + entry.Value[i].ObjectID);
+                            entry.Value.RemoveAt(i);
+                            i -= 1;
                         }
-
-                        else
+                        else if (!LoadedTemplateManager.LoadedMagazineDict.ContainsKey(entry.Value[i].ObjectID))
                         {
-                            Debug.LogWarning("TNHTweaker -- Magazine was either not loaded or already in magazine dictionary! It will not be added! : " + template.ObjectID);
+                            LoadedTemplateManager.LoadedMagazineDict.Add(entry.Value[i].ObjectID, entry.Value[i]);
                         }
                     }
                 }
+
+                LoadedTemplateManager.LoadedMagazineTypeDict = magazineCache.MagazineData;
+
             }
 
             CacheLoaded = true;

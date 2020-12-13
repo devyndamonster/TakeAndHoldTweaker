@@ -54,6 +54,8 @@ namespace FistVR
                 original.M.SubtractTokens(storedCost);
                 original.M.Increment(10, false);
 
+                Debug.Log(upgradeMag.ObjectID);
+
                 Instantiate(IM.OD[upgradeMag.ObjectID].GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 Destroy(detectedMag.gameObject);
 
