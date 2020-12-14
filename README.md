@@ -7,6 +7,7 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
     - By default the games root folder path is C:\Program Files (x86)\Steam\steamapps\common\H3VR
 2. Download the **TakeAndHoldTweaker(Unzip Me).zip** from the [releases page](https://github.com/devyndamonster/TakeAndHoldTweaker/releases)
 3. Extract that zip file into your H3VR install folder
+![An image showing where to install the mod files](https://i.imgur.com/eZLxmIr.png)
 4. Run H3VR once, and enter the Take &amp; Hold menu scene
     - This may take a while, as it will have to generate a compatible magazines cache
     - This will also generate a config file inside your **Mods/configs** folder
