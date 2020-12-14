@@ -647,7 +647,6 @@ namespace FistVR
             PossiblePanelTypes.Add(PanelType.AmmoReloader);
             PossiblePanelTypes.Add(PanelType.MagDuplicator);
             PossiblePanelTypes.Add(PanelType.Recycler);
-            PossiblePanelTypes.Add(PanelType.MagUpgrader);
             MinConstructors = 1;
             MaxConstructors = 1;
             MinPanels = 1;

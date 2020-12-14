@@ -481,11 +481,16 @@ namespace FistVR
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
             Level level = character.GetCurrentLevel(___m_curLevel);
 
+            
 
             //Generate all of the supply points for this level
             List<int> supplyPointsIndexes = GetNextSupplyPointIndexes(__instance, ___m_curPointSequence, ___m_level, ___m_curHoldIndex);
             int numSupplyPoints = UnityEngine.Random.Range(level.MinSupplyPoints, level.MaxSupplyPoints + 1);
             numSupplyPoints = Mathf.Clamp(numSupplyPoints, 0, supplyPointsIndexes.Count);
+            level.PossiblePanelTypes.Shuffle();
+
+            TNHTweakerLogger.Log("TNHTWEAKER -- Panel types for this hold:", TNHTweakerLogger.LogType.Character);
+            level.PossiblePanelTypes.ForEach(o => TNHTweakerLogger.Log(o.ToString(), TNHTweakerLogger.LogType.Character));
 
             TNHTweakerLogger.Log("TNHTWEAKER -- Spawning " + numSupplyPoints + " supply points", TNHTweakerLogger.LogType.Character);
             for (int i = 0; i < numSupplyPoints; i++)
@@ -506,7 +511,7 @@ namespace FistVR
 
         public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, int supplyIndex)
         {
-            TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point", TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point : " + supplyIndex, TNHTweakerLogger.LogType.Character);
 
             supplyPoint.T = level.TakeChallenge.GetTakeChallenge();
 
@@ -520,7 +525,6 @@ namespace FistVR
 
             SpawnSupplyConstructor(supplyPoint, numConstructors);
 
-            level.PossiblePanelTypes.Shuffle();
             SpawnSecondarySupplyPanel(supplyPoint, level, numConstructors, supplyIndex);
 
             SpawnSupplyBoxes(supplyPoint, level);
@@ -542,11 +546,14 @@ namespace FistVR
         
         public static void SpawnSecondarySupplyPanel(TNH_SupplyPoint point, Level level, int startingPanelIndex, int supplyIndex)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning secondary panels", TNHTweakerLogger.LogType.Character);
+
             PanelType panelType;
             List<PanelType> panelTypes = new List<PanelType>(level.PossiblePanelTypes);
 
             if (point.M.EquipmentMode != TNHSetting_EquipmentMode.LimitedAmmo)
             {
+                TNHTweakerLogger.Log("TNHTWEAKER -- Removing mag duplicator since we are on limited ammo mode", TNHTweakerLogger.LogType.Character);
                 panelTypes.Remove(PanelType.MagDuplicator);
             }
 
@@ -554,9 +561,12 @@ namespace FistVR
 
             for (int i = startingPanelIndex; i < startingPanelIndex + numPanels && i < point.SpawnPoints_Panels.Count && panelTypes.Count > 0; i++)
             {
+                TNHTweakerLogger.Log("TNHTWEAKER -- Panel index : " + i, TNHTweakerLogger.LogType.Character);
+
                 //If this is the first panel, we should ensure that it is an ammo resupply
                 if (panelTypes.Contains(PanelType.AmmoReloader) && point.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo && i == startingPanelIndex && supplyIndex == 0)
                 {
+                    TNHTweakerLogger.Log("TNHTWEAKER -- First supply and first panel on limited ammo, forcing ammo reloader to spawn", TNHTweakerLogger.LogType.Character);
                     panelType = PanelType.AmmoReloader;
                     panelTypes.Remove(PanelType.AmmoReloader);
                 }
@@ -564,9 +574,11 @@ namespace FistVR
                 //Otherwise we just select a random panel from valid panels
                 else
                 {
-                    if (supplyIndex > panelTypes.Count) supplyIndex = 0;
+                    if (supplyIndex >= panelTypes.Count) supplyIndex = 0;
                     panelType = panelTypes[supplyIndex];
                     supplyIndex += 1;
+
+                    TNHTweakerLogger.Log("TNHTWEAKER -- Panel type selected : " + panelType, TNHTweakerLogger.LogType.Character);
                 }
 
                 GameObject panel = null;
