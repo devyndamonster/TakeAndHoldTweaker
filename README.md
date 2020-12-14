@@ -3,7 +3,7 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
 
 ## Installation
 1. Install the [Deli Mod Loader](https://github.com/Deli-Counter/Deli)
-    - Deli requires BepInEx, you can find installation instructions for that [here](https://bepinex.github.io/bepinex_docs/master/articles/user_guide/installation/index.html?tabs=tabid-win)
+    - Deli requires the x64 version of BepInEx, you can find installation instructions for that [here](https://bepinex.github.io/bepinex_docs/master/articles/user_guide/installation/index.html?tabs=tabid-win)
     - By default the games root folder path is C:\Program Files (x86)\Steam\steamapps\common\H3VR
 2. Download the **TakeAndHoldTweaker(Unzip Me).zip** from the [releases page](https://github.com/devyndamonster/TakeAndHoldTweaker/releases)
 3. Extract that zip file into your H3VR install folder
