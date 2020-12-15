@@ -1,15 +1,16 @@
 ﻿using ADepIn;
+using Deli;
+using FistVR;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using UnityEngine;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 
-using TNHTweaker.Character;
-using TNHTweaker.Logger;
-using TNHTweaker.Serializable;
-using TNHTweaker.Utils;
-using UnityEngine;
-
-
-namespace TNHTweaker.Templates
+namespace FistVR
 {
 
     [QuickNamedBind("Sosig")]
