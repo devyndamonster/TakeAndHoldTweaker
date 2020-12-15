@@ -1,17 +1,17 @@
 ﻿using ADepIn;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Policy;
+using System.Text;
 using UnityEngine;
-using FistVR;
-using TNHTweaker.Templates;
-using TNHTweaker.Panels;
-using TNHTweaker.Utils;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 using Valve.Newtonsoft.Json.Serialization;
 
-namespace TNHTweaker.Character
+namespace FistVR
 {
     public class CustomCharacter
     {

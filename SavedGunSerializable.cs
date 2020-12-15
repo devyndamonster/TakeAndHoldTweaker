@@ -1,10 +1,10 @@
 ﻿using System;
-using FistVR;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Valve.Newtonsoft.Json;
 
-namespace TNHTweaker.Serializable
+namespace FistVR
 {
 
     public class SavedGunSerializable

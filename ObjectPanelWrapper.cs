@@ -1,13 +1,12 @@
 ﻿using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
-using FistVR;
-using TNHTweaker.Cache;
-using TNHTweaker.Templates;
 using UnityEngine.UI;
 
-namespace TNHTweaker.Panels
+namespace FistVR
 {
     public enum PanelType
     {
