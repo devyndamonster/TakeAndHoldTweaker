@@ -1,10 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
+using FistVR;
+using TNHTweaker.Cache;
+using TNHTweaker.Character;
+using TNHTweaker.Serializable;
+using TNHTweaker.Panels;
+using TNHTweaker.Logger;
+
 using UnityEngine;
 
-namespace FistVR
+namespace TNHTweaker.Templates
 {
     public static class LoadedTemplateManager
     {

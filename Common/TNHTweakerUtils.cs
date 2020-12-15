@@ -12,7 +12,14 @@ using System.Linq;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 
-namespace FistVR
+using TNHTweaker.Logger;
+using TNHTweaker.Templates;
+using TNHTweaker.Serializable;
+using TNHTweaker.Cache;
+using TNHTweaker.Character;
+
+
+namespace TNHTweaker.Utils
 {
     class TNHTweakerUtils
     {

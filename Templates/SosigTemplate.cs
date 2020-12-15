@@ -1,11 +1,12 @@
-﻿using System;
+﻿using FistVR;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using TNHTweaker.Character;
+using TNHTweaker.Utils;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 
-namespace FistVR
+namespace TNHTweaker.Templates
 {
     public class SosigTemplate
     {

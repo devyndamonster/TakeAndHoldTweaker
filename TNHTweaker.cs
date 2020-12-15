@@ -4,18 +4,23 @@ using UnityEngine;
 using FistVR;
 using HarmonyLib;
 using System.Collections.Generic;
-using System.Reflection;
 using BepInEx.Configuration;
 using System.IO;
 using System.Collections;
 using System.Linq;
-using BepInEx.Logging;
-using System.IO.IsolatedStorage;
-using Valve.Newtonsoft.Json;
 using Deli;
 using ADepIn;
 
-namespace FistVR
+
+using TNHTweaker.Character;
+using TNHTweaker.Extentions;
+using TNHTweaker.Utils;
+using TNHTweaker.Serializable;
+using TNHTweaker.Panels;
+using TNHTweaker.Logger;
+using TNHTweaker.Templates;
+
+namespace TNHTweaker
 {
     [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "0.1.4.0")]
     public class TNHTweaker : DeliBehaviour
