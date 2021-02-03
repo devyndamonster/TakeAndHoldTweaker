@@ -1,10 +1,11 @@
-﻿using System;
+﻿using FistVR;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Valve.Newtonsoft.Json;
 
-namespace FistVR
+namespace TNHTweaker
 {
     public class CompatibleMagazineCache
     {

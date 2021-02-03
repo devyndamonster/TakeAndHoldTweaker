@@ -1,4 +1,5 @@
 ﻿using ADepIn;
+using FistVR;
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 using Valve.Newtonsoft.Json.Serialization;
 
-namespace FistVR
+namespace TNHTweaker
 {
     public class CustomCharacter
     {

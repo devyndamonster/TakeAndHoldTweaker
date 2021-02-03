@@ -15,7 +15,7 @@ using Valve.Newtonsoft.Json;
 using Deli;
 using ADepIn;
 
-namespace FistVR
+namespace TNHTweaker
 {
     [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "0.1.4.0")]
     public class TNHTweaker : DeliBehaviour

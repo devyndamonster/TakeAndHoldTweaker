@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace FistVR
-{
+namespace TNHTweaker
+{  
     public static class Extensions
     {
 

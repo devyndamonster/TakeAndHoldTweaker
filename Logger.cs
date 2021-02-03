@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace FistVR
+namespace TNHTweaker
 {
     static class TNHTweakerLogger
     {

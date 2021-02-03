@@ -10,7 +10,7 @@ using UnityEngine;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 
-namespace FistVR
+namespace TNHTweaker
 {
 
     [QuickNamedBind("Sosig")]

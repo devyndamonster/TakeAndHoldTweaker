@@ -12,7 +12,7 @@ using System.Linq;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 
-namespace FistVR
+namespace TNHTweaker
 {
     class TNHTweakerUtils
     {
@@ -643,6 +643,11 @@ namespace FistVR
 
             List<string> blacklist = GetMagazineCacheBlacklist(path);
 
+            System.Diagnostics.Stopwatch fullWatch = new System.Diagnostics.Stopwatch();
+            System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+            fullWatch.Start();
+            watch.Start();
+
             //If the cache exists, we load it and check it's validity
             if (File.Exists(cachePath))
             {
@@ -654,14 +659,18 @@ namespace FistVR
                     File.Delete(cachePath);
                     magazineCache = null;
                 }
+
+                watch.Stop();
+                Debug.Log("Benchmark -- Loading pre-existing cache took " + watch.ElapsedMilliseconds + "ms");
             }
+
+            watch.Stop();
 
             //If the magazine cache file didn't exist, or wasn't valid, we must build a new one
             if (magazineCache == null)
             {
                 Debug.Log("TNHTweaker -- Building new magazine cache -- This may take a while!");
                 magazineCache = new CompatibleMagazineCache();
-
 
                 //Load all of the magazines into the cache
                 Debug.Log("TNHTweaker -- Loading all magazines");
@@ -679,7 +688,12 @@ namespace FistVR
                     FVRObject magazine = magazines[i];
                     if (!magazineCache.Magazines.Contains(magazine.ItemID))
                     {
+
+                        watch.Start();
                         FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
+                        watch.Stop();
+                        Debug.Log("Benchmark -- Getting magazine component took " + watch.ElapsedMilliseconds + "ms");
+
                         magazineCache.Magazines.Add(magazine.ItemID);
 
                         if (magComp != null)
@@ -704,7 +718,11 @@ namespace FistVR
                     FVRObject firearm = firearms[i];
                     if (blacklist.Contains(firearm.ItemID)) continue;
 
+                    watch.Start();
                     FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
+                    watch.Stop();
+                    Debug.Log("Benchmark -- Getting firearm component took " + watch.ElapsedMilliseconds + "ms");
+
                     magazineCache.Firearms.Add(firearm.ItemID);
 
                     if (firearmComp == null)
@@ -814,6 +832,9 @@ namespace FistVR
                 LoadedTemplateManager.LoadedMagazineTypeDict = magazineCache.MagazineData;
 
             }
+
+            fullWatch.Stop();
+            Debug.Log("Benchmark -- Total magazine caching time took " + fullWatch.ElapsedMilliseconds + "ms");
 
             CacheLoaded = true;
         }
