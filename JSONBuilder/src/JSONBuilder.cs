@@ -7,7 +7,8 @@ using FistVR;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
-using TNHTweaker;
+using TNHTweaker.Character;
+using TNHTweaker.Templates;
 
 namespace JSONBuilder
 {

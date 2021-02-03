@@ -10,14 +10,20 @@ using System.IO;
 using System.Collections;
 using System.Linq;
 using BepInEx.Logging;
-using System.IO.IsolatedStorage;
+using System.Runtime.InteropServices;
 using Valve.Newtonsoft.Json;
-using Deli;
 using ADepIn;
+using Deli;
+using TNHTweaker.Character;
+using TNHTweaker.Logger;
+using TNHTweaker.ObjectPanel;
+using TNHTweaker.Serializable;
+using TNHTweaker.Templates;
+using TNHTweaker.Utils;
+
 
 namespace TNHTweaker
 {
-    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "0.1.4.0")]
     public class TNHTweaker : DeliBehaviour
     {
         private static ConfigEntry<bool> printCharacters;

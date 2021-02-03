@@ -6,11 +6,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using TNHTweaker.Character;
+using TNHTweaker.Logger;
+using TNHTweaker.Serializable;
+using TNHTweaker.Utils;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 
-namespace TNHTweaker
+namespace TNHTweaker.Templates
 {
 
     [QuickNamedBind("Sosig")]

@@ -9,10 +9,15 @@ using BepInEx.Configuration;
 using System.IO;
 using System.Collections;
 using System.Linq;
+using TNHTweaker.Cache;
+using TNHTweaker.Character;
+using TNHTweaker.Logger;
+using TNHTweaker.Serializable;
+using TNHTweaker.Templates;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 
-namespace TNHTweaker
+namespace TNHTweaker.Utils
 {
     class TNHTweakerUtils
     {

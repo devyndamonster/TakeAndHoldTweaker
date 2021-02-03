@@ -3,9 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TNHTweaker.Cache;
+using TNHTweaker.Character;
+using TNHTweaker.Logger;
+using TNHTweaker.ObjectPanel;
+using TNHTweaker.Serializable;
 using UnityEngine;
 
-namespace TNHTweaker
+namespace TNHTweaker.Templates
 {
     public static class LoadedTemplateManager
     {

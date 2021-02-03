@@ -3,10 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TNHTweaker.Character;
+using TNHTweaker.Utils;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 
-namespace TNHTweaker
+namespace TNHTweaker.Templates
 {
     public class SosigTemplate
     {

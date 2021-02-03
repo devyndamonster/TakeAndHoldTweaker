@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace TNHTweaker
+namespace TNHTweaker.Logger
 {
     static class TNHTweakerLogger
     {

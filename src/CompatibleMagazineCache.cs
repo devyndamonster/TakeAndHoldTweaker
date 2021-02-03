@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using Valve.Newtonsoft.Json;
 
-namespace TNHTweaker
+namespace TNHTweaker.Cache
 {
     public class CompatibleMagazineCache
     {

@@ -4,10 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TNHTweaker.Cache;
+using TNHTweaker.Templates;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace TNHTweaker
+namespace TNHTweaker.ObjectPanel
 {
     public enum PanelType
     {

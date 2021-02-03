@@ -3,9 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TNHTweaker.Utils;
 using Valve.Newtonsoft.Json;
 
-namespace TNHTweaker
+namespace TNHTweaker.Serializable
 {
 
     public class SavedGunSerializable
