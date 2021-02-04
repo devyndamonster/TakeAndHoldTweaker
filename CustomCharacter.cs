@@ -520,6 +520,8 @@ namespace TNHTweaker
             TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
 
             objectTable = new ObjectTable();
+
+            //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
             if (!IsCompatibleMagazine && !UseIDOverride)
             {
                 objectTable.Initialize(GetObjectTableDef());
@@ -529,7 +531,8 @@ namespace TNHTweaker
                 }
             }
 
-            return objects.Count != 0;
+            //The table is valid if it has items in it, or is a compatible magazine
+            return objects.Count != 0 || IsCompatibleMagazine;
         }
     }
 
