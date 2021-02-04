@@ -14,10 +14,10 @@ using System.IO.IsolatedStorage;
 using Valve.Newtonsoft.Json;
 using Deli;
 using ADepIn;
+using UnityEngine.UI;
 
 namespace TNHTweaker
 {
-    [BepInPlugin("org.bebinex.plugins.tnhtweaker", "A plugin for tweaking tnh parameters", "0.1.4.0")]
     public class TNHTweaker : DeliBehaviour
     {
         private static ConfigEntry<bool> printCharacters;
@@ -110,7 +110,7 @@ namespace TNHTweaker
 
         [HarmonyPatch(typeof(TNH_UIManager), "Start")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
-        public static bool InitTNH(List<TNH_UIManager.CharacterCategory> ___Categories, TNH_CharacterDatabase ___CharDatabase)
+        public static bool InitTNH(List<TNH_UIManager.CharacterCategory> ___Categories, TNH_CharacterDatabase ___CharDatabase, TNH_UIManager __instance)
         {
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
@@ -156,7 +156,10 @@ namespace TNHTweaker
                 
                 TNHTweakerUtils.LoadMagazineCache(OutputFilePath);
             }
-            
+
+            //Setup the character panel to support more characters
+            ExpandCharacterUI(__instance);
+
             //Load all characters into the UI
             foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharactersDict.Keys)
             {
@@ -169,6 +172,39 @@ namespace TNHTweaker
 
             filesBuilt = true;
             return true;
+        }
+
+        private static void ExpandCharacterUI(TNH_UIManager manager)
+        {
+            //Add additional character buttons
+            OptionsPanel_ButtonSet buttonSet = manager.LBL_CharacterName[1].transform.parent.GetComponent<OptionsPanel_ButtonSet>();
+            List<FVRPointableButton> buttonList = new List<FVRPointableButton>(buttonSet.ButtonsInSet);
+            for (int i = 0; i < 6; i++)
+            {
+                Text newCharacterLabel = Instantiate(manager.LBL_CharacterName[1].gameObject, manager.LBL_CharacterName[1].transform.parent).GetComponent<Text>();
+                Button newButton = newCharacterLabel.gameObject.GetComponent<Button>();
+
+                int buttonIndex = 6 + i;
+
+                newButton.onClick = new Button.ButtonClickedEvent();
+                newButton.onClick.AddListener(() => { manager.SetSelectedCharacter(buttonIndex); });
+                newButton.onClick.AddListener(() => { buttonSet.SetSelectedButton(buttonIndex); });
+
+                manager.LBL_CharacterName.Add(newCharacterLabel);
+                buttonList.Add(newCharacterLabel.gameObject.GetComponent<FVRPointableButton>());
+            }
+            buttonSet.ButtonsInSet = buttonList.ToArray();
+
+            //Adjust buttons to be tighter together
+            float prevY = manager.LBL_CharacterName[0].transform.localPosition.y;
+            for (int i = 1; i < manager.LBL_CharacterName.Count; i++)
+            {
+                Debug.Log("Adjusting panel: " + i);
+                Debug.Log("Previous y: " + prevY);
+                prevY = prevY - 35f;
+                Debug.Log("Next y: " + prevY);
+                manager.LBL_CharacterName[i].transform.localPosition = new Vector3(250, prevY, 0);
+            }
         }
 
         private static void LoadDefaultSosigs()

@@ -665,6 +665,7 @@ namespace TNHTweaker
             }
 
             watch.Stop();
+            watch.Reset();
 
             //If the magazine cache file didn't exist, or wasn't valid, we must build a new one
             if (magazineCache == null)
@@ -693,6 +694,7 @@ namespace TNHTweaker
                         FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
                         watch.Stop();
                         Debug.Log("Benchmark -- Getting magazine component took " + watch.ElapsedMilliseconds + "ms");
+                        watch.Reset();
 
                         magazineCache.Magazines.Add(magazine.ItemID);
 
@@ -722,6 +724,7 @@ namespace TNHTweaker
                     FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
                     watch.Stop();
                     Debug.Log("Benchmark -- Getting firearm component took " + watch.ElapsedMilliseconds + "ms");
+                    watch.Reset();
 
                     magazineCache.Firearms.Add(firearm.ItemID);
 
@@ -730,17 +733,29 @@ namespace TNHTweaker
                         continue;
                     }
 
+                    
+
                     bool addedMagazine = false;
                     foreach (FVRFireArmMagazine magazine in magazineCache.MagazineObjects)
                     {
                         if (firearmComp.MagazineType == magazine.MagazineType && !ListContainsObjectID(firearm.CompatibleMagazines, magazine.ObjectWrapper.ItemID))
                         {
+                            
+                            watch.Start();
+
                             //If this is the first time a magazine has been added to this firearm, we need to create an entry
+                            MagazineCacheEntry entry;
                             if (!addedMagazine)
                             {
-                                magazineCache.Entries.Add(new MagazineCacheEntry());
-                                magazineCache.Entries.Last().FirearmID = firearm.ItemID;
+                                entry = new MagazineCacheEntry();
+                                magazineCache.Entries.Add(entry);
+                                entry.FirearmID = firearm.ItemID;
                             }
+                            else
+                            {
+                                entry = magazineCache.Entries.Last();
+                            }
+
                             addedMagazine = true;
 
                             //Update the ammo and compatible magazines for the entry
@@ -752,12 +767,20 @@ namespace TNHTweaker
                             {
                                 firearm.MinCapacityRelated = magazine.m_capacity;
                             }
-                            magazineCache.Entries.Last().MaxAmmo = firearm.MaxCapacityRelated;
-                            magazineCache.Entries.Last().MinAmmo = firearm.MinCapacityRelated;
+
+                            entry.MaxAmmo = firearm.MaxCapacityRelated;
+                            entry.MinAmmo = firearm.MinCapacityRelated;
                             firearm.CompatibleMagazines.Add(magazine.ObjectWrapper);
-                            magazineCache.Entries.Last().CompatibleMagazines.Add(magazine.ObjectWrapper.ItemID);
+                            entry.CompatibleMagazines.Add(magazine.ObjectWrapper.ItemID);
+
+                            watch.Stop();
+                            Debug.Log("Benchmark -- Optimized version took " + (watch.Elapsed.TotalMilliseconds * 1000000) + " nano seconds");
+                            watch.Reset();
                         }
                     }
+
+                    
+                    
 
                 }
 
