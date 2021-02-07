@@ -114,6 +114,8 @@ namespace TNHTweaker
         {
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
+            Text magazineCacheText = CreateMagazineCacheText(__instance);
+
             //Perform first time setup of all files
             if (!filesBuilt)
             {
@@ -123,7 +125,6 @@ namespace TNHTweaker
                 LoadDefaultSosigs();
                 LoadDefaultCharacters(___CharDatabase.Characters);
                 LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
-
 
                 //Perform the delayed init for default characters
                 Debug.Log("TNHTweaker -- Delayed Init of default characters");
@@ -153,13 +154,18 @@ namespace TNHTweaker
                 TNHTweakerUtils.CreateObjectIDFile(OutputFilePath);
                 TNHTweakerUtils.CreateSosigIDFile(OutputFilePath);
                 TNHTweakerUtils.CreateJsonVaultFiles(OutputFilePath);
-                
-                TNHTweakerUtils.LoadMagazineCache(OutputFilePath);
+
+                //TNHTweakerUtils.LoadMagazineCache(OutputFilePath);
+                AnvilManager.Run(TNHTweakerUtils.LoadMagazineCacheAsync(OutputFilePath, magazineCacheText));
+            }
+            else
+            {
+                magazineCacheText.text = "CACHE BUILT";
             }
 
             //Setup the character panel to support more characters
             ExpandCharacterUI(__instance);
-
+            
             //Load all characters into the UI
             foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharactersDict.Keys)
             {
@@ -172,6 +178,15 @@ namespace TNHTweaker
 
             filesBuilt = true;
             return true;
+        }
+
+        private static Text CreateMagazineCacheText(TNH_UIManager manager)
+        {
+            Text magazineCacheText = Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
+            magazineCacheText.transform.localPosition = new Vector3(0, 550, 0);
+            magazineCacheText.text = "EXAMPLE TEXT";
+
+            return magazineCacheText;
         }
 
         private static void ExpandCharacterUI(TNH_UIManager manager)
@@ -549,7 +564,7 @@ namespace TNHTweaker
         {
             TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point : " + supplyIndex, TNHTweakerLogger.LogType.Character);
 
-            supplyPoint.T = level.TakeChallenge.GetTakeChallenge();
+            supplyPoint.T = level.SupplyChallenge.GetTakeChallenge();
 
             Traverse pointTraverse = Traverse.Create(supplyPoint);
 
@@ -662,15 +677,15 @@ namespace TNHTweaker
 
             Traverse pointTraverse = Traverse.Create(point);
 
-            for (int i = 0; i < level.TakeChallenge.NumGuards && i < point.SpawnPoints_Sosigs_Defense.Count; i++)
+            for (int i = 0; i < level.SupplyChallenge.NumGuards && i < point.SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = point.SpawnPoints_Sosigs_Defense[i];
-                SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[level.TakeChallenge.GetTakeChallenge().GID];
+                SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[level.SupplyChallenge.GetTakeChallenge().GID];
                 SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING SUPPLY GROUP AT " + transform.position, TNHTweakerLogger.LogType.Patrol);
 
-                Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharactersDict[point.M.C], transform, point.M.AI_Difficulty, level.TakeChallenge.IFFUsed, false, transform.position, true);
+                Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharactersDict[point.M.C], transform, point.M.AI_Difficulty, level.SupplyChallenge.IFFUsed, false, transform.position, true);
 
                 pointTraverse.Field("m_activeSosigs").Method("Add", enemy).GetValue();
             }
@@ -680,11 +695,11 @@ namespace TNHTweaker
         public static void SpawnSupplyTurrets(TNH_SupplyPoint point, Level level)
         {
             point.SpawnPoints_Turrets.Shuffle<Transform>();
-            FVRObject turretPrefab = point.M.GetTurretPrefab(level.TakeChallenge.TurretType);
+            FVRObject turretPrefab = point.M.GetTurretPrefab(level.SupplyChallenge.TurretType);
 
             Traverse pointTraverse = Traverse.Create(point);
 
-            for (int i = 0; i < level.TakeChallenge.NumTurrets && i < point.SpawnPoints_Turrets.Count; i++)
+            for (int i = 0; i < level.SupplyChallenge.NumTurrets && i < point.SpawnPoints_Turrets.Count; i++)
             {
                 Vector3 pos = point.SpawnPoints_Turrets[i].position + Vector3.up * 0.25f;
                 AutoMeater turret = Instantiate<GameObject>(turretPrefab.GetGameObject(), pos, point.SpawnPoints_Turrets[i].rotation).GetComponent<AutoMeater>();
