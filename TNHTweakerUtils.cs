@@ -17,8 +17,6 @@ namespace TNHTweaker
 {
     class TNHTweakerUtils
     {
-        public static bool CacheLoaded = true;
-
         public static void CreateObjectIDFile(string path)
         {
             try
@@ -815,17 +813,18 @@ namespace TNHTweaker
                 LoadedTemplateManager.LoadedMagazineTypeDict = magazineCache.MagazineData;
             }
 
-            CacheLoaded = true;
         }
 
 
-        public static IEnumerator LoadMagazineCacheAsync(string path, Text text)
+        public static IEnumerator LoadMagazineCacheAsync(string path, Text text, SceneLoader hotdog)
         {
             CompatibleMagazineCache magazineCache = null;
 
             string cachePath = path + "/CachedCompatibleMags.json";
-
             List<string> blacklist = GetMagazineCacheBlacklist(path);
+
+            text.text = "BUILDING CACHE : 0%";
+            hotdog.gameObject.SetActive(false);
 
             //If the cache exists, we load it and check it's validity
             if (File.Exists(cachePath))
@@ -835,6 +834,7 @@ namespace TNHTweaker
 
                 if (!IsMagazineCacheValid(magazineCache, blacklist))
                 {
+                    Debug.Log("TNHTweaker -- Existing magazine cache was not valid");
                     File.Delete(cachePath);
                     magazineCache = null;
                 }
@@ -867,10 +867,10 @@ namespace TNHTweaker
                     {
                         yield return magazine.GetGameObjectAsync();
                         FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
+                        magazineCache.Magazines.Add(magazine.ItemID);
 
                         if (magComp != null)
                         {
-                            magazineCache.Magazines.Add(magazine.ItemID);
                             magazineCache.MagazineObjects.Add(magComp);
                             magazineCache.AddMagazineData(magComp);
                         }
@@ -893,10 +893,11 @@ namespace TNHTweaker
                     FVRObject firearm = firearms[i];
                     yield return firearm.GetGameObjectAsync();
                     FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
+                    magazineCache.Firearms.Add(firearm.ItemID);
+
                     if (firearmComp == null) continue;
 
                     //If this firearm is valid, then we create a magazine cache entry for it
-                    magazineCache.Firearms.Add(firearm.ItemID);
                     MagazineCacheEntry entry = new MagazineCacheEntry();
                     magazineCache.Entries.Add(entry);
                     entry.FirearmID = firearm.ItemID;
@@ -1003,7 +1004,7 @@ namespace TNHTweaker
             }
 
             text.text = "CACHE BUILT";
-            CacheLoaded = true;
+            hotdog.gameObject.SetActive(true);
         }
 
 

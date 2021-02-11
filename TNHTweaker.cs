@@ -155,8 +155,8 @@ namespace TNHTweaker
                 TNHTweakerUtils.CreateSosigIDFile(OutputFilePath);
                 TNHTweakerUtils.CreateJsonVaultFiles(OutputFilePath);
 
-                //TNHTweakerUtils.LoadMagazineCache(OutputFilePath);
-                AnvilManager.Run(TNHTweakerUtils.LoadMagazineCacheAsync(OutputFilePath, magazineCacheText));
+                SceneLoader sceneHotDog = FindObjectOfType<SceneLoader>();
+                AnvilManager.Run(TNHTweakerUtils.LoadMagazineCacheAsync(OutputFilePath, magazineCacheText, sceneHotDog));
             }
             else
             {
@@ -184,6 +184,7 @@ namespace TNHTweaker
         {
             Text magazineCacheText = Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
             magazineCacheText.transform.localPosition = new Vector3(0, 550, 0);
+            magazineCacheText.transform.localScale = new Vector3(2, 2, 2);
             magazineCacheText.text = "EXAMPLE TEXT";
 
             return magazineCacheText;
@@ -1619,6 +1620,7 @@ namespace TNHTweaker
         {
             return !preventOutfitFunctionality;
         }
+
 
         public static int GetClosestSupplyPointIndex(List<TNH_SupplyPoint> SupplyPoints, Vector3 playerPosition)
         {
