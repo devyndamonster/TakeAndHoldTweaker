@@ -215,10 +215,7 @@ namespace TNHTweaker
             float prevY = manager.LBL_CharacterName[0].transform.localPosition.y;
             for (int i = 1; i < manager.LBL_CharacterName.Count; i++)
             {
-                Debug.Log("Adjusting panel: " + i);
-                Debug.Log("Previous y: " + prevY);
                 prevY = prevY - 35f;
-                Debug.Log("Next y: " + prevY);
                 manager.LBL_CharacterName[i].transform.localPosition = new Vector3(250, prevY, 0);
             }
         }
