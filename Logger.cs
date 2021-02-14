@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BepInEx.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +9,12 @@ namespace TNHTweaker
 {
     static class TNHTweakerLogger
     {
+        public static ManualLogSource BepLog;
 
-        public static bool LogGeneral = false;
+        public static bool AllowLogging = false;
         public static bool LogCharacter = false;
         public static bool LogFile = false;
-        public static bool LogPatrol = false;
+        public static bool LogTNH = false;
 
 
         public enum LogType
@@ -20,32 +22,46 @@ namespace TNHTweaker
             General,
             Character,
             File,
-            Patrol
+            TNH
+        }
+
+        public static void Init()
+        {
+            BepLog = BepInEx.Logging.Logger.CreateLogSource("TNHTweaker");
         }
 
         public static void Log(string log, LogType type)
         {
-            if (LogGeneral)
+            if (AllowLogging)
             {
                 if(type == LogType.General)
                 {
-                    Debug.Log(log);
+                    BepLog.LogInfo(log);
                 }
                 else if(type == LogType.Character && LogCharacter)
                 {
-                    Debug.Log(log);
+                    BepLog.LogInfo(log);
                 }
                 else if (type == LogType.File && LogFile)
                 {
-                    Debug.Log(log);
+                    BepLog.LogInfo(log);
                 }
-                else if (type == LogType.Patrol && LogPatrol)
+                else if (type == LogType.TNH && LogTNH)
                 {
-                    Debug.Log(log);
+                    BepLog.LogInfo(log);
                 }
             }
         }
 
+        public static void LogWarning(string log)
+        {
+            BepLog.LogWarning(log);
+        }
+
+        public static void LogError(string log)
+        {
+            BepLog.LogError(log);
+        }
 
     }
 }

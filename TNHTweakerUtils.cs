@@ -40,7 +40,7 @@ namespace TNHTweaker
 
             catch (Exception ex)
             {
-                Debug.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(ex.ToString());
             }
         }
 
@@ -68,7 +68,7 @@ namespace TNHTweaker
 
             catch (Exception ex)
             {
-                Debug.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(ex.ToString());
             }
         }
 
@@ -96,7 +96,7 @@ namespace TNHTweaker
 
             catch (Exception ex)
             {
-                Debug.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(ex.ToString());
             }
         }
 
@@ -159,7 +159,6 @@ namespace TNHTweaker
                     using (StreamWriter sw = File.CreateText(path + "/" + charDef.DisplayName + ".json"))
                     {
                         string characterString = JsonConvert.SerializeObject(charDef, Formatting.Indented, new StringEnumConverter());
-                        //TNHTweakerLogger.Log(characterString, TNHTweakerLogger.LogType.File);
                         sw.WriteLine(characterString);
                         sw.Close();
                     }
@@ -168,7 +167,7 @@ namespace TNHTweaker
 
             catch (Exception ex)
             {
-                Debug.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(ex.ToString());
             }
         }
 
@@ -197,7 +196,6 @@ namespace TNHTweaker
                     {
                         SosigTemplate sosig = new SosigTemplate(template);
                         string characterString = JsonConvert.SerializeObject(sosig, Formatting.Indented, new StringEnumConverter());
-                        //TNHTweakerLogger.Log(characterString, TNHTweakerLogger.LogType.File);
                         sw.WriteLine(characterString);
                         sw.Close();
                     }
@@ -207,7 +205,7 @@ namespace TNHTweaker
 
             catch (Exception ex)
             {
-                Debug.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(ex.ToString());
             }
         }
 
@@ -241,7 +239,7 @@ namespace TNHTweaker
                     }
                     catch(Exception e)
                     {
-                        Debug.LogError("Vault File could not be loaded");
+                        TNHTweakerLogger.LogError("Vault File could not be loaded");
                     }
                 }
                 
@@ -264,7 +262,7 @@ namespace TNHTweaker
 
             catch (Exception ex)
             {
-                Debug.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(ex.ToString());
             }
         }
 
@@ -289,7 +287,7 @@ namespace TNHTweaker
 
             catch (Exception ex)
             {
-                Debug.LogError(ex.ToString());
+                TNHTweakerLogger.LogError(ex.ToString());
             }
 
             return blacklist;
@@ -365,7 +363,6 @@ namespace TNHTweaker
                 {
                     if (!IM.OD.ContainsKey(table.IDOverride[i]))
                     {
-
                         //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
                         if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(table.IDOverride[i]))
                         {
@@ -376,13 +373,13 @@ namespace TNHTweaker
 
                             else
                             {
-                                Debug.LogWarning("TNHTweaker -- Vaulted gun in table does not have all components loaded, removing it! VaultID : " + table.IDOverride[i]);
+                                TNHTweakerLogger.LogWarning("TNHTweaker -- Vaulted gun in table does not have all components loaded, removing it! VaultID : " + table.IDOverride[i]);
                             }
                         }
 
                         else
                         {
-                            Debug.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + table.IDOverride[i]);
+                            TNHTweakerLogger.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + table.IDOverride[i]);
                         }
 
                         table.IDOverride.RemoveAt(i);
@@ -408,71 +405,78 @@ namespace TNHTweaker
                 {
                     if (!IM.OD.ContainsKey(config.Headwear[i]))
                     {
-                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Headwear[i]);
                         config.Headwear.RemoveAt(i);
                         i -= 1;
                     }
                 }
+                if (config.Headwear.Count == 0) config.Chance_Headwear = 0;
 
                 for (int i = 0; i < config.Facewear.Count; i++)
                 {
                     if (!IM.OD.ContainsKey(config.Facewear[i]))
                     {
-                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Facewear[i]);
                         config.Facewear.RemoveAt(i);
                         i -= 1;
                     }
                 }
+                if (config.Facewear.Count == 0) config.Chance_Facewear = 0;
 
                 for (int i = 0; i < config.Eyewear.Count; i++)
                 {
                     if (!IM.OD.ContainsKey(config.Eyewear[i]))
                     {
-                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Eyewear[i]);
                         config.Eyewear.RemoveAt(i);
                         i -= 1;
                     }
                 }
+                if (config.Eyewear.Count == 0) config.Chance_Eyewear = 0;
 
                 for (int i = 0; i < config.Torsowear.Count; i++)
                 {
                     if (!IM.OD.ContainsKey(config.Torsowear[i]))
                     {
-                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Torsowear[i]);
                         config.Torsowear.RemoveAt(i);
                         i -= 1;
                     }
                 }
+                if (config.Torsowear.Count == 0) config.Chance_Torsowear = 0;
 
                 for (int i = 0; i < config.Pantswear.Count; i++)
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear[i]))
                     {
-                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear[i]);
                         config.Pantswear.RemoveAt(i);
                         i -= 1;
                     }
                 }
+                if (config.Pantswear.Count == 0) config.Chance_Pantswear = 0;
 
                 for (int i = 0; i < config.Pantswear_Lower.Count; i++)
                 {
                     if (!IM.OD.ContainsKey(config.Pantswear_Lower[i]))
                     {
-                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Pantswear_Lower[i]);
                         config.Pantswear_Lower.RemoveAt(i);
                         i -= 1;
                     }
                 }
+                if (config.Pantswear_Lower.Count == 0) config.Chance_Pantswear_Lower = 0;
 
                 for (int i = 0; i < config.Backpacks.Count; i++)
                 {
                     if (!IM.OD.ContainsKey(config.Backpacks[i]))
                     {
-                        Debug.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clothing item not loaded, removing it from clothing config! ObjectID : " + config.Backpacks[i]);
                         config.Backpacks.RemoveAt(i);
                         i -= 1;
                     }
                 }
+                if (config.Backpacks.Count == 0) config.Chance_Backpacks = 0;
             }
 
         }
@@ -676,7 +680,7 @@ namespace TNHTweaker
 
                 if (!IsMagazineCacheValid(magazineCache, blacklist))
                 {
-                    Debug.Log("TNHTweaker -- Existing magazine cache was not valid");
+                    TNHTweakerLogger.Log("TNHTweaker -- Existing magazine cache was not valid", TNHTweakerLogger.LogType.General);
                     File.Delete(cachePath);
                     magazineCache = null;
                 }
@@ -687,11 +691,11 @@ namespace TNHTweaker
             //If the magazine cache file didn't exist, or wasn't valid, we must build a new one
             if (magazineCache == null)
             {
-                Debug.Log("TNHTweaker -- Building new magazine cache -- This may take a while!");
+                TNHTweakerLogger.Log("TNHTweaker -- Building new magazine cache -- This may take a while!", TNHTweakerLogger.LogType.General);
                 magazineCache = new CompatibleMagazineCache();
 
                 //Load all of the magazines into the cache
-                Debug.Log("TNHTweaker -- Loading all magazines");
+                TNHTweakerLogger.Log("TNHTweaker -- Loading all magazines", TNHTweakerLogger.LogType.General);
                 DateTime start = DateTime.Now;
                 List<FVRObject> magazines = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine];
                 for (int i = 0; i < magazines.Count; i++)
@@ -700,7 +704,7 @@ namespace TNHTweaker
                     if ((DateTime.Now - start).TotalSeconds > 2)
                     {
                         start = DateTime.Now;
-                        Debug.Log("-- " + (i * 50 / magazines.Count) + "% --");
+                        TNHTweakerLogger.Log("-- " + (i * 50 / magazines.Count) + "% --", TNHTweakerLogger.LogType.General);
                         text.text = "BUILDING CACHE : " + (i * 50 / magazines.Count) + "%";
                     }
 
@@ -720,14 +724,14 @@ namespace TNHTweaker
                 }
 
                 //Load all firearms into the cache
-                Debug.Log("TNHTweaker -- Applying compatible magazines to firearms");
+                TNHTweakerLogger.Log("TNHTweaker -- Applying compatible magazines to firearms", TNHTweakerLogger.LogType.General);
                 List<FVRObject> firearms = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm];
                 for (int i = 0; i < firearms.Count; i++)
                 {
                     if ((DateTime.Now - start).TotalSeconds > 2)
                     {
                         start = DateTime.Now;
-                        Debug.Log("-- " + ((i * 50 / firearms.Count) + 50) + "% --");
+                        TNHTweakerLogger.Log("-- " + ((i * 50 / firearms.Count) + 50) + "% --", TNHTweakerLogger.LogType.General);
                         text.text = "BUILDING CACHE : " + ((i * 50 / firearms.Count) + 50) + "%";
                     }
 
@@ -787,7 +791,7 @@ namespace TNHTweaker
 
                         else
                         {
-                            Debug.LogWarning("TNHTweaker -- Attempted to add duplicate magazine : " + template.ObjectID);
+                            TNHTweakerLogger.LogWarning("TNHTweaker -- Attempted to add duplicate magazine : " + template.ObjectID);
                         }
                     }
                 }
@@ -804,7 +808,7 @@ namespace TNHTweaker
             //If the cache is valid, we can just load each entry from the cache
             else
             {
-                Debug.Log("TNHTweaker -- Loading existing magazine cache");
+                TNHTweakerLogger.Log("TNHTweaker -- Loading existing magazine cache", TNHTweakerLogger.LogType.General);
 
                 foreach (MagazineCacheEntry entry in magazineCache.Entries)
                 {
@@ -831,7 +835,7 @@ namespace TNHTweaker
                     {
                         if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
                         {
-                            Debug.LogWarning("TNHTweaker -- Magazine in cache was not loaded : " + entry.Value[i].ObjectID);
+                            TNHTweakerLogger.LogWarning("TNHTweaker -- Magazine in cache was not loaded : " + entry.Value[i].ObjectID);
                             entry.Value.RemoveAt(i);
                             i -= 1;
                         }
@@ -875,7 +879,7 @@ namespace TNHTweaker
             {
                 if (!magazineCache.Magazines.Contains(mag))
                 {
-                    Debug.LogWarning("TNHTweaker -- Magazine not found in cache: " + mag);
+                    TNHTweakerLogger.LogWarning("TNHTweaker -- Magazine not found in cache: " + mag);
                     cacheValid = false;
                 }
             }
@@ -883,7 +887,7 @@ namespace TNHTweaker
             {
                 if (!magazineCache.Firearms.Contains(firearm) && !blacklist.Contains(firearm))
                 {
-                    Debug.LogWarning("TNHTweaker -- Firearm not found in cache: " + firearm);
+                    TNHTweakerLogger.LogWarning("TNHTweaker -- Firearm not found in cache: " + firearm);
                     cacheValid = false;
                 }
             }

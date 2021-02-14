@@ -1,4 +1,5 @@
-﻿using FistVR;
+﻿using BepInEx.Logging;
+using FistVR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace TNHTweaker
 {
     public class SosigTemplate
     {
+
         public string DisplayName;
         public SosigEnemyCategory SosigEnemyCategory;
         public string SosigEnemyID;
@@ -74,8 +76,10 @@ namespace TNHTweaker
 
 		public void DelayedInit()
         {
-			if(template != null)
+			if (template != null)
             {
+				TNHTweakerLogger.Log("TNHTweaker -- Delayed init of sosig: " + DisplayName, TNHTweakerLogger.LogType.Character);
+
 				TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
 
 				template.SosigPrefabs = SosigPrefabs.Select(o => IM.OD[o]).ToList();

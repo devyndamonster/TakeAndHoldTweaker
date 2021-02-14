@@ -44,7 +44,7 @@ namespace TNHTweaker
             }
             else
             {
-                Debug.LogError("TNHTweaker -- Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
+                TNHTweakerLogger.LogError("TNHTweaker -- Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
                 return;
             }
 
@@ -70,7 +70,7 @@ namespace TNHTweaker
             }
             else
             {
-                Debug.LogError("TNHTweaker -- Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
+                TNHTweakerLogger.LogError("TNHTweaker -- Loaded sosig had same SosigEnemyID as another sosig -- SosigEnemyID : " + template.SosigEnemyID);
                 return;
             }
 

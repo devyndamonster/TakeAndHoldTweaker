@@ -32,7 +32,7 @@ namespace TNHTweaker
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
 
-            if (original == null) Debug.LogError("Mag Upgrader failed, original Mag Duplicator was null!");
+            if (original == null) TNHTweakerLogger.LogError("Mag Upgrader failed, original Mag Duplicator was null!");
 
             Traverse.Create(original).Field("m_scanTick").SetValue(999999);
 
@@ -171,7 +171,7 @@ namespace TNHTweaker
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
 
-            if (original == null) Debug.LogError("Full Auto Enabler failed, original Mag Duplicator was null!");
+            if (original == null) TNHTweakerLogger.LogError("Full Auto Enabler failed, original Mag Duplicator was null!");
 
             Traverse.Create(original).Field("m_scanTick").SetValue(999999);
 

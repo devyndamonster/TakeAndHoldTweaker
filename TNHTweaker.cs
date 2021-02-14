@@ -1,27 +1,23 @@
-﻿using System;
-using BepInEx;
-using UnityEngine;
+﻿using ADepIn;
+using BepInEx.Configuration;
+using Deli;
 using FistVR;
 using HarmonyLib;
-using System.Collections.Generic;
-using System.Reflection;
-using BepInEx.Configuration;
-using System.IO;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using BepInEx.Logging;
-using System.IO.IsolatedStorage;
-using Valve.Newtonsoft.Json;
-using Deli;
-using ADepIn;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace TNHTweaker
 {
     public class TNHTweaker : DeliBehaviour
     {
+
         private static ConfigEntry<bool> printCharacters;
-        private static ConfigEntry<bool> logPatrols;
+        private static ConfigEntry<bool> logTNH;
         private static ConfigEntry<bool> logFileReads;
         private static ConfigEntry<bool> allowLog;
 
@@ -36,7 +32,8 @@ namespace TNHTweaker
 
         private void Awake()
         {
-            Debug.Log("Hello World (from TNH Tweaker)");
+            TNHTweakerLogger.Init();
+            TNHTweakerLogger.Log("Hello World (from TNH Tweaker)", TNHTweakerLogger.LogType.General);
 
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
 
@@ -60,33 +57,32 @@ namespace TNHTweaker
 
         private void LoadConfigFile()
         {
-            Debug.Log("TNHTweaker -- Getting config file");
+            TNHTweakerLogger.Log("TNHTweaker -- Getting config file", TNHTweakerLogger.LogType.File);
 
             allowLog = Source.Config.Bind("Debug",
                                     "EnableLogging",
-                                    false,
+                                    true,
                                     "Set to true to enable logging");
 
             printCharacters = Source.Config.Bind("Debug",
-                                         "PrintCharacterInfo",
+                                         "LogCharacterInfo",
                                          false,
                                          "Decide if should print all character info");
 
-            logPatrols = Source.Config.Bind("Debug",
-                                    "LogPatrolSpawns",
+            logTNH = Source.Config.Bind("Debug",
+                                    "LogTNH",
                                     false,
-                                    "If true, patrols that spawn will have log output");
+                                    "If true, general TNH information will be logged");
 
             logFileReads = Source.Config.Bind("Debug",
                                     "LogFileReads",
                                     false,
                                     "If true, reading from a file will log the reading process");
 
-            TNHTweakerLogger.LogGeneral = allowLog.Value;
+            TNHTweakerLogger.AllowLogging = allowLog.Value;
             TNHTweakerLogger.LogCharacter = printCharacters.Value;
-            TNHTweakerLogger.LogPatrol = logPatrols.Value;
+            TNHTweakerLogger.LogTNH = logTNH.Value;
             TNHTweakerLogger.LogFile = logFileReads.Value;
-
         }
 
         private void SetupOutputDirectory()
@@ -99,15 +95,6 @@ namespace TNHTweaker
             }
         }
 
-        [HarmonyPatch(typeof(IM), "GenerateItemDBs")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPostfix]
-        public static void DelayedItemInit()
-        {
-            //Debug.Log("TNHTweaker -- Performing delayed init for all loaded characters and sosigs");
-
-        }
-
-
         [HarmonyPatch(typeof(TNH_UIManager), "Start")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool InitTNH(List<TNH_UIManager.CharacterCategory> ___Categories, TNH_CharacterDatabase ___CharDatabase, TNH_UIManager __instance)
@@ -119,35 +106,37 @@ namespace TNHTweaker
             //Perform first time setup of all files
             if (!filesBuilt)
             {
-                Debug.Log("TNHTweaker -- Performing TNH Initialization");
+                TNHTweakerLogger.Log("TNHTweaker -- Performing TNH Initialization", TNHTweakerLogger.LogType.General);
 
                 //Load all of the default templates into our dictionaries
+                TNHTweakerLogger.Log("TNHTweaker -- Adding default sosigs", TNHTweakerLogger.LogType.General);
                 LoadDefaultSosigs();
+                TNHTweakerLogger.Log("TNHTweaker -- Adding default characters", TNHTweakerLogger.LogType.General);
                 LoadDefaultCharacters(___CharDatabase.Characters);
                 LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
 
                 //Perform the delayed init for default characters
-                Debug.Log("TNHTweaker -- Delayed Init of default characters");
+                TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of default characters", TNHTweakerLogger.LogType.General);
                 foreach (CustomCharacter character in LoadedTemplateManager.DefaultCharacters)
                 {
                     character.DelayedInit(false);
                 }
 
                 //Perform the delayed init for all custom loaded characters and sosigs
-                Debug.Log("TNHTweaker -- Delayed Init of custom characters");
+                TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of custom characters", TNHTweakerLogger.LogType.General);
                 foreach (CustomCharacter character in LoadedTemplateManager.CustomCharacters)
                 {
                     character.DelayedInit(true);
                 }
 
-                Debug.Log("TNHTweaker -- Delayed Init of custom sosigs");
+                TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of custom sosigs", TNHTweakerLogger.LogType.General);
                 foreach (SosigTemplate sosig in LoadedTemplateManager.CustomSosigs)
                 {
                     sosig.DelayedInit();
                 }
 
                 //Create files relevant for character creation
-                Debug.Log("TNHTweaker -- Creating character creation files");
+                TNHTweakerLogger.Log("TNHTweaker -- Creating character creation files", TNHTweakerLogger.LogType.General);
                 TNHTweakerUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, OutputFilePath);
                 TNHTweakerUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, OutputFilePath);
                 TNHTweakerUtils.CreateIconIDFile(OutputFilePath, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
@@ -222,8 +211,6 @@ namespace TNHTweaker
 
         private static void LoadDefaultSosigs()
         {
-            TNHTweakerLogger.Log("TNHTweaker -- Adding default sosigs", TNHTweakerLogger.LogType.File);
-
             //Now load all default sosig templates into custom sosig dictionary
             foreach (SosigEnemyTemplate sosig in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Values)
             {
@@ -233,8 +220,7 @@ namespace TNHTweaker
 
         private static void LoadDefaultCharacters(List<TNH_CharacterDef> characters)
         {
-            TNHTweakerLogger.Log("TNHTweaker -- Adding default characters", TNHTweakerLogger.LogType.File);
-
+            
             foreach (TNH_CharacterDef character in characters)
             {
                 LoadedTemplateManager.AddCharacterTemplate(character);
@@ -265,7 +251,7 @@ namespace TNHTweaker
                         {
                             if(obj == null)
                             {
-                                TNHTweakerLogger.Log("TNHTWEAKER -- NULL OBJECT IN TABLE", TNHTweakerLogger.LogType.Character);
+                                TNHTweakerLogger.Log("TNHTWEAKER -- Null object in character table", TNHTweakerLogger.LogType.Character);
                                 continue;
                             }
                             sw.WriteLine("-" + obj.ItemID);
@@ -277,9 +263,8 @@ namespace TNHTweaker
 
             catch (Exception ex)
             {
-                Debug.LogError(ex.ToString());
+                //Debug.LogError(ex.ToString());
             }
-
         }
 
         private static int GetValidPatrolIndex(List<TNH_PatrolChallenge.Patrol> patrols)
@@ -302,7 +287,7 @@ namespace TNHTweaker
         [HarmonyPrefix]
         public static bool GenerateValidPatrolReplacement(TNH_PatrolChallenge P, int curStandardIndex, int excludeHoldIndex, bool isStart, TNH_Manager __instance, TNH_Progression.Level ___m_curLevel, List<TNH_Manager.SosigPatrolSquad> ___m_patrolSquads, ref float ___m_timeTilPatrolCanSpawn)
         {
-            TNHTweakerLogger.Log("TNHTWEAKER -- GENERATING A PATROL -- THERE ARE CURRENTLY " + ___m_patrolSquads.Count + " PATROLS ACTIVE", TNHTweakerLogger.LogType.Patrol);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Generating a patrol -- There are currently " + ___m_patrolSquads.Count + " patrols active", TNHTweakerLogger.LogType.TNH);
 
             if (P.Patrols.Count < 1) return false;
 
@@ -310,12 +295,12 @@ namespace TNHTweaker
             int patrolIndex = GetValidPatrolIndex(P.Patrols);
             if(patrolIndex == -1)
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- NO VALID PATROLS", TNHTweakerLogger.LogType.Patrol);
+                TNHTweakerLogger.Log("TNHTWEAKER -- No valid patrols can spawn", TNHTweakerLogger.LogType.TNH);
                 ___m_timeTilPatrolCanSpawn = 999;
                 return false;
             }
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- VALID PATROL FOUND", TNHTweakerLogger.LogType.Patrol);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Valid patrol found", TNHTweakerLogger.LogType.TNH);
 
             TNH_PatrolChallenge.Patrol patrol = P.Patrols[patrolIndex];
 
@@ -380,7 +365,7 @@ namespace TNHTweaker
             Level currLevel = character.GetCurrentLevel(level);
             Patrol currPatrol = currLevel.GetPatrol(patrol);
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- IS PATROL BOSS: " + currPatrol.IsBoss, TNHTweakerLogger.LogType.Patrol);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Is patrol a boss?: " + currPatrol.IsBoss, TNHTweakerLogger.LogType.TNH);
 
             for (int i = 0; i < PatrolSize; i++)
             {
@@ -477,7 +462,7 @@ namespace TNHTweaker
                 }
                 catch
                 {
-                    Debug.LogWarning("Failed to destroy constructor! It's likely that the constructor is already destroyed, so everything is probably just fine :)");
+                    TNHTweakerLogger.LogWarning("TNHTWEAKER -- Failed to destroy constructor! It's likely that the constructor is already destroyed, so everything is probably just fine :)");
                 }
                 
                 SpawnedConstructors.RemoveAt(0);
@@ -538,10 +523,10 @@ namespace TNHTweaker
             numSupplyPoints = Mathf.Clamp(numSupplyPoints, 0, supplyPointsIndexes.Count);
             level.PossiblePanelTypes.Shuffle();
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- Panel types for this hold:", TNHTweakerLogger.LogType.Character);
-            level.PossiblePanelTypes.ForEach(o => TNHTweakerLogger.Log(o.ToString(), TNHTweakerLogger.LogType.Character));
+            TNHTweakerLogger.Log("TNHTWEAKER -- Panel types for this hold:", TNHTweakerLogger.LogType.TNH);
+            level.PossiblePanelTypes.ForEach(o => TNHTweakerLogger.Log(o.ToString(), TNHTweakerLogger.LogType.TNH));
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning " + numSupplyPoints + " supply points", TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning " + numSupplyPoints + " supply points", TNHTweakerLogger.LogType.TNH);
             for (int i = 0; i < numSupplyPoints; i++)
             {
                 TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointsIndexes[i]];
@@ -560,7 +545,7 @@ namespace TNHTweaker
 
         public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, int supplyIndex)
         {
-            TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point : " + supplyIndex, TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point : " + supplyIndex, TNHTweakerLogger.LogType.TNH);
 
             supplyPoint.T = level.SupplyChallenge.GetTakeChallenge();
 
@@ -584,6 +569,8 @@ namespace TNHTweaker
 
         public static void SpawnSupplyConstructor(TNH_SupplyPoint point, int toSpawn)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning constructor panel", TNHTweakerLogger.LogType.TNH);
+
             point.SpawnPoints_Panels.Shuffle();
             
             for(int i = 0; i < toSpawn && i < point.SpawnPoints_Panels.Count; i++)
@@ -595,14 +582,14 @@ namespace TNHTweaker
         
         public static void SpawnSecondarySupplyPanel(TNH_SupplyPoint point, Level level, int startingPanelIndex, int supplyIndex)
         {
-            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning secondary panels", TNHTweakerLogger.LogType.Character);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning secondary panels", TNHTweakerLogger.LogType.TNH);
 
             PanelType panelType;
             List<PanelType> panelTypes = new List<PanelType>(level.PossiblePanelTypes);
 
             if (point.M.EquipmentMode != TNHSetting_EquipmentMode.LimitedAmmo)
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- Removing mag duplicator since we are on limited ammo mode", TNHTweakerLogger.LogType.Character);
+                TNHTweakerLogger.Log("TNHTWEAKER -- Removing mag duplicator since we are on limited ammo mode", TNHTweakerLogger.LogType.TNH);
                 panelTypes.Remove(PanelType.MagDuplicator);
             }
 
@@ -610,12 +597,12 @@ namespace TNHTweaker
 
             for (int i = startingPanelIndex; i < startingPanelIndex + numPanels && i < point.SpawnPoints_Panels.Count && panelTypes.Count > 0; i++)
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- Panel index : " + i, TNHTweakerLogger.LogType.Character);
+                TNHTweakerLogger.Log("TNHTWEAKER -- Panel index : " + i, TNHTweakerLogger.LogType.TNH);
 
                 //If this is the first panel, we should ensure that it is an ammo resupply
                 if (panelTypes.Contains(PanelType.AmmoReloader) && point.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo && i == startingPanelIndex && supplyIndex == 0)
                 {
-                    TNHTweakerLogger.Log("TNHTWEAKER -- First supply and first panel on limited ammo, forcing ammo reloader to spawn", TNHTweakerLogger.LogType.Character);
+                    TNHTweakerLogger.Log("TNHTWEAKER -- First supply and first panel on limited ammo, forcing ammo reloader to spawn", TNHTweakerLogger.LogType.TNH);
                     panelType = PanelType.AmmoReloader;
                     panelTypes.Remove(PanelType.AmmoReloader);
                 }
@@ -627,7 +614,7 @@ namespace TNHTweaker
                     panelType = panelTypes[supplyIndex];
                     supplyIndex += 1;
 
-                    TNHTweakerLogger.Log("TNHTWEAKER -- Panel type selected : " + panelType, TNHTweakerLogger.LogType.Character);
+                    TNHTweakerLogger.Log("TNHTWEAKER -- Panel type selected : " + panelType, TNHTweakerLogger.LogType.TNH);
                 }
 
                 GameObject panel = null;
@@ -664,7 +651,12 @@ namespace TNHTweaker
                 //If we spawned a panel, add it to the global list
                 if (panel != null)
                 {
+                    TNHTweakerLogger.Log("TNHTWEAKER -- Panel spawned successfully", TNHTweakerLogger.LogType.TNH);
                     SpawnedPanels.Add(panel);
+                }
+                else
+                {
+                    TNHTweakerLogger.LogWarning("TNHTWEAKER -- Failed to spawn secondary panel!");
                 }
             }
         }
@@ -680,8 +672,6 @@ namespace TNHTweaker
                 Transform transform = point.SpawnPoints_Sosigs_Defense[i];
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[level.SupplyChallenge.GetTakeChallenge().GID];
                 SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
-
-                TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING SUPPLY GROUP AT " + transform.position, TNHTweakerLogger.LogType.Patrol);
 
                 Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharactersDict[point.M.C], transform, point.M.AI_Difficulty, level.SupplyChallenge.IFFUsed, false, transform.position, true);
 
@@ -715,7 +705,7 @@ namespace TNHTweaker
 
             int boxesToSpawn = UnityEngine.Random.Range(level.MinBoxesSpawned, level.MaxBoxesSpawned + 1);
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- GOING TO SPAWN " + boxesToSpawn + " BOXES AT THIS SUPPLY POINT -- MIN (" + level.MinBoxesSpawned + "), MAX (" + level.MaxBoxesSpawned + ")", TNHTweakerLogger.LogType.General);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Going to spawn " + boxesToSpawn + " boxes at this point -- Min (" + level.MinBoxesSpawned + "), Max (" + level.MaxBoxesSpawned + ")", TNHTweakerLogger.LogType.TNH);
 
             for (int i = 0; i < boxesToSpawn; i++)
             {
@@ -724,7 +714,6 @@ namespace TNHTweaker
                 Quaternion rotation = Quaternion.Slerp(spawnTransform.rotation, UnityEngine.Random.rotation, 0.1f);
                 GameObject box = Instantiate(point.M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, point.M.Prefabs_ShatterableCrates.Count)], position, rotation);
                 boxes.Add(box);
-                TNHTweakerLogger.Log("TNHTWEAKER -- BOX SPAWNED", TNHTweakerLogger.LogType.General);
             }
 
             int tokensSpawned = 0;
@@ -824,8 +813,6 @@ namespace TNHTweaker
                 SosigEnemyTemplate template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[___T.GID];
                 SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
 
-                TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING TAKE GROUP AT " + transform.position, TNHTweakerLogger.LogType.Patrol);
-
                 Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharactersDict[___M.C], transform, ___M.AI_Difficulty, ___T.IFFUsed, false, transform.position, true);
 
                 ___m_activeSosigs.Add(enemy);
@@ -912,7 +899,7 @@ namespace TNHTweaker
         {
             if (character.ForceAllAgentWeapons) allowAllWeapons = true;
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING SOSIG: " + template.SosigEnemyID, TNHTweakerLogger.LogType.Patrol);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning sosig: " + template.SosigEnemyID, TNHTweakerLogger.LogType.TNH);
 
             //Create the sosig object
             GameObject sosigPrefab = Instantiate(IM.OD[template.SosigPrefabs.GetRandom<string>()].GetGameObject(), spawnLocation.position, spawnLocation.rotation);
@@ -1025,7 +1012,7 @@ namespace TNHTweaker
 
                 if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(spawnedObject))
                 {
-                    Debug.LogWarning("TNHTweaker -- Tried to add vaulted gun to sosigs dropped items, but spawning of vaulted items not supported yet! Nothing will be dropped!");
+                    TNHTweakerLogger.LogWarning("TNHTweaker -- Tried to add vaulted gun to sosigs dropped items, but spawning of vaulted items not supported yet! Nothing will be dropped!");
                 }
 
                 else
@@ -1107,7 +1094,7 @@ namespace TNHTweaker
             weapon.SetAutoDestroy(true);
             weapon.O.SpawnLockable = false;
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- EQUIPPING WEAPON: " + weapon.gameObject.name, TNHTweakerLogger.LogType.Patrol);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Equipping sosig weapon: " + weapon.gameObject.name, TNHTweakerLogger.LogType.TNH);
 
             //Equip the sosig weapon to the sosig
             sosig.ForceEquip(weapon);
@@ -1195,7 +1182,7 @@ namespace TNHTweaker
                         
             if(grenadeChance >= UnityEngine.Random.Range(0f, 1f))
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- THROWING A GRENADE ", TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.Log("TNHTWEAKER -- Throwing grenade ", TNHTweakerLogger.LogType.TNH);
 
                 //Get a random grenade vector to spawn a grenade at
                 TNH_HoldPoint.AttackVector randAttackVector = AttackVectors[UnityEngine.Random.Range(0, AttackVectors.Count)];
@@ -1211,7 +1198,7 @@ namespace TNHTweaker
 
         public static void SpawnHoldEnemyGroup(TNH_HoldChallenge.Phase curPhase, int phaseIndex, List<TNH_HoldPoint.AttackVector> AttackVectors, List<Transform> SpawnPoints_Turrets, List<Sosig> ActiveSosigs, TNH_Manager M, ref bool isFirstWave)
         {
-            TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING AN ENEMY WAVE", TNHTweakerLogger.LogType.General);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning enemy wave", TNHTweakerLogger.LogType.TNH);
 
             //TODO add custom property form MinDirections
             int numAttackVectors = UnityEngine.Random.Range(1, curPhase.MaxDirections + 1);
@@ -1232,7 +1219,7 @@ namespace TNHTweaker
             int vectorIndex = 0;
             while(sosigsSpawned < enemiesToSpawn)
             {
-                TNHTweakerLogger.Log("TNHTWEAKER -- SPAWNING AT ATTACK VECTOR: " + vectorIndex, TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.Log("TNHTWEAKER -- Spawning at attack vector: " + vectorIndex, TNHTweakerLogger.LogType.TNH);
 
                 if (AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint) break;
 
@@ -1251,8 +1238,6 @@ namespace TNHTweaker
                 Sosig enemy = SpawnEnemy(customTemplate, character, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M.AI_Difficulty, curPhase.IFFUsed, true, targetVector, true);
 
                 ActiveSosigs.Add(enemy);
-
-                TNHTweakerLogger.Log("TNHTWEAKER -- SOSIG SPAWNED", TNHTweakerLogger.LogType.General);
 
                 //At this point, the leader has been spawned, so always set enemy to be regulars
                 enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.EnemyType.GetRandom<string>()]];
@@ -1407,6 +1392,8 @@ namespace TNHTweaker
 
         private static IEnumerator SpawnObjectAtConstructor(EquipmentPoolDef.PoolEntry entry, TNH_ObjectConstructor constructor, Traverse constructorTraverse)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning item at constructor", TNHTweakerLogger.LogType.TNH);
+
             constructorTraverse.Field("allowEntry").SetValue(false);
             EquipmentPool pool = LoadedTemplateManager.EquipmentPoolDictionary[entry];
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[constructor.M.C];
@@ -1414,6 +1401,8 @@ namespace TNHTweaker
 
             if(pool.Tables[0].SpawnsInLargeCase || pool.Tables[0].SpawnsInSmallCase)
             {
+                TNHTweakerLogger.Log("TNHTWEAKER -- Item will spawn in a container", TNHTweakerLogger.LogType.TNH);
+
                 GameObject caseFab = constructor.M.Prefab_WeaponCaseLarge;
                 if (pool.Tables[0].SpawnsInSmallCase) caseFab = constructor.M.Prefab_WeaponCaseSmall;
 
@@ -1426,16 +1415,21 @@ namespace TNHTweaker
 
             else
             {
+                TNHTweakerLogger.Log("TNHTWEAKER -- Item will spawn without a container", TNHTweakerLogger.LogType.TNH);
+
                 int mainSpawnCount = 0;
                 int requiredSpawnCount = 0;
                 int ammoSpawnCount = 0;
                 int objectSpawnCount = 0;
 
+
+                TNHTweakerLogger.Log("TNHTWEAKER -- Pool has " + pool.Tables.Count + " tables to spawn from" ,TNHTweakerLogger.LogType.TNH);
                 for (int tableIndex = 0; tableIndex < pool.Tables.Count; tableIndex++)
                 {
                     ObjectPool table = pool.Tables[tableIndex];
 
-                    for(int itemIndex = 0; itemIndex < table.ItemsToSpawn; itemIndex++)
+                    TNHTweakerLogger.Log("TNHTWEAKER -- Table will spawn " + table.ItemsToSpawn + " items from it", TNHTweakerLogger.LogType.TNH);
+                    for (int itemIndex = 0; itemIndex < table.ItemsToSpawn; itemIndex++)
                     {
                         FVRObject mainObject;
                         SavedGunSerializable vaultFile = null;
@@ -1446,22 +1440,30 @@ namespace TNHTweaker
 
                         if (table.IsCompatibleMagazine)
                         {
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Item will be a compatible magazine", TNHTweakerLogger.LogType.TNH);
                             mainObject = TNHTweakerUtils.GetMagazineForEquipped(table.MinAmmoCapacity, table.MaxAmmoCapacity);
-                            if (mainObject == null) break;
+                            if (mainObject == null)
+                            {
+                                TNHTweakerLogger.LogWarning("TNHTWEAKER -- Failed to spawn a compatible magazine!");
+                                break;
+                            }
                         }
 
                         else
                         {
                             string item = table.GetObjects().GetRandom();
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Item selected: " + item, TNHTweakerLogger.LogType.TNH);
 
                             if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(item))
                             {
+                                TNHTweakerLogger.Log("TNHTWEAKER -- Item is a vaulted gun", TNHTweakerLogger.LogType.TNH);
                                 vaultFile = LoadedTemplateManager.LoadedVaultFiles[item];
                                 mainObject = vaultFile.GetGunObject();
                             }
 
                             else
                             {
+                                TNHTweakerLogger.Log("TNHTWEAKER -- Item is a normal object", TNHTweakerLogger.LogType.TNH);
                                 mainObject = IM.OD[item];
                             }
                         }
@@ -1487,12 +1489,14 @@ namespace TNHTweaker
                         if (vaultFile != null)
                         {
                             AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(vaultFile, primarySpawn, trackedObjects));
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Vaulted gun spawned", TNHTweakerLogger.LogType.TNH);
                         }
                         else
                         {
                             yield return mainObject.GetGameObjectAsync();
                             GameObject spawnedObject = Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * 0.2f * mainSpawnCount, primarySpawn.rotation);
                             trackedObjects.Add(spawnedObject);
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Normal item spawned", TNHTweakerLogger.LogType.TNH);
                         }
 
                         
@@ -1503,6 +1507,7 @@ namespace TNHTweaker
                             GameObject requiredItem = Instantiate(mainObject.RequiredSecondaryPieces[j].GetGameObject(), requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
                             trackedObjects.Add(requiredItem);
                             requiredSpawnCount += 1;
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Required item spawned", TNHTweakerLogger.LogType.TNH);
                         }
 
 
@@ -1510,6 +1515,8 @@ namespace TNHTweaker
                         FVRObject ammoObject = mainObject.GetRandomAmmoObject(mainObject, character.ValidAmmoEras, table.MinAmmoCapacity, table.MaxAmmoCapacity, character.ValidAmmoSets);
                         if (ammoObject != null)
                         {
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Item has compatible ammo object: " + ammoObject.ItemID, TNHTweakerLogger.LogType.TNH);
+
                             int spawnCount = table.NumMagsSpawned;
 
                             if (ammoObject.Category == FVRObject.ObjectCategory.Cartridge)
@@ -1538,11 +1545,14 @@ namespace TNHTweaker
                             GameObject spawnedSight = Instantiate(sight.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
                             trackedObjects.Add(spawnedSight);
 
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Required sight spawned", TNHTweakerLogger.LogType.TNH);
+
                             for (int j = 0; j < sight.RequiredSecondaryPieces.Count; j++)
                             {
                                 yield return sight.RequiredSecondaryPieces[j].GetGameObjectAsync();
                                 GameObject spawnedRequired = Instantiate(sight.RequiredSecondaryPieces[j].GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
                                 trackedObjects.Add(spawnedRequired);
+                                TNHTweakerLogger.Log("TNHTWEAKER -- Required item for sight spawned", TNHTweakerLogger.LogType.TNH);
                             }
 
                             objectSpawnCount += 1;
@@ -1555,8 +1565,9 @@ namespace TNHTweaker
                             yield return bespoke.GetGameObjectAsync();
                             GameObject bespokeObject = Instantiate(bespoke.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
                             trackedObjects.Add(bespokeObject);
-
                             objectSpawnCount += 1;
+
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Bespoke item spawned", TNHTweakerLogger.LogType.TNH);
                         }
                     }
                 }
@@ -1588,54 +1599,11 @@ namespace TNHTweaker
             return true;
         }
 
-
-        [HarmonyPatch(typeof(TNH_SupplyPoint), "Configure")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPrefix]
-        public static bool PrintSupplyPoint(TNH_SupplyPoint.SupplyPanelType panelType)
-        {
-            TNHTweakerLogger.Log("TNHTWEAKER -- CONFIGURING SUPPLY POINT -- PANEL TYPE: " + panelType.ToString(), TNHTweakerLogger.LogType.General);
-            return true;
-        }
-
-
-        [HarmonyPatch(typeof(FVRObject), "GetRandomAmmoObject")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPrefix]
-        public static bool PrintCompatableMagazines(FVRObject __instance)
-        {
-            TNHTweakerLogger.Log("TNHTWEAKER -- COMPATABLE MAGAZINE COUNT: " + __instance.CompatibleMagazines.Count, TNHTweakerLogger.LogType.General);
-            foreach(FVRObject mag in __instance.CompatibleMagazines)
-            {
-                TNHTweakerLogger.Log(mag.ItemID, TNHTweakerLogger.LogType.General);
-            }
-            return true;
-        }
-
-
         [HarmonyPatch(typeof(Sosig), "BuffHealing_Invis")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool OverrideCloaking()
         {
             return !preventOutfitFunctionality;
         }
-
-
-        public static int GetClosestSupplyPointIndex(List<TNH_SupplyPoint> SupplyPoints, Vector3 playerPosition)
-        {
-            float minDist = 999999999f;
-            int minIndex = 0;
-
-            for (int i = 0; i < SupplyPoints.Count; i++)
-            {
-                float dist = Vector3.Distance(SupplyPoints[i].SpawnPoint_PlayerSpawn.position, playerPosition);
-                if(dist < minDist)
-                {
-                    minDist = dist;
-                    minIndex = i;
-                }
-            }
-
-            return minIndex;
-        }
-
     }
 }

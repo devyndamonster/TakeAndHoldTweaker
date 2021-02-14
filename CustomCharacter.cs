@@ -165,7 +165,7 @@ namespace TNHTweaker
         {
             if(character == null)
             {
-                Debug.LogError("TNHTweaker -- Tried to get character, but it hasn't been initialized yet! Returning null! Character Name : " + DisplayName);
+                TNHTweakerLogger.LogError("TNHTweaker -- Tried to get character, but it hasn't been initialized yet! Returning null! Character Name : " + DisplayName);
                 return null;
             }
 
@@ -227,45 +227,47 @@ namespace TNHTweaker
 
         public void DelayedInit(bool isCustom)
         {
-            if (!PrimaryWeapon.DelayedInit(isCustom))
+            TNHTweakerLogger.Log("TNHTweaker -- Delayed init of character: " + DisplayName, TNHTweakerLogger.LogType.Character);
+
+            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(isCustom))
             {
-                Debug.LogWarning("TNHTweaker -- Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryWeapon = false;
                 character.Has_Weapon_Primary = false;
             }
-            if (!SecondaryWeapon.DelayedInit(isCustom))
+            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(isCustom))
             {
-                Debug.LogWarning("TNHTweaker -- Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryWeapon = false;
                 character.Has_Weapon_Secondary = false;
             }
-            if (!TertiaryWeapon.DelayedInit(isCustom))
+            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(isCustom))
             {
-                Debug.LogWarning("TNHTweaker -- Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryWeapon = false;
                 character.Has_Weapon_Tertiary = false;
             }
-            if (!PrimaryItem.DelayedInit(isCustom))
+            if (HasPrimaryItem && !PrimaryItem.DelayedInit(isCustom))
             {
-                Debug.LogWarning("TNHTweaker -- Primary starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryItem = false;
                 character.Has_Item_Primary = false;
             }
-            if (!SecondaryItem.DelayedInit(isCustom))
+            if (HasSecondaryItem && !SecondaryItem.DelayedInit(isCustom))
             {
-                Debug.LogWarning("TNHTweaker -- Secondary starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryItem = false;
                 character.Has_Item_Secondary = false;
             }
-            if (!TertiaryItem.DelayedInit(isCustom))
+            if (HasTertiaryItem && !TertiaryItem.DelayedInit(isCustom))
             {
-                Debug.LogWarning("TNHTweaker -- Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryItem = false;
                 character.Has_Item_Tertiary = false;
             }
-            if (!Shield.DelayedInit(isCustom))
+            if (HasShield && !Shield.DelayedInit(isCustom))
             {
-                Debug.LogWarning("TNHTweaker -- Shield starting item had no pools to spawn from, and will not spawn equipment!");
+                TNHTweakerLogger.LogWarning("TNHTweaker -- Shield starting item had no pools to spawn from, and will not spawn equipment!");
                 HasShield = false;
                 character.Has_Item_Shield = false;
             }
@@ -280,7 +282,7 @@ namespace TNHTweaker
             {
                 EquipmentPool pool = EquipmentPools[i];
                 if(!pool.DelayedInit(characterMod, path, isCustom)){
-                    Debug.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
+                    TNHTweakerLogger.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
                     i-=1;
