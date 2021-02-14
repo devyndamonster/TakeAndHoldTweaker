@@ -13,7 +13,6 @@ namespace TNHTweaker
         public string DisplayName;
         public SosigEnemyCategory SosigEnemyCategory;
         public string SosigEnemyID;
-        public string EnemyType;
         public List<string> SosigPrefabs;
         public List<SosigConfig> Configs;
         public List<SosigConfig> ConfigsEasy;
@@ -36,7 +35,6 @@ namespace TNHTweaker
             DisplayName = template.DisplayName;
             SosigEnemyCategory = template.SosigEnemyCategory;
             SosigEnemyID = template.SosigEnemyID.ToString();
-            EnemyType = template.EnemyType.ToString();
             SecondaryChance = template.SecondaryChance;
             TertiaryChance = template.TertiaryChance;
 

@@ -545,54 +545,78 @@ namespace TNHTweaker
             FVRInteractiveObject rightHandObject = GM.CurrentMovementManager.Hands[0].CurrentInteractable;
             FVRInteractiveObject leftHandObject = GM.CurrentMovementManager.Hands[1].CurrentInteractable;
 
+            //First we want to get any firearms that are in the players hands
             if(rightHandObject is FVRFireArm && (rightHandObject as FVRFireArm).ObjectWrapper != null)
             {
-                heldGuns.Add((rightHandObject as FVRFireArm).ObjectWrapper);
+                FVRObject firearm = (rightHandObject as FVRFireArm).ObjectWrapper;
+                if (firearm.CompatibleClips.Count > 0 || firearm.CompatibleMagazines.Count > 0 || firearm.CompatibleSpeedLoaders.Count > 0)
+                {
+                    heldGuns.Add(firearm);
+                }  
             }
             if (leftHandObject is FVRFireArm && (leftHandObject as FVRFireArm).ObjectWrapper != null)
             {
-                heldGuns.Add((leftHandObject as FVRFireArm).ObjectWrapper);
+                FVRObject firearm = (leftHandObject as FVRFireArm).ObjectWrapper;
+                if (firearm.CompatibleClips.Count > 0 || firearm.CompatibleMagazines.Count > 0 || firearm.CompatibleSpeedLoaders.Count > 0)
+                {
+                    heldGuns.Add(firearm);
+                }
             }
 
-            foreach(FVRQuickBeltSlot slot in GM.CurrentPlayerBody.QuickbeltSlots)
+            //After prioritizing the players hands, if the player didn't have any valid guns in their hands, then we can search for guns on their body
+            if(heldGuns.Count == 0)
             {
-                if (slot.CurObject is FVRFireArm && (slot.CurObject as FVRFireArm).ObjectWrapper != null)
+                foreach (FVRQuickBeltSlot slot in GM.CurrentPlayerBody.QuickbeltSlots)
                 {
-                    FVRObject firearm = (slot.CurObject as FVRFireArm).ObjectWrapper;
-
-                    if(firearm.CompatibleClips.Count > 0 || firearm.CompatibleMagazines.Count > 0 || firearm.CompatibleSpeedLoaders.Count > 0)
+                    if (slot.CurObject is FVRFireArm && (slot.CurObject as FVRFireArm).ObjectWrapper != null)
                     {
-                        heldGuns.Add(firearm);
-                    }
-                }
+                        FVRObject firearm = (slot.CurObject as FVRFireArm).ObjectWrapper;
 
-                else if (slot.CurObject is PlayerBackPack && (slot.CurObject as PlayerBackPack).ObjectWrapper != null)
-                {
-                    foreach (FVRQuickBeltSlot backpackSlot in GM.CurrentPlayerBody.QuickbeltSlots)
-                    {
-                        if (backpackSlot.CurObject is FVRFireArm && (backpackSlot.CurObject as FVRFireArm).ObjectWrapper != null)
+                        if (firearm.CompatibleClips.Count > 0 || firearm.CompatibleMagazines.Count > 0 || firearm.CompatibleSpeedLoaders.Count > 0)
                         {
-                            FVRObject firearm = (backpackSlot.CurObject as FVRFireArm).ObjectWrapper;
+                            heldGuns.Add(firearm);
+                        }
+                    }
 
-                            if (firearm.CompatibleClips.Count > 0 || firearm.CompatibleMagazines.Count > 0 || firearm.CompatibleSpeedLoaders.Count > 0)
+                    else if (slot.CurObject is PlayerBackPack && (slot.CurObject as PlayerBackPack).ObjectWrapper != null)
+                    {
+                        foreach (FVRQuickBeltSlot backpackSlot in GM.CurrentPlayerBody.QuickbeltSlots)
+                        {
+                            if (backpackSlot.CurObject is FVRFireArm && (backpackSlot.CurObject as FVRFireArm).ObjectWrapper != null)
                             {
-                                heldGuns.Add(firearm);
+                                FVRObject firearm = (backpackSlot.CurObject as FVRFireArm).ObjectWrapper;
+
+                                if (firearm.CompatibleClips.Count > 0 || firearm.CompatibleMagazines.Count > 0 || firearm.CompatibleSpeedLoaders.Count > 0)
+                                {
+                                    heldGuns.Add(firearm);
+                                }
                             }
                         }
                     }
                 }
             }
-
+            
             if(heldGuns.Count > 0)
             {
                 FVRObject firearm = heldGuns.GetRandom();
 
+                //If this guns has compatible magazines, priorotize spawing them
                 if (firearm.CompatibleMagazines.Count > 0)
                 {
+                    //First try to return a magazine within the specified capacity
                     List<MagazineDataTemplate> validMagazines = GetMagazinesWithinCapacity(minCapacity, maxCapacity, firearm);
-                    if (validMagazines.Count > 0) return IM.OD[validMagazines.GetRandom().ObjectID];
-                    else return IM.OD[GetSmallestCapacityMagazine(firearm).ObjectID];
+                    if (validMagazines.Count > 0)
+                    {
+                        return IM.OD[validMagazines.GetRandom().ObjectID];
+                    }
+
+                    //If there were no valid magazines, just return the smallest one compatible with the weapon
+                    MagazineDataTemplate smallestMagazine = GetSmallestCapacityMagazine(firearm);
+                    if(smallestMagazine != null && IM.OD.ContainsKey(smallestMagazine.ObjectID)){
+                        return IM.OD[GetSmallestCapacityMagazine(firearm).ObjectID];
+                    }
                 }
+
                 else if (firearm.CompatibleClips.Count > 0) return firearm.CompatibleClips.GetRandom();
                 else return firearm.CompatibleSpeedLoaders.GetRandom();
             }
@@ -618,7 +642,7 @@ namespace TNHTweaker
 
         public static MagazineDataTemplate GetSmallestCapacityMagazine(FVRObject firearm)
         {
-            List<MagazineDataTemplate> magazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[firearm.ItemID]).ToList();
+            List<MagazineDataTemplate> magazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[o.ItemID]).ToList();
             if (magazines.Count == 0) return null;
 
             MagazineDataTemplate smallestMagazine = magazines[0];
@@ -631,188 +655,6 @@ namespace TNHTweaker
             }
 
             return smallestMagazine;
-        }
-
-        
-        public static void LoadMagazineCache(string path)
-        {
-            CompatibleMagazineCache magazineCache = null;
-
-            string cachePath = path + "/CachedCompatibleMags.json";
-
-            List<string> blacklist = GetMagazineCacheBlacklist(path);
-
-            //If the cache exists, we load it and check it's validity
-            if (File.Exists(cachePath))
-            {
-                string cacheJson = File.ReadAllText(cachePath);
-                magazineCache = JsonConvert.DeserializeObject<CompatibleMagazineCache>(cacheJson);
-
-                if (!IsMagazineCacheValid(magazineCache, blacklist))
-                {
-                    File.Delete(cachePath);
-                    magazineCache = null;
-                }
-
-            }
-
-
-            //If the magazine cache file didn't exist, or wasn't valid, we must build a new one
-            if (magazineCache == null)
-            {
-                Debug.Log("TNHTweaker -- Building new magazine cache -- This may take a while!");
-                magazineCache = new CompatibleMagazineCache();
-
-                //Load all of the magazines into the cache
-                Debug.Log("TNHTweaker -- Loading all magazines");
-                DateTime start = DateTime.Now;
-                List<FVRObject> magazines = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Magazine];
-                for (int i = 0; i < magazines.Count; i++)
-                {
-
-                    if((DateTime.Now - start).TotalSeconds > 2)
-                    {
-                        start = DateTime.Now;
-                        Debug.Log("-- " + (i * 100 / magazines.Count) + "% --");
-                    }
-
-                    FVRObject magazine = magazines[i];
-                    if (!magazineCache.Magazines.Contains(magazine.ItemID))
-                    {
-                        FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
-                        
-                        if (magComp != null)
-                        {
-                            magazineCache.Magazines.Add(magazine.ItemID);
-                            magazineCache.MagazineObjects.Add(magComp);
-                            magazineCache.AddMagazineData(magComp);
-                        }
-                    }
-                }
-
-                //Load all firearms into the cache
-                Debug.Log("TNHTweaker -- Applying compatible magazines to firearms");
-                List<FVRObject> firearms = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm];
-                for (int i = 0; i < firearms.Count; i++)
-                {
-                    if ((DateTime.Now - start).TotalSeconds > 2)
-                    {
-                        start = DateTime.Now;
-                        Debug.Log("-- " + (i * 100 / firearms.Count) + "% --");
-                    }
-
-                    //First we should try and get the component of the firearm
-                    FVRObject firearm = firearms[i];
-                    FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
-                    if (firearmComp == null) continue;
-
-                    //If this firearm is valid, then we create a magazine cache entry for it
-                    magazineCache.Firearms.Add(firearm.ItemID);
-                    MagazineCacheEntry entry = new MagazineCacheEntry();
-                    magazineCache.Entries.Add(entry);
-                    entry.FirearmID = firearm.ItemID;
-                    entry.MaxAmmo = firearm.MaxCapacityRelated;
-                    entry.MinAmmo = firearm.MinCapacityRelated;
-
-                    //Loop through every magazine, and add compatible ones to the current firearm
-                    foreach (FVRFireArmMagazine magazine in magazineCache.MagazineObjects)
-                    {
-                        if (firearmComp.MagazineType == magazine.MagazineType)
-                        {
-                            //If the firearm isn't in the blacklist, and has a new magazine that isn't compatible yet, then we make it compatible
-                            if (!firearm.CompatibleMagazines.Contains(magazine.ObjectWrapper) && !blacklist.Contains(firearm.ItemID))
-                            {
-                                if (firearm.MaxCapacityRelated < magazine.m_capacity)
-                                {
-                                    firearm.MaxCapacityRelated = magazine.m_capacity;
-                                }
-                                if (firearm.MinCapacityRelated > magazine.m_capacity)
-                                {
-                                    firearm.MinCapacityRelated = magazine.m_capacity;
-                                }
-
-                                firearm.CompatibleMagazines.Add(magazine.ObjectWrapper);
-                            }
-
-                            entry.MaxAmmo = firearm.MaxCapacityRelated;
-                            entry.MinAmmo = firearm.MinCapacityRelated;
-                            entry.CompatibleMagazines.Add(magazine.ObjectWrapper.ItemID);
-                        }
-                    }
-
-                }
-
-                //Load all of this data into the template manager
-                LoadedTemplateManager.LoadedMagazineTypeDict = magazineCache.MagazineData;
-                foreach(List<MagazineDataTemplate> magList in LoadedTemplateManager.LoadedMagazineTypeDict.Values)
-                {
-                    foreach (MagazineDataTemplate template in magList)
-                    {
-                        if (!LoadedTemplateManager.LoadedMagazineDict.ContainsKey(template.ObjectID))
-                        {
-                            LoadedTemplateManager.LoadedMagazineDict.Add(template.ObjectID, template);
-                        }
-
-                        else
-                        {
-                            Debug.LogWarning("TNHTweaker -- Attempted to add duplicate magazine : " + template.ObjectID);
-                        }
-                    }
-                }
-
-                //Create the cache file 
-                using (StreamWriter sw = File.CreateText(cachePath))
-                {
-                    string cacheString = JsonConvert.SerializeObject(magazineCache, Formatting.Indented, new StringEnumConverter());
-                    sw.WriteLine(cacheString);
-                    sw.Close();
-                }
-            }
-
-            //If the cache is valid, we can just load each entry from the cache
-            else
-            {
-                Debug.Log("TNHTweaker -- Loading existing magazine cache");
-
-                foreach (MagazineCacheEntry entry in magazineCache.Entries)
-                {
-                    if (blacklist.Contains(entry.FirearmID)) continue;
-
-                    if (IM.OD.ContainsKey(entry.FirearmID))
-                    {
-                        FVRObject firearm = IM.OD[entry.FirearmID];
-                        foreach (string mag in entry.CompatibleMagazines)
-                        {
-                            if (IM.OD.ContainsKey(mag))
-                            {
-                                firearm.CompatibleMagazines.Add(IM.OD[mag]);
-                            }
-                        }
-                        firearm.MaxCapacityRelated = entry.MaxAmmo;
-                        firearm.MinCapacityRelated = entry.MinAmmo;
-                    }
-                }
-
-                foreach(KeyValuePair<FireArmMagazineType, List<MagazineDataTemplate>> entry in magazineCache.MagazineData)
-                {
-                    for(int i = 0; i < entry.Value.Count; i++)
-                    {
-                        if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
-                        {
-                            Debug.LogWarning("TNHTweaker -- Magazine in cache was not loaded : " + entry.Value[i].ObjectID);
-                            entry.Value.RemoveAt(i);
-                            i -= 1;
-                        }
-                        else if (!LoadedTemplateManager.LoadedMagazineDict.ContainsKey(entry.Value[i].ObjectID))
-                        {
-                            LoadedTemplateManager.LoadedMagazineDict.Add(entry.Value[i].ObjectID, entry.Value[i]);
-                        }
-                    }
-                }
-
-                LoadedTemplateManager.LoadedMagazineTypeDict = magazineCache.MagazineData;
-            }
-
         }
 
 

@@ -50,7 +50,6 @@ namespace TNHTweaker
 
             //Now fill out the SosigEnemyIDs values for the real sosig template (These will effectively be ints, but this is ok since enums are just ints in disguise)
             realTemplate.SosigEnemyID = (SosigEnemyID)SosigIDDict[template.SosigEnemyID];
-            realTemplate.EnemyType = (TNH_EnemyType)SosigIDDict[template.SosigEnemyID];
 
             //Finally add the templates to our global dictionary
             CustomSosigs.Add(template);
