@@ -23,7 +23,7 @@ namespace TNHTweaker
         public TNH_MagDuplicator original;
 
         private FVRFireArmMagazine detectedMag = null;
-        private MagazineDataTemplate upgradeMag = null;
+        private AmmoObjectDataTemplate upgradeMag = null;
         private int storedCost = 0;
         private Collider[] colBuffer = new Collider[50];
         private float scanTick = 1f;
@@ -126,11 +126,11 @@ namespace TNHTweaker
             }
         }
 
-        private MagazineDataTemplate GetNextHighestCapacityMagazine(FVRFireArmMagazine mag)
+        private AmmoObjectDataTemplate GetNextHighestCapacityMagazine(FVRFireArmMagazine mag)
         {
-            MagazineDataTemplate nextLargestMag = new MagazineDataTemplate(mag);
+            AmmoObjectDataTemplate nextLargestMag = new AmmoObjectDataTemplate(mag);
 
-            foreach(MagazineDataTemplate magTemplate in LoadedTemplateManager.LoadedMagazineTypeDict[mag.MagazineType])
+            foreach(AmmoObjectDataTemplate magTemplate in LoadedTemplateManager.LoadedMagazineTypeDict[mag.MagazineType])
             {
                 //If are next largest is the same size as the original, then we take a larger magazine
                 if(magTemplate.Capacity > mag.m_capacity && mag.m_capacity == nextLargestMag.Capacity)

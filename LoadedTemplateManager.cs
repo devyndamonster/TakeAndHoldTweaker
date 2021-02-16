@@ -20,8 +20,12 @@ namespace TNHTweaker
         public static List<SosigTemplate> CustomSosigs = new List<SosigTemplate>();
         public static List<SosigEnemyTemplate> DefaultSosigs = new List<SosigEnemyTemplate>();
         public static Dictionary<string, int> SosigIDDict = new Dictionary<string, int>();
-        public static Dictionary<FireArmMagazineType, List<MagazineDataTemplate>> LoadedMagazineTypeDict = new Dictionary<FireArmMagazineType, List<MagazineDataTemplate>>();
-        public static Dictionary<string, MagazineDataTemplate> LoadedMagazineDict = new Dictionary<string, MagazineDataTemplate>();
+        public static Dictionary<FireArmMagazineType, List<AmmoObjectDataTemplate>> LoadedMagazineTypeDict = new Dictionary<FireArmMagazineType, List<AmmoObjectDataTemplate>>();
+        public static Dictionary<FireArmClipType, List<AmmoObjectDataTemplate>> LoadedClipTypeDict = new Dictionary<FireArmClipType, List<AmmoObjectDataTemplate>>();
+        public static Dictionary<FireArmRoundType, List<AmmoObjectDataTemplate>> LoadedBulletTypeDict = new Dictionary<FireArmRoundType, List<AmmoObjectDataTemplate>>();
+        public static Dictionary<string, AmmoObjectDataTemplate> LoadedMagazineDict = new Dictionary<string, AmmoObjectDataTemplate>();
+        public static Dictionary<string, AmmoObjectDataTemplate> LoadedClipDict = new Dictionary<string, AmmoObjectDataTemplate>();
+        public static Dictionary<string, AmmoObjectDataTemplate> LoadedBulletDict = new Dictionary<string, AmmoObjectDataTemplate>();
 
         public static int NewSosigID = 30000;
         public static int NewCharacterID = 30;
@@ -122,6 +126,133 @@ namespace TNHTweaker
             {
                 LoadedVaultFiles.Add(template.FileName, template);
             }
+        }
+
+
+        public static void AddMagazineData(CompatibleMagazineCache magazineCache)
+        {
+            //Load all of this data into the template manager
+            LoadedMagazineTypeDict = magazineCache.MagazineData;
+            foreach (List<AmmoObjectDataTemplate> magList in LoadedMagazineTypeDict.Values)
+            {
+                foreach (AmmoObjectDataTemplate template in magList)
+                {
+                    if (!LoadedMagazineDict.ContainsKey(template.ObjectID))
+                    {
+                        LoadedMagazineDict.Add(template.ObjectID, template);
+                    }
+
+                    else
+                    {
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Attempted to add duplicate magazine : " + template.ObjectID);
+                    }
+                }
+            }
+
+            //Load all of this data into the template manager
+            LoadedClipTypeDict = magazineCache.ClipData;
+            foreach (List<AmmoObjectDataTemplate> clipList in LoadedClipTypeDict.Values)
+            {
+                foreach (AmmoObjectDataTemplate template in clipList)
+                {
+                    if (!LoadedClipDict.ContainsKey(template.ObjectID))
+                    {
+                        LoadedClipDict.Add(template.ObjectID, template);
+                    }
+
+                    else
+                    {
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Attempted to add duplicate clip : " + template.ObjectID);
+                    }
+                }
+            }
+
+            //Load all of this data into the template manager
+            LoadedBulletTypeDict = magazineCache.BulletData;
+            foreach (List<AmmoObjectDataTemplate> bulletList in LoadedBulletTypeDict.Values)
+            {
+                foreach (AmmoObjectDataTemplate template in bulletList)
+                {
+                    if (!LoadedBulletDict.ContainsKey(template.ObjectID))
+                    {
+                        LoadedBulletDict.Add(template.ObjectID, template);
+                    }
+
+                    else
+                    {
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Attempted to add duplicate bullet : " + template.ObjectID);
+                    }
+                }
+            }
+        }
+
+        public static void AddMagazineDataFromLoad(CompatibleMagazineCache magazineCache)
+        {
+            //Loop through all magazine objects by type
+            foreach (KeyValuePair<FireArmMagazineType, List<AmmoObjectDataTemplate>> entry in magazineCache.MagazineData)
+            {
+                //Loop through the magazines of the selected type
+                for (int i = 0; i < entry.Value.Count; i++)
+                {
+                    //If the magazine is not loaded, remove it
+                    if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
+                    {
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Magazine in cache was not loaded : " + entry.Value[i].ObjectID);
+                        entry.Value.RemoveAt(i);
+                        i -= 1;
+                    }
+
+                    else if (!LoadedMagazineDict.ContainsKey(entry.Value[i].ObjectID))
+                    {
+                        entry.Value[i].AmmoObject = IM.OD[entry.Value[i].ObjectID];
+                        LoadedMagazineDict.Add(entry.Value[i].ObjectID, entry.Value[i]);
+                    }
+                }
+            }
+            LoadedMagazineTypeDict = magazineCache.MagazineData;
+
+
+            foreach (KeyValuePair<FireArmClipType, List<AmmoObjectDataTemplate>> entry in magazineCache.ClipData)
+            {
+                for (int i = 0; i < entry.Value.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
+                    {
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clip in cache was not loaded : " + entry.Value[i].ObjectID);
+                        entry.Value.RemoveAt(i);
+                        i -= 1;
+                    }
+
+                    else if (!LoadedClipDict.ContainsKey(entry.Value[i].ObjectID))
+                    {
+                        entry.Value[i].AmmoObject = IM.OD[entry.Value[i].ObjectID];
+                        LoadedClipDict.Add(entry.Value[i].ObjectID, entry.Value[i]);
+                    }
+                }
+            }
+            LoadedClipTypeDict = magazineCache.ClipData;
+
+
+            foreach (KeyValuePair<FireArmRoundType, List<AmmoObjectDataTemplate>> entry in magazineCache.BulletData)
+            {
+                for (int i = 0; i < entry.Value.Count; i++)
+                {
+                    if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
+                    {
+                        TNHTweakerLogger.LogWarning("TNHTweaker -- Bullet in cache was not loaded : " + entry.Value[i].ObjectID);
+                        entry.Value.RemoveAt(i);
+                        i -= 1;
+                    }
+
+                    else if (!LoadedBulletDict.ContainsKey(entry.Value[i].ObjectID))
+                    {
+                        entry.Value[i].AmmoObject = IM.OD[entry.Value[i].ObjectID];
+                        LoadedBulletDict.Add(entry.Value[i].ObjectID, entry.Value[i]);
+                    }
+                }
+            }
+            LoadedBulletTypeDict = magazineCache.BulletData;
+
         }
 
 
