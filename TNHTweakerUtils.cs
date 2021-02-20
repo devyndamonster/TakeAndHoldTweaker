@@ -1109,6 +1109,19 @@ namespace TNHTweaker
             }
             return false;
         }
+
+        public static bool SavedGunComponentsLoaded(SavedGun gun)
+        {
+            foreach(SavedGunComponent comp in gun.Components)
+            {
+                if (IM.OD.ContainsKey(comp.ObjectID))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 
     

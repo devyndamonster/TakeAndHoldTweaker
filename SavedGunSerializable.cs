@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 using Valve.Newtonsoft.Json;
 
 namespace TNHTweaker
@@ -16,6 +17,9 @@ namespace TNHTweaker
         public List<FireArmRoundClass> LoadedRoundsInChambers;
         public List<string> SavedFlags;
 
+        public bool OverrideFireSelectors;
+        public List<FireSelectorMode> FireSelectorModes;
+
         [JsonIgnore]
         private SavedGun gun;
 
@@ -28,6 +32,9 @@ namespace TNHTweaker
             LoadedRoundsInMag = gun.LoadedRoundsInMag;
             LoadedRoundsInChambers = gun.LoadedRoundsInChambers;
             SavedFlags = gun.SavedFlags;
+
+            FireSelectorModes = new List<FireSelectorMode>();
+            LoadFireSelectorModes();
 
             this.gun = gun;
         }
@@ -69,6 +76,44 @@ namespace TNHTweaker
             }
 
             return null;
+        }
+
+        private void LoadFireSelectorModes()
+        {
+            GameObject gunObject = GetGunObject().GetGameObject();
+
+            Handgun handgunComp = gunObject.GetComponent<Handgun>();
+            if(handgunComp != null)
+            {
+                foreach(Handgun.FireSelectorMode mode in handgunComp.FireSelectorModes)
+                {
+                    FireSelectorModes.Add(new FireSelectorMode(mode));
+                }
+
+                return;
+            }
+
+            ClosedBoltWeapon closedBoltComp = gunObject.GetComponent<ClosedBoltWeapon>();
+            if (closedBoltComp != null)
+            {
+                foreach (ClosedBoltWeapon.FireSelectorMode mode in closedBoltComp.FireSelector_Modes)
+                {
+                    FireSelectorModes.Add(new FireSelectorMode(mode));
+                }
+
+                return;
+            }
+
+            OpenBoltReceiver openBoltComp = gunObject.GetComponent<OpenBoltReceiver>();
+            if (openBoltComp != null)
+            {
+                foreach (OpenBoltReceiver.FireSelectorMode mode in openBoltComp.FireSelector_Modes)
+                {
+                    FireSelectorModes.Add(new FireSelectorMode(mode));
+                }
+
+                return;
+            }
         }
 
     }
@@ -134,4 +179,46 @@ namespace TNHTweaker
         }
 
     }
+
+
+    public class FireSelectorMode
+    {
+        public float SelectorPosition;
+        public FireSelectorModeType ModeType;
+        public int BurstAmount;
+
+        public FireSelectorMode() { }
+
+        public FireSelectorMode(Handgun.FireSelectorMode mode)
+        {
+            SelectorPosition = mode.SelectorPosition;
+            ModeType = (FireSelectorModeType)Enum.Parse(typeof(FireSelectorModeType), mode.ModeType.ToString());
+            BurstAmount = mode.BurstAmount;
+        }
+
+        public FireSelectorMode(ClosedBoltWeapon.FireSelectorMode mode)
+        {
+            SelectorPosition = mode.SelectorPosition;
+            ModeType = (FireSelectorModeType)Enum.Parse(typeof(FireSelectorModeType), mode.ModeType.ToString());
+            BurstAmount = mode.BurstAmount;
+        }
+
+        public FireSelectorMode(OpenBoltReceiver.FireSelectorMode mode)
+        {
+            SelectorPosition = mode.SelectorPosition;
+            ModeType = (FireSelectorModeType)Enum.Parse(typeof(FireSelectorModeType), mode.ModeType.ToString());
+            BurstAmount = -1;
+        }
+    }
+
+
+    public enum FireSelectorModeType
+    {
+        Safe,
+        Single,
+        Burst,
+        FullAuto,
+        SuperFastBurst
+    }
+
 }

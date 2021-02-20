@@ -225,6 +225,21 @@ namespace TNHTweaker
             return requiredSightsTable;
         }
 
+        public bool CharacterUsesSosig(string id)
+        {
+            foreach(Level level in Levels)
+            {
+                if (level.LevelUsesSosig(id)) return true;
+            }
+
+            foreach (Level level in LevelsEndless)
+            {
+                if (level.LevelUsesSosig(id)) return true;
+            }
+
+            return false;
+        }
+
         public void DelayedInit(bool isCustom)
         {
             TNHTweakerLogger.Log("TNHTweaker -- Delayed init of character: " + DisplayName, TNHTweakerLogger.LogType.Character);
@@ -721,6 +736,53 @@ namespace TNHTweaker
                     phase.DelayedInit(isCustom);
                 }
             }
+        }
+
+        public bool LevelUsesSosig(string id)
+        {
+            if (TakeChallenge.EnemyType == id)
+            {
+                return true;
+            }
+
+            else if (SupplyChallenge.EnemyType == id)
+            {
+                return true;
+            }
+
+            foreach (Patrol patrol in Patrols)
+            {
+                if (patrol.LeaderType == id)
+                {
+                    return true;
+                }
+
+                foreach (string sosigID in patrol.EnemyType)
+                {
+                    if (sosigID == id)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            foreach (Phase phase in HoldPhases)
+            {
+                if (phase.LeaderType == id)
+                {
+                    return true;
+                }
+
+                foreach (string sosigID in phase.EnemyType)
+                {
+                    if (sosigID == id)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 

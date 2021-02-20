@@ -30,6 +30,13 @@ namespace TNHTweaker
         private static bool filesBuilt = false;
         private static bool preventOutfitFunctionality = false;
 
+        ///////////////////////////////////////////////
+        //INITIALIZING THE TAKE AND HOLD TWEAKER PLUGIN
+        ///////////////////////////////////////////////
+
+        /// <summary>
+        /// First method that gets called
+        /// </summary>
         private void Awake()
         {
             TNHTweakerLogger.Init();
@@ -44,7 +51,9 @@ namespace TNHTweaker
             LoadPanelSprites();
         }
 
-
+        /// <summary>
+        /// Loads the sprites used in secondary panels in TNH
+        /// </summary>
         private void LoadPanelSprites()
         {
             Option<Texture2D> magUpgradeContent = Source.Resources.Get<Texture2D>("mag_upgrade.png");
@@ -52,9 +61,11 @@ namespace TNHTweaker
 
             Option<Texture2D> fullAutoContent = Source.Resources.Get<Texture2D>("full_auto.png");
             LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, TNHTweakerUtils.LoadSprite(fullAutoContent.Expect("TNHTweaker -- Failed to load Full Auto Adder icon!")));
-
         }
 
+        /// <summary>
+        /// Loads the bepinex config file, and applys those settings
+        /// </summary>
         private void LoadConfigFile()
         {
             TNHTweakerLogger.Log("TNHTweaker -- Getting config file", TNHTweakerLogger.LogType.File);
@@ -85,6 +96,9 @@ namespace TNHTweaker
             TNHTweakerLogger.LogFile = logFileReads.Value;
         }
 
+        /// <summary>
+        /// Creates the main TNH Tweaker file folder
+        /// </summary>
         private void SetupOutputDirectory()
         {
             OutputFilePath = Application.dataPath.Replace("/h3vr_Data", "/TNH_Tweaker");
@@ -95,6 +109,19 @@ namespace TNHTweaker
             }
         }
 
+
+        //////////////////////////////////
+        //INITIALIZING TAKE AND HOLD SCENE
+        //////////////////////////////////
+
+
+        /// <summary>
+        /// Performs initial setup of the TNH Scene when loaded
+        /// </summary>
+        /// <param name="___Categories"></param>
+        /// <param name="___CharDatabase"></param>
+        /// <param name="__instance"></param>
+        /// <returns></returns>
         [HarmonyPatch(typeof(TNH_UIManager), "Start")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool InitTNH(List<TNH_UIManager.CharacterCategory> ___Categories, TNH_CharacterDatabase ___CharDatabase, TNH_UIManager __instance)
@@ -109,31 +136,21 @@ namespace TNHTweaker
                 TNHTweakerLogger.Log("TNHTweaker -- Performing TNH Initialization", TNHTweakerLogger.LogType.General);
 
                 //Load all of the default templates into our dictionaries
-                TNHTweakerLogger.Log("TNHTweaker -- Adding default sosigs", TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.Log("TNHTweaker -- Adding default sosigs to template dictionary", TNHTweakerLogger.LogType.General);
                 LoadDefaultSosigs();
-                TNHTweakerLogger.Log("TNHTweaker -- Adding default characters", TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.Log("TNHTweaker -- Adding default characters to template dictionary", TNHTweakerLogger.LogType.General);
                 LoadDefaultCharacters(___CharDatabase.Characters);
+
                 LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
 
-                //Perform the delayed init for default characters
                 TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of default characters", TNHTweakerLogger.LogType.General);
-                foreach (CustomCharacter character in LoadedTemplateManager.DefaultCharacters)
-                {
-                    character.DelayedInit(false);
-                }
+                InitCharacters(LoadedTemplateManager.DefaultCharacters, false);
 
-                //Perform the delayed init for all custom loaded characters and sosigs
                 TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of custom characters", TNHTweakerLogger.LogType.General);
-                foreach (CustomCharacter character in LoadedTemplateManager.CustomCharacters)
-                {
-                    character.DelayedInit(true);
-                }
+                InitCharacters(LoadedTemplateManager.CustomCharacters, true);
 
                 TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of custom sosigs", TNHTweakerLogger.LogType.General);
-                foreach (SosigTemplate sosig in LoadedTemplateManager.CustomSosigs)
-                {
-                    sosig.DelayedInit();
-                }
+                InitSosigs(LoadedTemplateManager.CustomSosigs);
 
                 //Create files relevant for character creation
                 TNHTweakerLogger.Log("TNHTweaker -- Creating character creation files", TNHTweakerLogger.LogType.General);
@@ -169,6 +186,11 @@ namespace TNHTweaker
             return true;
         }
 
+        /// <summary>
+        /// Creates the additional text above the character select screen, and returns that text component
+        /// </summary>
+        /// <param name="manager"></param>
+        /// <returns></returns>
         private static Text CreateMagazineCacheText(TNH_UIManager manager)
         {
             Text magazineCacheText = Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
@@ -179,6 +201,11 @@ namespace TNHTweaker
             return magazineCacheText;
         }
 
+
+        /// <summary>
+        /// Adds more space for characters to be displayed in the TNH menu
+        /// </summary>
+        /// <param name="manager"></param>
         private static void ExpandCharacterUI(TNH_UIManager manager)
         {
             //Add additional character buttons
@@ -209,25 +236,93 @@ namespace TNHTweaker
             }
         }
 
+        /// <summary>
+        /// Loads all default sosigs into the template manager
+        /// </summary>
         private static void LoadDefaultSosigs()
         {
-            //Now load all default sosig templates into custom sosig dictionary
             foreach (SosigEnemyTemplate sosig in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Values)
             {
                 LoadedTemplateManager.AddSosigTemplate(sosig);
             }
         }
 
+        /// <summary>
+        /// Loads all default characters into the template manager
+        /// </summary>
+        /// <param name="characters">A list of TNH characters</param>
         private static void LoadDefaultCharacters(List<TNH_CharacterDef> characters)
         {
-            
             foreach (TNH_CharacterDef character in characters)
             {
                 LoadedTemplateManager.AddCharacterTemplate(character);
             }
         }
 
+        /// <summary>
+        /// Performs a delayed init on the sent list of custom characters, and removes any characters that failed to init
+        /// </summary>
+        /// <param name="characters"></param>
+        /// <param name="isCustom"></param>
+        private static void InitCharacters(List<CustomCharacter> characters, bool isCustom)
+        {
+            for (int i = 0; i < characters.Count; i++)
+            {
+                CustomCharacter character = characters[i];
 
+                try
+                {
+                    character.DelayedInit(isCustom);
+                }
+                catch (Exception e)
+                {
+                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load character: " + character.DisplayName + ". Error Output:\n" + e.ToString());
+                    characters.RemoveAt(i);
+                    LoadedTemplateManager.LoadedCharactersDict.Remove(character.GetCharacter());
+                    i -= 1;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Performs a delayed init on the sent list of sosigs. If a sosig fails to init, any character using that sosig will be removed
+        /// </summary>
+        /// <param name="sosigs"></param>
+        private static void InitSosigs(List<SosigTemplate> sosigs)
+        {
+            for (int i = 0; i < sosigs.Count; i++)
+            {
+                SosigTemplate sosig = sosigs[i];
+
+                try
+                {
+                    sosig.DelayedInit();
+                }
+                catch (Exception e)
+                {
+                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load sosig: " + sosig.DisplayName + ". Error Output:\n" + e.ToString());
+
+                    //Find any characters that use this sosig, and remove them
+                    for (int j = 0; j < LoadedTemplateManager.LoadedCharactersDict.Values.Count; j++)
+                    {
+                        //This is probably monsterously inefficient, but if you're at this point you're already fucked :)
+                        KeyValuePair<TNH_CharacterDef, CustomCharacter> value_pair = LoadedTemplateManager.LoadedCharactersDict.ToList()[j];
+
+                        if (value_pair.Value.CharacterUsesSosig(sosig.SosigEnemyID))
+                        {
+                            TNHTweakerLogger.LogError("TNHTweaker -- Removing character that used removed sosig: " + value_pair.Value.DisplayName);
+                            LoadedTemplateManager.LoadedCharactersDict.Remove(value_pair.Key);
+                            j -= 1;
+                        }
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Generates a file which shows every item in the equipment pools of the character
+        /// </summary>
+        /// <param name="___m_objectTableDics"></param>
         [HarmonyPatch(typeof(TNH_Manager), "InitTables")] // Specify target method with HarmonyPatch attribute
         [HarmonyPostfix]
         public static void PrintGenerateTables(Dictionary<ObjectTableDef, ObjectTable> ___m_objectTableDics)
@@ -267,6 +362,17 @@ namespace TNHTweaker
             }
         }
 
+
+        /////////////////////////////
+        //PATCHES FOR PATROL SPAWNING
+        /////////////////////////////
+
+
+        /// <summary>
+        /// Finds an index in the patrols list which can spawn, preventing bosses that have already spawned from spawning again
+        /// </summary>
+        /// <param name="patrols">List of patrols that can spawn</param>
+        /// <returns>Returns -1 if no valid index is found, otherwise returns a random index for a patrol </returns>
         private static int GetValidPatrolIndex(List<TNH_PatrolChallenge.Patrol> patrols)
         {
             int index = UnityEngine.Random.Range(0, patrols.Count);
@@ -274,6 +380,7 @@ namespace TNHTweaker
 
             while(spawnedBossIndexes.Contains(index) && attempts < patrols.Count)
             {
+                attempts += 1;
                 index += 1;
                 if (index >= patrols.Count) index = 0;
             }
@@ -283,6 +390,19 @@ namespace TNHTweaker
             return index;
         }
 
+
+        /// <summary>
+        /// Decides the spawning location and patrol pathing for sosig patrols, and then spawns the patrol
+        /// </summary>
+        /// <param name="P"></param>
+        /// <param name="curStandardIndex"></param>
+        /// <param name="excludeHoldIndex"></param>
+        /// <param name="isStart"></param>
+        /// <param name="__instance"></param>
+        /// <param name="___m_curLevel"></param>
+        /// <param name="___m_patrolSquads"></param>
+        /// <param name="___m_timeTilPatrolCanSpawn"></param>
+        /// <returns></returns>
         [HarmonyPatch(typeof(TNH_Manager), "GenerateValidPatrol")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool GenerateValidPatrolReplacement(TNH_PatrolChallenge P, int curStandardIndex, int excludeHoldIndex, bool isStart, TNH_Manager __instance, TNH_Progression.Level ___m_curLevel, List<TNH_Manager.SosigPatrolSquad> ___m_patrolSquads, ref float ___m_timeTilPatrolCanSpawn)
@@ -345,6 +465,15 @@ namespace TNHTweaker
         }
 
         
+        /// <summary>
+        /// Spawns a patrol at the desire patrol point
+        /// </summary>
+        /// <param name="HoldPointStart"></param>
+        /// <param name="instance"></param>
+        /// <param name="level"></param>
+        /// <param name="patrol"></param>
+        /// <param name="patrolIndex"></param>
+        /// <returns></returns>
         public static TNH_Manager.SosigPatrolSquad GeneratePatrol(int HoldPointStart, TNH_Manager instance, TNH_Progression.Level level, TNH_PatrolChallenge.Patrol patrol, int patrolIndex)
         {
             TNH_Manager.SosigPatrolSquad squad = new TNH_Manager.SosigPatrolSquad();
@@ -418,63 +547,14 @@ namespace TNHTweaker
                 squad.Squad.Add(sosig);
             }
 
-
             return squad;
         }
 
 
-        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Hold")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPostfix]
-        public static void AfterSetHold()
-        {
-            ClearAllPanels();
-        }
 
-        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Dead")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPostfix]
-        public static void AfterSetDead()
-        {
-            ClearAllPanels();
-        }
-
-        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Completed")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPostfix]
-        public static void AfterSetComplete()
-        {
-            ClearAllPanels();
-        }
-
-        public static void ClearAllPanels()
-        {
-            //Debug.Log("Destroying constructors");
-            while (SpawnedConstructors.Count > 0)
-            {
-                try
-                {
-                    TNH_ObjectConstructor constructor = SpawnedConstructors[0].GetComponent<TNH_ObjectConstructor>();
-
-                    if(constructor != null)
-                    {
-                        constructor.ClearCase();
-                    }
-
-                    Destroy(SpawnedConstructors[0]);
-                }
-                catch
-                {
-                    TNHTweakerLogger.LogWarning("TNHTWEAKER -- Failed to destroy constructor! It's likely that the constructor is already destroyed, so everything is probably just fine :)");
-                }
-                
-                SpawnedConstructors.RemoveAt(0);
-            }
-
-            //Debug.Log("Destroying panels");
-            while (SpawnedPanels.Count > 0)
-            {
-                Destroy(SpawnedPanels[0]);
-                SpawnedPanels.RemoveAt(0);
-            }
-        }
+        ///////////////////////////////////////////
+        //PATCHES FOR SUPPLY POINTS AND TAKE POINTS
+        ///////////////////////////////////////////
 
 
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")] // Specify target method with HarmonyPatch attribute
@@ -516,7 +596,6 @@ namespace TNHTweaker
             Level level = character.GetCurrentLevel(___m_curLevel);
 
             
-
             //Generate all of the supply points for this level
             List<int> supplyPointsIndexes = GetNextSupplyPointIndexes(__instance, ___m_curPointSequence, ___m_level, ___m_curHoldIndex);
             int numSupplyPoints = UnityEngine.Random.Range(level.MinSupplyPoints, level.MaxSupplyPoints + 1);
@@ -841,6 +920,13 @@ namespace TNHTweaker
         }
 
 
+
+        ///////////////////////////////
+        //PATCHES FOR DURING HOLD POINT
+        ///////////////////////////////
+
+
+
         [HarmonyPatch(typeof(TNH_HoldPoint), "IdentifyEncryption")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool IdentifyEncryptionReplacement(TNH_HoldPoint __instance, TNH_HoldChallenge.Phase ___m_curPhase)
@@ -892,7 +978,147 @@ namespace TNHTweaker
             }
         }
 
+        public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int m_phaseIndex)
+        {
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
+            Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
+            Phase currPhase = currLevel.HoldPhases[m_phaseIndex];
 
+            float grenadeChance = currPhase.GrenadeChance;
+            string grenadeType = currPhase.GrenadeType;
+
+            if (grenadeChance >= UnityEngine.Random.Range(0f, 1f))
+            {
+                TNHTweakerLogger.Log("TNHTWEAKER -- Throwing grenade ", TNHTweakerLogger.LogType.TNH);
+
+                //Get a random grenade vector to spawn a grenade at
+                TNH_HoldPoint.AttackVector randAttackVector = AttackVectors[UnityEngine.Random.Range(0, AttackVectors.Count)];
+
+                //Instantiate the grenade object
+                GameObject grenadeObject = Instantiate(IM.OD[grenadeType].GetGameObject(), randAttackVector.GrenadeVector.position, randAttackVector.GrenadeVector.rotation);
+
+                //Give the grenade an initial velocity based on the grenade vector
+                grenadeObject.GetComponent<Rigidbody>().velocity = 15 * randAttackVector.GrenadeVector.forward;
+                grenadeObject.GetComponent<SosigWeapon>().FuseGrenade();
+            }
+        }
+
+
+
+        public static void SpawnHoldEnemyGroup(TNH_HoldChallenge.Phase curPhase, int phaseIndex, List<TNH_HoldPoint.AttackVector> AttackVectors, List<Transform> SpawnPoints_Turrets, List<Sosig> ActiveSosigs, TNH_Manager M, ref bool isFirstWave)
+        {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning enemy wave", TNHTweakerLogger.LogType.TNH);
+
+            //TODO add custom property form MinDirections
+            int numAttackVectors = UnityEngine.Random.Range(1, curPhase.MaxDirections + 1);
+            numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
+
+            //Get the custom character data
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
+            Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
+            Phase currPhase = currLevel.HoldPhases[phaseIndex];
+
+            //Set first enemy to be spawned as leader
+            SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.LeaderType]];
+            int enemiesToSpawn = UnityEngine.Random.Range(curPhase.MinEnemies, curPhase.MaxEnemies + 1);
+
+            int sosigsSpawned = 0;
+            int vectorSpawnPoint = 0;
+            Vector3 targetVector;
+            int vectorIndex = 0;
+            while (sosigsSpawned < enemiesToSpawn)
+            {
+                TNHTweakerLogger.Log("TNHTWEAKER -- Spawning at attack vector: " + vectorIndex, TNHTweakerLogger.LogType.TNH);
+
+                if (AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint) break;
+
+                //Set the sosigs target position
+                if (currPhase.SwarmPlayer)
+                {
+                    targetVector = GM.CurrentPlayerBody.TorsoTransform.position;
+                }
+                else
+                {
+                    targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
+                }
+
+                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[enemyTemplate];
+
+                Sosig enemy = SpawnEnemy(customTemplate, character, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M.AI_Difficulty, curPhase.IFFUsed, true, targetVector, true);
+
+                ActiveSosigs.Add(enemy);
+
+                //At this point, the leader has been spawned, so always set enemy to be regulars
+                enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.EnemyType.GetRandom<string>()]];
+                sosigsSpawned += 1;
+
+                vectorIndex += 1;
+                if (vectorIndex >= numAttackVectors)
+                {
+                    vectorIndex = 0;
+                    vectorSpawnPoint += 1;
+                }
+
+
+            }
+            isFirstWave = false;
+
+        }
+
+
+
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawningRoutineUpdate")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool SpawningUpdateReplacement(
+            ref float ___m_tickDownToNextGroupSpawn,
+            List<Sosig> ___m_activeSosigs,
+            TNH_HoldPoint.HoldState ___m_state,
+            ref bool ___m_hasThrownNadesInWave,
+            List<TNH_HoldPoint.AttackVector> ___AttackVectors,
+            List<Transform> ___SpawnPoints_Turrets,
+            TNH_Manager ___M,
+            TNH_HoldChallenge.Phase ___m_curPhase,
+            int ___m_phaseIndex,
+            ref bool ___m_isFirstWave)
+        {
+
+            ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
+
+
+            if (___m_activeSosigs.Count < 1)
+            {
+                if (___m_state == TNH_HoldPoint.HoldState.Analyzing)
+                {
+                    ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
+                }
+            }
+
+            if (!___m_hasThrownNadesInWave && ___m_tickDownToNextGroupSpawn <= 5f && !___m_isFirstWave)
+            {
+                SpawnGrenades(___AttackVectors, ___M, ___m_phaseIndex);
+                ___m_hasThrownNadesInWave = true;
+            }
+
+            //Handle spawning of a wave if it is time
+            if (___m_tickDownToNextGroupSpawn <= 0 && ___m_activeSosigs.Count + ___m_curPhase.MaxEnemies <= ___m_curPhase.MaxEnemiesAlive)
+            {
+                ___AttackVectors.Shuffle();
+
+                SpawnHoldEnemyGroup(___m_curPhase, ___m_phaseIndex, ___AttackVectors, ___SpawnPoints_Turrets, ___m_activeSosigs, ___M, ref ___m_isFirstWave);
+                ___m_hasThrownNadesInWave = false;
+                ___m_tickDownToNextGroupSpawn = ___m_curPhase.SpawnCadence;
+            }
+
+
+            return false;
+        }
+
+
+
+
+        /////////////////////////////
+        //PATCHES FOR SPAWNING SOSIGS
+        /////////////////////////////
 
 
         public static Sosig SpawnEnemy(SosigTemplate template, CustomCharacter character, Transform spawnLocation, TNHModifier_AIDifficulty difficulty, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
@@ -1168,140 +1394,33 @@ namespace TNHTweaker
         }
 
 
-        
 
 
-        public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int m_phaseIndex)
-        {
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
-            Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
-            Phase currPhase = currLevel.HoldPhases[m_phaseIndex];
-
-            float grenadeChance = currPhase.GrenadeChance;
-            string grenadeType = currPhase.GrenadeType;
-                        
-            if(grenadeChance >= UnityEngine.Random.Range(0f, 1f))
-            {
-                TNHTweakerLogger.Log("TNHTWEAKER -- Throwing grenade ", TNHTweakerLogger.LogType.TNH);
-
-                //Get a random grenade vector to spawn a grenade at
-                TNH_HoldPoint.AttackVector randAttackVector = AttackVectors[UnityEngine.Random.Range(0, AttackVectors.Count)];
-
-                //Instantiate the grenade object
-                GameObject grenadeObject = Instantiate(IM.OD[grenadeType].GetGameObject(), randAttackVector.GrenadeVector.position, randAttackVector.GrenadeVector.rotation);
-
-                //Give the grenade an initial velocity based on the grenade vector
-                grenadeObject.GetComponent<Rigidbody>().velocity = 15 * randAttackVector.GrenadeVector.forward;
-                grenadeObject.GetComponent<SosigWeapon>().FuseGrenade();
-            }
-        }
-
-        public static void SpawnHoldEnemyGroup(TNH_HoldChallenge.Phase curPhase, int phaseIndex, List<TNH_HoldPoint.AttackVector> AttackVectors, List<Transform> SpawnPoints_Turrets, List<Sosig> ActiveSosigs, TNH_Manager M, ref bool isFirstWave)
-        {
-            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning enemy wave", TNHTweakerLogger.LogType.TNH);
-
-            //TODO add custom property form MinDirections
-            int numAttackVectors = UnityEngine.Random.Range(1, curPhase.MaxDirections + 1);
-            numAttackVectors = Mathf.Clamp(numAttackVectors, 1, AttackVectors.Count);
-
-            //Get the custom character data
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
-            Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
-            Phase currPhase = currLevel.HoldPhases[phaseIndex];
-
-            //Set first enemy to be spawned as leader
-            SosigEnemyTemplate enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.LeaderType]];
-            int enemiesToSpawn = UnityEngine.Random.Range(curPhase.MinEnemies, curPhase.MaxEnemies + 1);
-
-            int sosigsSpawned = 0;
-            int vectorSpawnPoint = 0;
-            Vector3 targetVector;
-            int vectorIndex = 0;
-            while(sosigsSpawned < enemiesToSpawn)
-            {
-                TNHTweakerLogger.Log("TNHTWEAKER -- Spawning at attack vector: " + vectorIndex, TNHTweakerLogger.LogType.TNH);
-
-                if (AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack.Count <= vectorSpawnPoint) break;
-
-                //Set the sosigs target position
-                if (currPhase.SwarmPlayer)
-                {
-                    targetVector = GM.CurrentPlayerBody.TorsoTransform.position;
-                }
-                else
-                {
-                    targetVector = SpawnPoints_Turrets[UnityEngine.Random.Range(0, SpawnPoints_Turrets.Count)].position;
-                }
-
-                SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[enemyTemplate];
-
-                Sosig enemy = SpawnEnemy(customTemplate, character, AttackVectors[vectorIndex].SpawnPoints_Sosigs_Attack[vectorSpawnPoint], M.AI_Difficulty, curPhase.IFFUsed, true, targetVector, true);
-
-                ActiveSosigs.Add(enemy);
-
-                //At this point, the leader has been spawned, so always set enemy to be regulars
-                enemyTemplate = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPhase.EnemyType.GetRandom<string>()]];
-                sosigsSpawned += 1;
-
-                vectorIndex += 1;
-                if(vectorIndex >= numAttackVectors)
-                {
-                    vectorIndex = 0;
-                    vectorSpawnPoint += 1;
-                }
-
-                
-            }
-            isFirstWave = false;
-
-        }
+        //////////////////////////////////////////////
+        //PATCHES FOR CONSTRUCTOR AND SECONDARY PANELS
+        //////////////////////////////////////////////
 
 
 
-        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawningRoutineUpdate")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPatch(typeof(TNH_MagDuplicator), "Button_Duplicate")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
-        public static bool SpawningUpdateReplacement(
-            ref float ___m_tickDownToNextGroupSpawn,
-            List<Sosig> ___m_activeSosigs,
-            TNH_HoldPoint.HoldState ___m_state,
-            ref bool ___m_hasThrownNadesInWave,
-            List<TNH_HoldPoint.AttackVector> ___AttackVectors,
-            List<Transform> ___SpawnPoints_Turrets,
-            TNH_Manager ___M,
-            TNH_HoldChallenge.Phase ___m_curPhase,
-            int ___m_phaseIndex,
-            ref bool ___m_isFirstWave)
+        public static bool ButtonPressed(TNH_MagDuplicator __instance)
         {
-
-            ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
-
-            
-            if (___m_activeSosigs.Count < 1)
+            MagUpgrader upgraderPanel = __instance.GetComponent<MagUpgrader>();
+            if (upgraderPanel != null)
             {
-                if(___m_state == TNH_HoldPoint.HoldState.Analyzing)
-                {
-                    ___m_tickDownToNextGroupSpawn -= Time.deltaTime;
-                }
+                upgraderPanel.ButtonPressed();
+                return false;
             }
 
-            if(!___m_hasThrownNadesInWave && ___m_tickDownToNextGroupSpawn <= 5f && !___m_isFirstWave)
+            FullAutoEnabler fullAutoPanel = __instance.GetComponent<FullAutoEnabler>();
+            if (fullAutoPanel != null)
             {
-                SpawnGrenades(___AttackVectors, ___M, ___m_phaseIndex);
-                ___m_hasThrownNadesInWave = true;
+                fullAutoPanel.ButtonPressed();
+                return false;
             }
 
-            //Handle spawning of a wave if it is time
-            if(___m_tickDownToNextGroupSpawn <= 0 && ___m_activeSosigs.Count + ___m_curPhase.MaxEnemies <= ___m_curPhase.MaxEnemiesAlive)
-            {
-                ___AttackVectors.Shuffle();
-
-                SpawnHoldEnemyGroup(___m_curPhase, ___m_phaseIndex, ___AttackVectors, ___SpawnPoints_Turrets, ___m_activeSosigs, ___M, ref ___m_isFirstWave);
-                ___m_hasThrownNadesInWave = false;
-                ___m_tickDownToNextGroupSpawn = ___m_curPhase.SpawnCadence;
-            }
-
-
-            return false;
+            return true;
         }
 
 
@@ -1578,25 +1697,63 @@ namespace TNHTweaker
         }
 
 
-        [HarmonyPatch(typeof(TNH_MagDuplicator), "Button_Duplicate")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPrefix]
-        public static bool ButtonPressed(TNH_MagDuplicator __instance)
+
+        //////////////////////////
+        //MISC PATCHES AND METHODS
+        //////////////////////////
+
+
+        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Hold")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPostfix]
+        public static void AfterSetHold()
         {
-            MagUpgrader upgraderPanel = __instance.GetComponent<MagUpgrader>();
-            if (upgraderPanel != null)
+            ClearAllPanels();
+        }
+
+        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Dead")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPostfix]
+        public static void AfterSetDead()
+        {
+            ClearAllPanels();
+        }
+
+        [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Completed")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPostfix]
+        public static void AfterSetComplete()
+        {
+            ClearAllPanels();
+        }
+
+        public static void ClearAllPanels()
+        {
+            //Debug.Log("Destroying constructors");
+            while (SpawnedConstructors.Count > 0)
             {
-                upgraderPanel.ButtonPressed();
-                return false;
+                try
+                {
+                    TNH_ObjectConstructor constructor = SpawnedConstructors[0].GetComponent<TNH_ObjectConstructor>();
+
+                    if (constructor != null)
+                    {
+                        constructor.ClearCase();
+                    }
+
+                    Destroy(SpawnedConstructors[0]);
+                }
+                catch
+                {
+                    TNHTweakerLogger.LogWarning("TNHTWEAKER -- Failed to destroy constructor! It's likely that the constructor is already destroyed, so everything is probably just fine :)");
+                }
+
+                SpawnedConstructors.RemoveAt(0);
             }
 
-            FullAutoEnabler fullAutoPanel = __instance.GetComponent<FullAutoEnabler>();
-            if(fullAutoPanel != null)
+            //Debug.Log("Destroying panels");
+            while (SpawnedPanels.Count > 0)
             {
-                fullAutoPanel.ButtonPressed();
-                return false;
+                Destroy(SpawnedPanels[0]);
+                SpawnedPanels.RemoveAt(0);
             }
-
-            return true;
         }
 
         [HarmonyPatch(typeof(Sosig), "BuffHealing_Invis")] // Specify target method with HarmonyPatch attribute
@@ -1605,5 +1762,7 @@ namespace TNHTweaker
         {
             return !preventOutfitFunctionality;
         }
+
+
     }
 }
