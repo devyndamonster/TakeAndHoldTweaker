@@ -12,13 +12,16 @@ namespace TNHTweaker
     public class SavedGunSerializable
     {
         public string FileName;
-        public List<SavedGunComponentSerializable> Components;
         public List<FireArmRoundClass> LoadedRoundsInMag;
         public List<FireArmRoundClass> LoadedRoundsInChambers;
         public List<string> SavedFlags;
-
+        public bool OverrideFireRate;
+        public float SpeedRearward;
+        public float SpeedForward;
+        public float SpringStiffness;
         public bool OverrideFireSelectors;
         public List<FireSelectorMode> FireSelectorModes;
+        public List<SavedGunComponentSerializable> Components;
 
         [JsonIgnore]
         private SavedGun gun;
@@ -34,7 +37,7 @@ namespace TNHTweaker
             SavedFlags = gun.SavedFlags;
 
             FireSelectorModes = new List<FireSelectorMode>();
-            LoadFireSelectorModes();
+            LoadFirearmProperties();
 
             this.gun = gun;
         }
@@ -78,7 +81,7 @@ namespace TNHTweaker
             return null;
         }
 
-        private void LoadFireSelectorModes()
+        private void LoadFirearmProperties()
         {
             GameObject gunObject = GetGunObject().GetGameObject();
 
@@ -89,6 +92,10 @@ namespace TNHTweaker
                 {
                     FireSelectorModes.Add(new FireSelectorMode(mode));
                 }
+
+                SpeedForward = handgunComp.Slide.Speed_Forward;
+                SpeedRearward = handgunComp.Slide.Speed_Rearward;
+                SpringStiffness = handgunComp.Slide.SpringStiffness;
 
                 return;
             }
@@ -101,6 +108,10 @@ namespace TNHTweaker
                     FireSelectorModes.Add(new FireSelectorMode(mode));
                 }
 
+                SpeedForward = closedBoltComp.Bolt.Speed_Forward;
+                SpeedRearward = closedBoltComp.Bolt.Speed_Rearward;
+                SpringStiffness = closedBoltComp.Bolt.SpringStiffness;
+
                 return;
             }
 
@@ -110,6 +121,85 @@ namespace TNHTweaker
                 foreach (OpenBoltReceiver.FireSelectorMode mode in openBoltComp.FireSelector_Modes)
                 {
                     FireSelectorModes.Add(new FireSelectorMode(mode));
+                }
+
+                SpeedForward = openBoltComp.Bolt.BoltSpeed_Forward;
+                SpeedRearward = openBoltComp.Bolt.BoltSpeed_Rearward;
+                SpringStiffness = openBoltComp.Bolt.BoltSpringStiffness;
+
+                return;
+            }
+        }
+
+        public void ApplyFirearmProperties(FVRFireArm firearm)
+        {
+            if (!OverrideFireRate && !OverrideFireSelectors) return;
+
+            Handgun handgunComp = firearm.gameObject.GetComponent<Handgun>();
+            if (handgunComp != null)
+            {
+
+                if (OverrideFireSelectors)
+                {
+                    List<Handgun.FireSelectorMode> modeList = new List<Handgun.FireSelectorMode>();
+                    foreach (FireSelectorMode mode in FireSelectorModes)
+                    {
+                        modeList.Add(mode.GetHandgunMode());
+                    }
+                    handgunComp.FireSelectorModes = modeList.ToArray();
+                }
+
+                if (OverrideFireRate)
+                {
+                    handgunComp.Slide.Speed_Forward = SpeedForward;
+                    handgunComp.Slide.Speed_Rearward = SpeedRearward;
+                    handgunComp.Slide.SpringStiffness = SpringStiffness;
+                }
+
+                return;
+            }
+
+            ClosedBoltWeapon closedBoltComp = firearm.gameObject.GetComponent<ClosedBoltWeapon>();
+            if (closedBoltComp != null)
+            {
+                if (OverrideFireSelectors)
+                {
+                    List<ClosedBoltWeapon.FireSelectorMode> modeList = new List<ClosedBoltWeapon.FireSelectorMode>();
+                    foreach (FireSelectorMode mode in FireSelectorModes)
+                    {
+                        modeList.Add(mode.GetClosedBoltMode());
+                    }
+                    closedBoltComp.FireSelector_Modes = modeList.ToArray();
+                }
+
+                if (OverrideFireRate)
+                {
+                    closedBoltComp.Bolt.Speed_Forward = SpeedForward;
+                    closedBoltComp.Bolt.Speed_Rearward = SpeedRearward;
+                    closedBoltComp.Bolt.SpringStiffness = SpringStiffness;
+                }
+
+                return;
+            }
+
+            OpenBoltReceiver openBoltComp = firearm.gameObject.GetComponent<OpenBoltReceiver>();
+            if (openBoltComp != null)
+            {
+                if (OverrideFireSelectors)
+                {
+                    List<OpenBoltReceiver.FireSelectorMode> modeList = new List<OpenBoltReceiver.FireSelectorMode>();
+                    foreach (FireSelectorMode mode in FireSelectorModes)
+                    {
+                        modeList.Add(mode.GetOpenBoltMode());
+                    }
+                    openBoltComp.FireSelector_Modes = modeList.ToArray();
+                }
+                
+                if (OverrideFireRate)
+                {
+                    openBoltComp.Bolt.BoltSpeed_Forward = SpeedForward;
+                    openBoltComp.Bolt.BoltSpeed_Rearward = SpeedRearward;
+                    openBoltComp.Bolt.BoltSpringStiffness = SpringStiffness;
                 }
 
                 return;
@@ -208,6 +298,32 @@ namespace TNHTweaker
             SelectorPosition = mode.SelectorPosition;
             ModeType = (FireSelectorModeType)Enum.Parse(typeof(FireSelectorModeType), mode.ModeType.ToString());
             BurstAmount = -1;
+        }
+
+        public Handgun.FireSelectorMode GetHandgunMode()
+        {
+            Handgun.FireSelectorMode mode = new Handgun.FireSelectorMode();
+            mode.SelectorPosition = SelectorPosition;
+            mode.ModeType = (Handgun.FireSelectorModeType)Enum.Parse(typeof(Handgun.FireSelectorModeType), ModeType.ToString());
+            mode.BurstAmount = BurstAmount;
+            return mode;
+        }
+
+        public OpenBoltReceiver.FireSelectorMode GetOpenBoltMode()
+        {
+            OpenBoltReceiver.FireSelectorMode mode = new OpenBoltReceiver.FireSelectorMode();
+            mode.SelectorPosition = SelectorPosition;
+            mode.ModeType = (OpenBoltReceiver.FireSelectorModeType)Enum.Parse(typeof(OpenBoltReceiver.FireSelectorModeType), ModeType.ToString());
+            return mode;
+        }
+
+        public ClosedBoltWeapon.FireSelectorMode GetClosedBoltMode()
+        {
+            ClosedBoltWeapon.FireSelectorMode mode = new ClosedBoltWeapon.FireSelectorMode();
+            mode.SelectorPosition = SelectorPosition;
+            mode.ModeType = (ClosedBoltWeapon.FireSelectorModeType)Enum.Parse(typeof(ClosedBoltWeapon.FireSelectorModeType), ModeType.ToString());
+            mode.BurstAmount = BurstAmount;
+            return mode;
         }
     }
 

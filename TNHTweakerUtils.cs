@@ -1000,6 +1000,8 @@ namespace TNHTweaker
                 if (gun.Components[j].isFirearm)
                 {
                     myGun = gameObject.GetComponent<FVRFireArm>();
+                    savedGun.ApplyFirearmProperties(myGun);
+                    
                     validIndexes.Add(j);
                     gameObject.transform.position = spawnPoint.position;
                     gameObject.transform.rotation = Quaternion.identity;
