@@ -662,6 +662,37 @@ namespace TNHTweaker
         }
 
 
+        public static AmmoObjectDataTemplate GetSmallestCapacityAmmoObject(FVRObject firearm)
+        {
+            if(firearm.CompatibleMagazines.Count != 0)
+            {
+                return GetSmallestCapacityMagazine(firearm);
+            }
+
+            else if(firearm.CompatibleClips.Count != 0)
+            {
+                return LoadedTemplateManager.LoadedClipDict[firearm.CompatibleClips[0].ItemID];
+            }
+
+            else if(firearm.CompatibleSpeedLoaders.Count != 0)
+            {
+                AmmoObjectDataTemplate speedLoaderTemplate = new AmmoObjectDataTemplate();
+                speedLoaderTemplate.ObjectID = firearm.CompatibleSpeedLoaders[0].ItemID;
+                speedLoaderTemplate.Capacity = 6;
+                speedLoaderTemplate.AmmoObject = IM.OD[speedLoaderTemplate.ObjectID];
+                return speedLoaderTemplate;
+            }
+
+            return null;
+        }
+
+        public static bool FVRObjectHasAmmoContainer(FVRObject item)
+        {
+            if (item == null) return false;
+            return item.CompatibleClips.Count != 0 || item.CompatibleMagazines.Count != 0 || item.CompatibleSpeedLoaders.Count != 0;
+        }
+
+
         public static IEnumerator LoadMagazineCacheAsync(string path, Text text, SceneLoader hotdog)
         {
             CompatibleMagazineCache magazineCache = null;
@@ -895,6 +926,12 @@ namespace TNHTweaker
                     if (IM.OD.ContainsKey(entry.FirearmID))
                     {
                         FVRObject firearm = IM.OD[entry.FirearmID];
+
+                        if(firearm.ItemID == "Makarov")
+                        {
+                            TNHTweakerLogger.Log("Makarov found", TNHTweakerLogger.LogType.General);
+                        }
+
                         foreach (string mag in entry.CompatibleMagazines)
                         {
                             if (IM.OD.ContainsKey(mag))
@@ -914,6 +951,11 @@ namespace TNHTweaker
                             if (IM.OD.ContainsKey(bullet))
                             {
                                 firearm.CompatibleSingleRounds.Add(IM.OD[bullet]);
+
+                                if (firearm.ItemID == "Makarov")
+                                {
+                                    TNHTweakerLogger.Log("bullet added", TNHTweakerLogger.LogType.General);
+                                }
                             }
                         }
                         firearm.MaxCapacityRelated = entry.MaxAmmo;

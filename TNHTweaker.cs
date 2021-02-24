@@ -61,6 +61,18 @@ namespace TNHTweaker
 
             Option<Texture2D> fullAutoContent = Source.Resources.Get<Texture2D>("full_auto.png");
             LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, TNHTweakerUtils.LoadSprite(fullAutoContent.Expect("TNHTweaker -- Failed to load Full Auto Adder icon!")));
+
+            Option<Texture2D> ammoPurchaseContent = Source.Resources.Get<Texture2D>("ammo_purchase.png");
+            LoadedTemplateManager.PanelSprites.Add(PanelType.AmmoPurchase, TNHTweakerUtils.LoadSprite(ammoPurchaseContent.Expect("TNHTweaker -- Failed to load Ammo Purchase icon!")));
+
+            Option<Texture2D> magPurchaseContent = Source.Resources.Get<Texture2D>("mag_purchase.png");
+            LoadedTemplateManager.PanelSprites.Add(PanelType.MagPurchase, TNHTweakerUtils.LoadSprite(magPurchaseContent.Expect("TNHTweaker -- Failed to load Mag Purchase icon!")));
+
+            Option<Texture2D> fireRateUpContent = Source.Resources.Get<Texture2D>("gas_up.png");
+            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateUp, TNHTweakerUtils.LoadSprite(fireRateUpContent.Expect("TNHTweaker -- Failed to load Fire Rate Up icon!")));
+
+            Option<Texture2D> fireRateDownContent = Source.Resources.Get<Texture2D>("gas_down.png");
+            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateDown, TNHTweakerUtils.LoadSprite(fireRateDownContent.Expect("TNHTweaker -- Failed to load Fire Rate Down icon!")));
         }
 
         /// <summary>
@@ -570,9 +582,10 @@ namespace TNHTweaker
             spawnedBossIndexes.Clear();
             preventOutfitFunctionality = LoadedTemplateManager.LoadedCharactersDict[__instance.C].ForceDisableOutfitFunctionality;
 
+            TNHTweakerLogger.Log("Makarov rounds: " + IM.OD["Makarov"].CompatibleSingleRounds.Count, TNHTweakerLogger.LogType.General);
 
             //Clear the TNH radar
-            if(__instance.RadarMode == TNHModifier_RadarMode.Standard)
+            if (__instance.RadarMode == TNHModifier_RadarMode.Standard)
             {
                 __instance.TAHReticle.GetComponent<AIEntity>().LM_VisualOcclusionCheck = __instance.ReticleMask_Take;
             }
@@ -715,16 +728,33 @@ namespace TNHTweaker
 
                 else if (panelType == PanelType.MagUpgrader)
                 {
-                    //Debug.Log("Spawning Mag Upgrader!");
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(MagUpgrader));
                 }
 
                 else if (panelType == PanelType.AddFullAuto)
                 {
-                    //Debug.Log("Spawning Full Auto Adder!");
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(FullAutoEnabler));
+                }
+
+                else if (panelType == PanelType.FireRateUp || panelType == PanelType.FireRateDown)
+                {
+                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    FireRateModifier component = (FireRateModifier)panel.AddComponent(typeof(FireRateModifier));
+                    component.Init(panelType);
+                }
+
+                else if (panelType == PanelType.MagPurchase)
+                {
+                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel.AddComponent(typeof(MagPurchaser));
+                }
+
+                else if (panelType == PanelType.AmmoPurchase)
+                {
+                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel.AddComponent(typeof(AmmoPurchaser));
                 }
 
                 //If we spawned a panel, add it to the global list
@@ -1399,29 +1429,6 @@ namespace TNHTweaker
         //////////////////////////////////////////////
         //PATCHES FOR CONSTRUCTOR AND SECONDARY PANELS
         //////////////////////////////////////////////
-
-
-
-        [HarmonyPatch(typeof(TNH_MagDuplicator), "Button_Duplicate")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPrefix]
-        public static bool ButtonPressed(TNH_MagDuplicator __instance)
-        {
-            MagUpgrader upgraderPanel = __instance.GetComponent<MagUpgrader>();
-            if (upgraderPanel != null)
-            {
-                upgraderPanel.ButtonPressed();
-                return false;
-            }
-
-            FullAutoEnabler fullAutoPanel = __instance.GetComponent<FullAutoEnabler>();
-            if (fullAutoPanel != null)
-            {
-                fullAutoPanel.ButtonPressed();
-                return false;
-            }
-
-            return true;
-        }
 
 
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")] // Specify target method with HarmonyPatch attribute
