@@ -7,12 +7,13 @@ using System.IO;
 using System.Linq;
 using System.Security.Policy;
 using System.Text;
+using TNHTweaker.Utilities;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Converters;
 using Valve.Newtonsoft.Json.Serialization;
 
-namespace TNHTweaker
+namespace TNHTweaker.ObjectTemplates
 {
     public class CustomCharacter
     {

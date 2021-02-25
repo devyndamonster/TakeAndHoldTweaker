@@ -99,14 +99,15 @@
   <ItemGroup>
     <Compile Include="Main\CompatibleMagazineCache.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
-    <Compile Include="Ultilities\Extensions.cs" />
+    <Compile Include="Utilities\FirearmUtils.cs" />
+    <Compile Include="Utilities\Extensions.cs" />
     <Compile Include="Main\LoadedTemplateManager.cs" />
-    <Compile Include="Ultilities\Logger.cs" />
+    <Compile Include="Utilities\Logger.cs" />
     <Compile Include="Main\ObjectPanelWrapper.cs" />
     <Compile Include="ObjectTemplates\SavedGunSerializable.cs" />
     <Compile Include="Main\TemplateLoaders.cs" />
     <Compile Include="ObjectTemplates\SosigTemplate.cs" />
-    <Compile Include="Ultilities\TNHTweakerUtils.cs" />
+    <Compile Include="Utilities\TNHTweakerUtils.cs" />
     <Compile Include="Main\TNHTweaker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
