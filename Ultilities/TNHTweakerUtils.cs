@@ -872,7 +872,7 @@ namespace TNHTweaker
                     {
                         foreach (AmmoObjectDataTemplate clip in magazineCache.ClipData[firearmComp.ClipType])
                         {
-                            if (!FVRObjectListContainsID(firearm.CompatibleClips, clip.ObjectID) && !blacklist.Contains(firearm.ItemID))
+                            if (!FVRObjectListContainsID(firearm.CompatibleClips, clip.ObjectID))
                             {
                                 //Clips don't modify capacity of guns, so we don't modify capacity related on the firearm object
                                 firearm.CompatibleClips.Add(clip.AmmoObject);
@@ -888,7 +888,7 @@ namespace TNHTweaker
                     {
                         foreach (AmmoObjectDataTemplate bullet in magazineCache.BulletData[firearmComp.RoundType])
                         {
-                            if (!FVRObjectListContainsID(firearm.CompatibleSingleRounds, bullet.ObjectID) && !blacklist.Contains(firearm.ItemID))
+                            if (!FVRObjectListContainsID(firearm.CompatibleSingleRounds, bullet.ObjectID))
                             {
                                 //Bullets don't modify capacity of guns, so we don't modify capacity related on the firearm object
                                 firearm.CompatibleSingleRounds.Add(bullet.AmmoObject);

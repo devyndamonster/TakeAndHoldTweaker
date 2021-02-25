@@ -97,21 +97,22 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CompatibleMagazineCache.cs" />
-    <Compile Include="CustomCharacter.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="LoadedTemplateManager.cs" />
-    <Compile Include="Logger.cs" />
-    <Compile Include="ObjectPanelWrapper.cs" />
-    <Compile Include="SavedGunSerializable.cs" />
-    <Compile Include="TemplateLoaders.cs" />
-    <Compile Include="SosigTemplate.cs" />
-    <Compile Include="TNHTweakerUtils.cs" />
-    <Compile Include="TNHTweaker.cs" />
+    <Compile Include="Main\CompatibleMagazineCache.cs" />
+    <Compile Include="ObjectTemplates\CustomCharacter.cs" />
+    <Compile Include="Ultilities\Extensions.cs" />
+    <Compile Include="Main\LoadedTemplateManager.cs" />
+    <Compile Include="Ultilities\Logger.cs" />
+    <Compile Include="Main\ObjectPanelWrapper.cs" />
+    <Compile Include="ObjectTemplates\SavedGunSerializable.cs" />
+    <Compile Include="Main\TemplateLoaders.cs" />
+    <Compile Include="ObjectTemplates\SosigTemplate.cs" />
+    <Compile Include="Ultilities\TNHTweakerUtils.cs" />
+    <Compile Include="Main\TNHTweaker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

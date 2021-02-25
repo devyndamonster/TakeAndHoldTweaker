@@ -135,26 +135,40 @@ namespace TNHTweaker
             }
         }
 
+        /// <summary>
+        /// Returns a object representing the next largest possible magazine of the same type as the sent mag. If there are multiple possible mags of the same size, a random magazine from those possibilities will be selected
+        /// </summary>
+        /// <param name="mag"></param>
+        /// <returns></returns>
         private AmmoObjectDataTemplate GetNextHighestCapacityMagazine(FVRFireArmMagazine mag)
         {
-            AmmoObjectDataTemplate nextLargestMag = new AmmoObjectDataTemplate(mag);
+            List<AmmoObjectDataTemplate> possibleMags = new List<AmmoObjectDataTemplate>();
+            possibleMags.Add(new AmmoObjectDataTemplate(mag));
 
             foreach(AmmoObjectDataTemplate magTemplate in LoadedTemplateManager.LoadedMagazineTypeDict[mag.MagazineType])
             {
                 //If are next largest is the same size as the original, then we take a larger magazine
-                if(magTemplate.Capacity > mag.m_capacity && mag.m_capacity == nextLargestMag.Capacity)
+                if(magTemplate.Capacity > mag.m_capacity && mag.m_capacity == possibleMags[0].Capacity)
                 {
-                    nextLargestMag = magTemplate;
+                    possibleMags.Clear();
+                    possibleMags.Add(magTemplate);
                 }
 
                 //We want the next largest mag size, so the minimum mag size that's also greater than the current mag size
-                else if (magTemplate.Capacity > mag.m_capacity && magTemplate.Capacity < nextLargestMag.Capacity)
+                else if (magTemplate.Capacity > mag.m_capacity && magTemplate.Capacity < possibleMags[0].Capacity)
                 {
-                    nextLargestMag = magTemplate;
+                    possibleMags.Clear();
+                    possibleMags.Add(magTemplate);
+                }
+
+                //If this magazine has the same capacity as the next largest magazines, add it to the list of options
+                else if(magTemplate.Capacity == possibleMags[0].Capacity)
+                {
+                    possibleMags.Add(magTemplate);
                 }
             }
 
-            return nextLargestMag;
+            return possibleMags.GetRandom();
         }
     }
 
@@ -234,9 +248,10 @@ namespace TNHTweaker
 
                     if (firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
                     {
-                        if (TNHTweakerUtils.FVRObjectHasAmmoContainer(firearm.ObjectWrapper))
+                        //NOTE: We access IM.OD[] because the ObjectWrapper is not properly updated from caching for soME FUCKING REASON AHHHHHH
+                        if (TNHTweakerUtils.FVRObjectHasAmmoContainer(IM.OD[firearm.ObjectWrapper.ItemID]))
                         {
-                            ammoObject = TNHTweakerUtils.GetSmallestCapacityAmmoObject(firearm.ObjectWrapper);
+                            ammoObject = TNHTweakerUtils.GetSmallestCapacityAmmoObject(IM.OD[firearm.ObjectWrapper.ItemID]);
 
                             SetCost();
 
