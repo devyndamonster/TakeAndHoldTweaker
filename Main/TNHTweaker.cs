@@ -1569,7 +1569,7 @@ namespace TNHTweaker
                         if (table.IsCompatibleMagazine)
                         {
                             TNHTweakerLogger.Log("TNHTWEAKER -- Item will be a compatible magazine", TNHTweakerLogger.LogType.TNH);
-                            mainObject = TNHTweakerUtils.GetMagazineForEquipped(table.MinAmmoCapacity, table.MaxAmmoCapacity);
+                            mainObject = FirearmUtils.GetMagazineForEquipped(table.MinAmmoCapacity, table.MaxAmmoCapacity);
                             if (mainObject == null)
                             {
                                 TNHTweakerLogger.LogWarning("TNHTWEAKER -- Failed to spawn a compatible magazine!");
