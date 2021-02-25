@@ -8,7 +8,7 @@
     <ProjectGuid>{13103263-BAB2-4450-AE68-23C78EB493B2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TakeAndHoldTweaker</RootNamespace>
+    <RootNamespace>TNHTweaker</RootNamespace>
     <AssemblyName>TakeAndHoldTweaker</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -34,6 +34,9 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
@@ -113,6 +116,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Schemas\CustomCharacterSchema.json" />
+    <None Include="Schemas\SosigTemplate.json" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

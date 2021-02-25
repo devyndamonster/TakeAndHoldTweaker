@@ -8,13 +8,14 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
 using TNHTweaker;
+using TNHTweaker.ObjectTemplates;
 
 namespace JSONBuilder
 {
-    class JSONBuilder
+    public static class JSONBuilder
     {
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             JSchemaGenerator generator = new JSchemaGenerator();
             generator.GenerationProviders.Add(new StringEnumGenerationProvider());
