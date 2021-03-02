@@ -29,7 +29,6 @@ namespace TNHTweaker
         private static List<GameObject> SpawnedConstructors = new List<GameObject>();
         private static List<GameObject> SpawnedPanels = new List<GameObject>();
 
-        private static bool filesBuilt = false;
         private static bool preventOutfitFunctionality = false;
 
         ///////////////////////////////////////////////
@@ -124,6 +123,16 @@ namespace TNHTweaker
         }
 
 
+
+        [HarmonyPatch(typeof(AnvilManager), "GetBundleAsync")]
+        [HarmonyPostfix]
+        public static void AddMonitoredAnvilCallback(AnvilCallback<AssetBundle> __result)
+        {
+            AsyncLoadMonitor.CallbackList.Add(__result);
+            TNHTweakerLogger.Log("TNHTweaker -- Added AssetBundle anvil callback to monitored callbacks!", TNHTweakerLogger.LogType.File);
+        }
+
+
         //////////////////////////////////
         //INITIALIZING TAKE AND HOLD SCENE
         //////////////////////////////////
@@ -143,62 +152,24 @@ namespace TNHTweaker
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
             Text magazineCacheText = CreateMagazineCacheText(__instance);
+            ExpandCharacterUI(__instance);
 
             //Perform first time setup of all files
-            if (!filesBuilt)
+            if (!TNHMenuInitializer.TNHInitialized)
             {
-                TNHTweakerLogger.Log("TNHTweaker -- Performing TNH Initialization", TNHTweakerLogger.LogType.General);
-
-                //Load all of the default templates into our dictionaries
-                TNHTweakerLogger.Log("TNHTweaker -- Adding default sosigs to template dictionary", TNHTweakerLogger.LogType.General);
-                LoadDefaultSosigs();
-                TNHTweakerLogger.Log("TNHTweaker -- Adding default characters to template dictionary", TNHTweakerLogger.LogType.General);
-                LoadDefaultCharacters(___CharDatabase.Characters);
-
-                LoadedTemplateManager.DefaultIconSprites = TNHTweakerUtils.GetAllIcons(LoadedTemplateManager.DefaultCharacters);
-
-                TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of default characters", TNHTweakerLogger.LogType.General);
-                InitCharacters(LoadedTemplateManager.DefaultCharacters, false);
-
-                TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of custom characters", TNHTweakerLogger.LogType.General);
-                InitCharacters(LoadedTemplateManager.CustomCharacters, true);
-
-                TNHTweakerLogger.Log("TNHTweaker -- Delayed Init of custom sosigs", TNHTweakerLogger.LogType.General);
-                InitSosigs(LoadedTemplateManager.CustomSosigs);
-
-                //Create files relevant for character creation
-                TNHTweakerLogger.Log("TNHTweaker -- Creating character creation files", TNHTweakerLogger.LogType.General);
-                TNHTweakerUtils.CreateDefaultSosigTemplateFiles(LoadedTemplateManager.DefaultSosigs, OutputFilePath);
-                TNHTweakerUtils.CreateDefaultCharacterFiles(LoadedTemplateManager.DefaultCharacters, OutputFilePath);
-                TNHTweakerUtils.CreateIconIDFile(OutputFilePath, LoadedTemplateManager.DefaultIconSprites.Keys.ToList());
-                TNHTweakerUtils.CreateObjectIDFile(OutputFilePath);
-                TNHTweakerUtils.CreateSosigIDFile(OutputFilePath);
-                TNHTweakerUtils.CreateJsonVaultFiles(OutputFilePath);
-
                 SceneLoader sceneHotDog = FindObjectOfType<SceneLoader>();
-                AnvilManager.Run(TNHTweakerUtils.LoadMagazineCacheAsync(OutputFilePath, magazineCacheText, sceneHotDog));
+                AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(OutputFilePath, magazineCacheText, sceneHotDog, ___Categories, ___CharDatabase, __instance));
             }
             else
             {
+                TNHMenuInitializer.RefreshTNHUI(__instance, ___Categories, ___CharDatabase);
                 magazineCacheText.text = "CACHE BUILT";
             }
 
-            //Setup the character panel to support more characters
-            ExpandCharacterUI(__instance);
-            
-            //Load all characters into the UI
-            foreach (TNH_CharacterDef character in LoadedTemplateManager.LoadedCharactersDict.Keys)
-            {
-                if (!___Categories[(int)character.Group].Characters.Contains(character.CharacterID))
-                {
-                    ___Categories[(int)character.Group].Characters.Add(character.CharacterID);
-                    ___CharDatabase.Characters.Add(character);
-                }
-            }
-
-            filesBuilt = true;
             return true;
         }
+
+
 
         /// <summary>
         /// Creates the additional text above the character select screen, and returns that text component
@@ -250,88 +221,7 @@ namespace TNHTweaker
             }
         }
 
-        /// <summary>
-        /// Loads all default sosigs into the template manager
-        /// </summary>
-        private static void LoadDefaultSosigs()
-        {
-            foreach (SosigEnemyTemplate sosig in ManagerSingleton<IM>.Instance.odicSosigObjsByID.Values)
-            {
-                LoadedTemplateManager.AddSosigTemplate(sosig);
-            }
-        }
-
-        /// <summary>
-        /// Loads all default characters into the template manager
-        /// </summary>
-        /// <param name="characters">A list of TNH characters</param>
-        private static void LoadDefaultCharacters(List<TNH_CharacterDef> characters)
-        {
-            foreach (TNH_CharacterDef character in characters)
-            {
-                LoadedTemplateManager.AddCharacterTemplate(character);
-            }
-        }
-
-        /// <summary>
-        /// Performs a delayed init on the sent list of custom characters, and removes any characters that failed to init
-        /// </summary>
-        /// <param name="characters"></param>
-        /// <param name="isCustom"></param>
-        private static void InitCharacters(List<CustomCharacter> characters, bool isCustom)
-        {
-            for (int i = 0; i < characters.Count; i++)
-            {
-                CustomCharacter character = characters[i];
-
-                try
-                {
-                    character.DelayedInit(isCustom);
-                }
-                catch (Exception e)
-                {
-                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load character: " + character.DisplayName + ". Error Output:\n" + e.ToString());
-                    characters.RemoveAt(i);
-                    LoadedTemplateManager.LoadedCharactersDict.Remove(character.GetCharacter());
-                    i -= 1;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Performs a delayed init on the sent list of sosigs. If a sosig fails to init, any character using that sosig will be removed
-        /// </summary>
-        /// <param name="sosigs"></param>
-        private static void InitSosigs(List<SosigTemplate> sosigs)
-        {
-            for (int i = 0; i < sosigs.Count; i++)
-            {
-                SosigTemplate sosig = sosigs[i];
-
-                try
-                {
-                    sosig.DelayedInit();
-                }
-                catch (Exception e)
-                {
-                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load sosig: " + sosig.DisplayName + ". Error Output:\n" + e.ToString());
-
-                    //Find any characters that use this sosig, and remove them
-                    for (int j = 0; j < LoadedTemplateManager.LoadedCharactersDict.Values.Count; j++)
-                    {
-                        //This is probably monsterously inefficient, but if you're at this point you're already fucked :)
-                        KeyValuePair<TNH_CharacterDef, CustomCharacter> value_pair = LoadedTemplateManager.LoadedCharactersDict.ToList()[j];
-
-                        if (value_pair.Value.CharacterUsesSosig(sosig.SosigEnemyID))
-                        {
-                            TNHTweakerLogger.LogError("TNHTweaker -- Removing character that used removed sosig: " + value_pair.Value.DisplayName);
-                            LoadedTemplateManager.LoadedCharactersDict.Remove(value_pair.Key);
-                            j -= 1;
-                        }
-                    }
-                }
-            }
-        }
+        
         
         /// <summary>
         /// Generates a file which shows every item in the equipment pools of the character
