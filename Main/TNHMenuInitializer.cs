@@ -22,8 +22,10 @@ namespace TNHTweaker
 
         public static IEnumerator InitializeTNHMenuAsync(string path, Text text, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance)
         {
+            TNHTweakerLogger.Log("Getting hotdog", TNHTweakerLogger.LogType.General);
             hotdog.gameObject.SetActive(false);
 
+            TNHTweakerLogger.Log("Checking load items text", TNHTweakerLogger.LogType.General);
             //First thing we want to do is wait for all asset bundles to be loaded in
             float itemLoadProgress = 0;
             do
@@ -34,17 +36,22 @@ namespace TNHTweaker
             }
             while (itemLoadProgress <= 1);
 
+            TNHTweakerLogger.Log("Magazine cache", TNHTweakerLogger.LogType.General);
             //Now that everything is loaded, we can perform magazine caching
             AnvilManager.Run(LoadMagazineCacheAsync(path, text));
             while (!MagazineCacheLoaded) yield return null;
 
+            TNHTweakerLogger.Log("Templates", TNHTweakerLogger.LogType.General);
             //Now perform final steps of loading characters
             LoadTNHTemplates(CharDatabase);
             CreateTNHFiles(path);
             RefreshTNHUI(instance, Categories, CharDatabase);
-            
+
+            TNHTweakerLogger.Log("Returning hotdog", TNHTweakerLogger.LogType.General);
             hotdog.gameObject.SetActive(true);
             TNHInitialized = true;
+
+            TNHTweakerLogger.Log("Done", TNHTweakerLogger.LogType.General);
         }
 
 

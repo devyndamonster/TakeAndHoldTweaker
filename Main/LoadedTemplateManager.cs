@@ -1,4 +1,6 @@
-﻿using FistVR;
+﻿using Deli.Setup;
+using Deli.VFS;
+using FistVR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,10 +90,10 @@ namespace TNHTweaker
         }
 
 
-        public static void AddCharacterTemplate(CustomCharacter template, Deli.Mod mod, string path, Sprite thumbnail)
+        public static void AddCharacterTemplate(CustomCharacter template, IDirectoryHandle dir, SetupStage stage, Sprite thumbnail)
         {
             CustomCharacters.Add(template);
-            LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, mod, path, thumbnail), template);
+            LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, dir, stage, thumbnail), template);
 
             foreach(EquipmentPool pool in template.EquipmentPools)
             {

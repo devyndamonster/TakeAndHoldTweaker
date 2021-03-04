@@ -1,4 +1,7 @@
 ﻿using ADepIn;
+using Deli.Immediate;
+using Deli.Setup;
+using Deli.VFS;
 using FistVR;
 using System;
 using System.CodeDom;
@@ -55,10 +58,11 @@ namespace TNHTweaker.ObjectTemplates
         private ObjectTable requiredSightsTable;
 
         [JsonIgnore]
-        private Deli.Mod characterMod;
+        private IDirectoryHandle dir;
 
         [JsonIgnore]
-        private string path;
+        private SetupStage stage;
+
 
         public CustomCharacter() { }
 
@@ -102,12 +106,12 @@ namespace TNHTweaker.ObjectTemplates
             this.character = character;
         }
 
-        public TNH_CharacterDef GetCharacter(int ID, Deli.Mod characterMod, string path, Sprite thumbnail)
+        public TNH_CharacterDef GetCharacter(int ID, IDirectoryHandle dir, SetupStage stage, Sprite thumbnail)
         {
             if(character == null)
             {
-                this.characterMod = characterMod;
-                this.path = path;
+                this.dir = dir;
+                this.stage = stage;
 
                 character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
                 character.DisplayName = DisplayName;
@@ -297,7 +301,7 @@ namespace TNHTweaker.ObjectTemplates
             for(int i = 0; i < EquipmentPools.Count; i++)
             {
                 EquipmentPool pool = EquipmentPools[i];
-                if(!pool.DelayedInit(characterMod, path, isCustom)){
+                if(!pool.DelayedInit(dir, stage, isCustom)){
                     TNHTweakerLogger.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
@@ -368,7 +372,7 @@ namespace TNHTweaker.ObjectTemplates
 
         
 
-        public bool DelayedInit(Deli.Mod characterMod, string path, bool isCustom)
+        public bool DelayedInit(IDirectoryHandle dir, SetupStage stage, bool isCustom)
         {
             if (pool != null)
             {
@@ -382,9 +386,14 @@ namespace TNHTweaker.ObjectTemplates
                     else
                     {
                         //Load the table icon from the character mod
-                        path += IconName;
-                        Option<Texture2D> imageContent = characterMod.Resources.Get<Texture2D>(path);
-                        pool.TableDef.Icon = TNHTweakerUtils.LoadSprite(imageContent.Expect("TNHTweaker -- Failed to load equipment pool icon!"));
+                        foreach(IFileHandle iconFile in dir.GetFiles())
+                        {
+                            if (iconFile.Path.EndsWith(IconName))
+                            {
+                                ImmediateReader<Texture2D> reader = stage.ImmediateReaders.Get<Texture2D>();
+                                pool.TableDef.Icon = TNHTweakerUtils.LoadSprite(reader(iconFile));
+                            }
+                        }
                     }
                 }
 

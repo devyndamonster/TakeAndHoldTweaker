@@ -1,5 +1,8 @@
 ﻿using ADepIn;
 using Deli;
+using Deli.Immediate;
+using Deli.Setup;
+using Deli.VFS;
 using FistVR;
 using System;
 using System.Collections.Generic;
@@ -15,69 +18,94 @@ using Valve.Newtonsoft.Json.Converters;
 namespace TNHTweaker
 {
 
-    [QuickNamedBind("Sosig")]
-    public class SosigLoader : IAssetLoader
+
+    public class SosigLoader
     {
-        public void LoadAsset(IServiceKernel kernel, Mod mod, string path)
+        public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
-            Option<Option<SosigTemplate>> content = mod.Resources.Get<Option<SosigTemplate>>(path);
 
-            Option<SosigTemplate> flattened = content.Flatten();
+            if(handle is not IFileHandle file)
+            {
+                throw new ArgumentException("Could not load sosig! Make sure you're pointing to a sosig template json file in the manifest");
+            }
 
-            SosigTemplate template = flattened.Expect("Failed to read sosig template!");
+            ImmediateReader<SosigTemplate> reader = stage.RegisterJson<SosigTemplate>();
+            SosigTemplate sosig = reader(file);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
+            TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
 
-            LoadedTemplateManager.AddSosigTemplate(template);
+            LoadedTemplateManager.AddSosigTemplate(sosig);
         }
     }
 
-    [QuickNamedBind("Character")]
-    public class CharacterLoader : IAssetLoader
+
+
+    public class CharacterLoader
     {
-        public void LoadAsset(IServiceKernel kernel, Mod mod, string path)
+        public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
             
-            string templatePath = path + "character.json";
-            Option<Option<CustomCharacter>> characterContent = mod.Resources.Get<Option<CustomCharacter>>(templatePath);
-            CustomCharacter template = characterContent.Flatten().Expect("TNHTweaker -- Failed to read custom character template! Character will not be loaded");
+            if(handle is not IDirectoryHandle dir)
+            {
+                throw new ArgumentException("Could not load character! Character should point to a folder holding the character.json and thumb.png");
+            }
 
-            string imagePath = path + "thumb.png";
-            Option<Texture2D> imageContent = mod.Resources.Get<Texture2D>(imagePath);
-            Sprite thumbnail = TNHTweakerUtils.LoadSprite(imageContent.Expect("TNHTweaker -- Failed to get character thumbnail! Character will not be loaded"));
 
-            TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + template.DisplayName, TNHTweakerLogger.LogType.File);
+            CustomCharacter character = null;
+            Sprite thumbnail = null;
 
-            LoadedTemplateManager.AddCharacterTemplate(template, mod, path, thumbnail);
+            foreach(IFileHandle file in dir.GetFiles())
+            {
+                if(file.Path.EndsWith("character.json"))
+                {
+                    ImmediateReader<CustomCharacter> reader = stage.RegisterJson<CustomCharacter>();
+                    character = reader(file);
+                }
+                else if (file.Path.EndsWith("thumb.png"))
+                {
+                    ImmediateReader<Texture2D> reader = stage.ImmediateReaders.Get<Texture2D>();
+                    thumbnail = TNHTweakerUtils.LoadSprite(reader(file));
+                }
+            }
+
+            if(character == null)
+            {
+                TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No character.json file found");
+                return;
+            }
+
+            else if(thumbnail == null)
+            {
+                TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No thumb.png file found");
+                return;
+            }
+
+            TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + character.DisplayName, TNHTweakerLogger.LogType.File);
+
+            LoadedTemplateManager.AddCharacterTemplate(character, dir, stage, thumbnail);
         }
     }
 
-    [QuickNamedBind("VaultFile")]
-    public class VaultFileLoader : IAssetLoader
+
+
+    public class VaultFileLoader
     {
-        public void LoadAsset(IServiceKernel kernel, Mod mod, string path)
+        public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
 
-            Option<Option<SavedGunSerializable>> content = mod.Resources.Get<Option<SavedGunSerializable>>(path);
+            if (handle is not IFileHandle file)
+            {
+                throw new ArgumentException("Could not load vault file! Make sure you're pointing to a vault json file in the manifest");
+            }
 
-            Option<SavedGunSerializable> flattened = content.Flatten();
+            ImmediateReader<SavedGunSerializable> reader = stage.RegisterJson<SavedGunSerializable>();
+            SavedGunSerializable savedGun = reader(file);
 
-            SavedGunSerializable template = flattened.Expect("Failed to read vault file!");
+            TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
 
-            TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + template.FileName, TNHTweakerLogger.LogType.File);
-
-            LoadedTemplateManager.AddVaultFile(template);
+            LoadedTemplateManager.AddVaultFile(savedGun);
         }
     }
 
-    internal class JsonAssetReaderEntry : IEntryModule<JsonAssetReaderEntry>
-    {
-        public void Load(IServiceKernel kernel)
-        {
-            kernel.BindJson<CustomCharacter>();
-            kernel.BindJson<SosigTemplate>();
-            kernel.BindJson<SavedGunSerializable>();
-        }
-    }
 
 }

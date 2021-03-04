@@ -1,6 +1,10 @@
 ﻿using ADepIn;
 using BepInEx.Configuration;
 using Deli;
+using Deli.Immediate;
+using Deli.Setup;
+using Deli.VFS;
+using Deli.Runtime;
 using FistVR;
 using HarmonyLib;
 using System;
@@ -12,12 +16,12 @@ using TNHTweaker.ObjectTemplates;
 using TNHTweaker.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
+using Deli.Runtime.Yielding;
 
 namespace TNHTweaker
 {
     public class TNHTweaker : DeliBehaviour
     {
-
         private static ConfigEntry<bool> printCharacters;
         private static ConfigEntry<bool> logTNH;
         private static ConfigEntry<bool> logFileReads;
@@ -45,36 +49,84 @@ namespace TNHTweaker
 
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
 
-            LoadConfigFile();
+            Stages.Setup += OnSetup;
+            Stages.Runtime += DuringRuntime;
+        }
 
+
+        /// <summary>
+        /// Performs initial setup for TNH Tweaker
+        /// </summary>
+        /// <param name="stage"></param>
+        private void OnSetup(SetupStage stage)
+        {
+            LoadConfigFile();
             SetupOutputDirectory();
 
-            LoadPanelSprites();
+            stage.SetupAssetLoaders[Source, "character"] = new CharacterLoader().LoadAsset;
+            stage.SetupAssetLoaders[Source, "sosig"] = new SosigLoader().LoadAsset;
+            stage.SetupAssetLoaders[Source, "vault_file"] = new VaultFileLoader().LoadAsset;
         }
+
+
+
+        private void DuringRuntime(RuntimeStage stage)
+        {
+            LoadPanelSprites(stage);
+        }
+
+
 
         /// <summary>
         /// Loads the sprites used in secondary panels in TNH
         /// </summary>
-        private void LoadPanelSprites()
+        private IEnumerator LoadPanelSprites(RuntimeStage stage)
         {
-            Option<Texture2D> magUpgradeContent = Source.Resources.Get<Texture2D>("mag_upgrade.png");
-            LoadedTemplateManager.PanelSprites.Add(PanelType.MagUpgrader, TNHTweakerUtils.LoadSprite(magUpgradeContent.Expect("TNHTweaker -- Failed to load Mag Upgrader icon!")));
+            //TODO I bet there's a really cool and satisfying way of rewriting all of this :)
+            IFileHandle? file = Source.Resources.GetFile("mag_upgrade.png");
+            DelayedReader<Texture2D> reader = stage.GetReader<Texture2D>();
+            ResultYieldInstruction<Texture2D> resultDelayed = reader(file);
+            yield return resultDelayed;
+            LoadedTemplateManager.PanelSprites.Add(PanelType.MagUpgrader, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
 
-            Option<Texture2D> fullAutoContent = Source.Resources.Get<Texture2D>("full_auto.png");
-            LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, TNHTweakerUtils.LoadSprite(fullAutoContent.Expect("TNHTweaker -- Failed to load Full Auto Adder icon!")));
 
-            Option<Texture2D> ammoPurchaseContent = Source.Resources.Get<Texture2D>("ammo_purchase.png");
-            LoadedTemplateManager.PanelSprites.Add(PanelType.AmmoPurchase, TNHTweakerUtils.LoadSprite(ammoPurchaseContent.Expect("TNHTweaker -- Failed to load Ammo Purchase icon!")));
+            file = Source.Resources.GetFile("full_auto.png");
+            reader = stage.GetReader<Texture2D>();
+            resultDelayed = reader(file);
+            yield return resultDelayed;
+            LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
 
-            Option<Texture2D> magPurchaseContent = Source.Resources.Get<Texture2D>("mag_purchase.png");
-            LoadedTemplateManager.PanelSprites.Add(PanelType.MagPurchase, TNHTweakerUtils.LoadSprite(magPurchaseContent.Expect("TNHTweaker -- Failed to load Mag Purchase icon!")));
 
-            Option<Texture2D> fireRateUpContent = Source.Resources.Get<Texture2D>("gas_up.png");
-            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateUp, TNHTweakerUtils.LoadSprite(fireRateUpContent.Expect("TNHTweaker -- Failed to load Fire Rate Up icon!")));
+            file = Source.Resources.GetFile("ammo_purchase.png");
+            reader = stage.GetReader<Texture2D>();
+            resultDelayed = reader(file);
+            yield return resultDelayed;
+            LoadedTemplateManager.PanelSprites.Add(PanelType.AmmoPurchase, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
 
-            Option<Texture2D> fireRateDownContent = Source.Resources.Get<Texture2D>("gas_down.png");
-            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateDown, TNHTweakerUtils.LoadSprite(fireRateDownContent.Expect("TNHTweaker -- Failed to load Fire Rate Down icon!")));
+
+            file = Source.Resources.GetFile("mag_purchase.png");
+            reader = stage.GetReader<Texture2D>();
+            resultDelayed = reader(file);
+            yield return resultDelayed;
+            LoadedTemplateManager.PanelSprites.Add(PanelType.MagPurchase, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
+
+
+            file = Source.Resources.GetFile("gas_up.png");
+            reader = stage.GetReader<Texture2D>();
+            resultDelayed = reader(file);
+            yield return resultDelayed;
+            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateUp, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
+
+
+            file = Source.Resources.GetFile("gas_down.png");
+            reader = stage.GetReader<Texture2D>();
+            resultDelayed = reader(file);
+            yield return resultDelayed;
+            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateDown, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
         }
+
+
+
 
         /// <summary>
         /// Loads the bepinex config file, and applys those settings
@@ -124,6 +176,10 @@ namespace TNHTweaker
 
 
 
+        /// <summary>
+        /// Every time an asset bundle is loaded asyncronously, the callback is added to a global list which can be monitored to see when loading is complete
+        /// </summary>
+        /// <param name="__result"></param>
         [HarmonyPatch(typeof(AnvilManager), "GetBundleAsync")]
         [HarmonyPostfix]
         public static void AddMonitoredAnvilCallback(AnvilCallback<AssetBundle> __result)
@@ -149,6 +205,8 @@ namespace TNHTweaker
         [HarmonyPrefix]
         public static bool InitTNH(List<TNH_UIManager.CharacterCategory> ___Categories, TNH_CharacterDatabase ___CharDatabase, TNH_UIManager __instance)
         {
+            TNHTweakerLogger.Log("Start method of TNH_UIManager just got called!", TNHTweakerLogger.LogType.General);
+
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
             Text magazineCacheText = CreateMagazineCacheText(__instance);
