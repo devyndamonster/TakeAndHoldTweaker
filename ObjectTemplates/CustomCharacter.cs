@@ -1,5 +1,6 @@
 ﻿using ADepIn;
 using Deli.Immediate;
+using Deli.Newtonsoft.Json;
 using Deli.Setup;
 using Deli.VFS;
 using FistVR;
@@ -12,9 +13,6 @@ using System.Security.Policy;
 using System.Text;
 using TNHTweaker.Utilities;
 using UnityEngine;
-using Valve.Newtonsoft.Json;
-using Valve.Newtonsoft.Json.Converters;
-using Valve.Newtonsoft.Json.Serialization;
 
 namespace TNHTweaker.ObjectTemplates
 {
@@ -56,12 +54,6 @@ namespace TNHTweaker.ObjectTemplates
 
         [JsonIgnore]
         private ObjectTable requiredSightsTable;
-
-        [JsonIgnore]
-        private IDirectoryHandle dir;
-
-        [JsonIgnore]
-        private SetupStage stage;
 
 
         public CustomCharacter() { }
@@ -106,12 +98,10 @@ namespace TNHTweaker.ObjectTemplates
             this.character = character;
         }
 
-        public TNH_CharacterDef GetCharacter(int ID, IDirectoryHandle dir, SetupStage stage, Sprite thumbnail)
+        public TNH_CharacterDef GetCharacter(int ID, Sprite thumbnail)
         {
             if(character == null)
             {
-                this.dir = dir;
-                this.stage = stage;
 
                 character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
                 character.DisplayName = DisplayName;
@@ -301,7 +291,7 @@ namespace TNHTweaker.ObjectTemplates
             for(int i = 0; i < EquipmentPools.Count; i++)
             {
                 EquipmentPool pool = EquipmentPools[i];
-                if(!pool.DelayedInit(dir, stage, isCustom)){
+                if(!pool.DelayedInit()){
                     TNHTweakerLogger.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
@@ -370,33 +360,11 @@ namespace TNHTweaker.ObjectTemplates
             return pool;
         }
 
-        
 
-        public bool DelayedInit(IDirectoryHandle dir, SetupStage stage, bool isCustom)
+        public bool DelayedInit()
         {
             if (pool != null)
             {
-                //If the character is a custom character, then it's icons need to be set
-                if (isCustom)
-                {
-                    if (LoadedTemplateManager.DefaultIconSprites.ContainsKey(IconName))
-                    {
-                        pool.TableDef.Icon = LoadedTemplateManager.DefaultIconSprites[IconName];
-                    }
-                    else
-                    {
-                        //Load the table icon from the character mod
-                        foreach(IFileHandle iconFile in dir.GetFiles())
-                        {
-                            if (iconFile.Path.EndsWith(IconName))
-                            {
-                                ImmediateReader<Texture2D> reader = stage.ImmediateReaders.Get<Texture2D>();
-                                pool.TableDef.Icon = TNHTweakerUtils.LoadSprite(reader(iconFile));
-                            }
-                        }
-                    }
-                }
-
                 bool allTablesValid = true;
                 foreach(ObjectPool table in Tables)
                 {
@@ -411,7 +379,6 @@ namespace TNHTweaker.ObjectTemplates
 
             return false;
         }
-
     }
 
     public class ObjectPool

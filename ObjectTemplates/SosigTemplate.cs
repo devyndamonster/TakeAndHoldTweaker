@@ -1,4 +1,5 @@
 ﻿using BepInEx.Logging;
+using Deli.Newtonsoft.Json;
 using FistVR;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,6 @@ using System.Linq;
 using System.Text;
 using TNHTweaker.Utilities;
 using UnityEngine;
-using Valve.Newtonsoft.Json;
 
 namespace TNHTweaker.ObjectTemplates
 {
@@ -60,6 +60,9 @@ namespace TNHTweaker.ObjectTemplates
         {
 			if(template == null)
             {
+
+				TNHTweakerLogger.Log("TNHTweaker -- Getting sosig template", TNHTweakerLogger.LogType.Character);
+
 				template = (SosigEnemyTemplate)ScriptableObject.CreateInstance(typeof(SosigEnemyTemplate));
 
 				template.DisplayName = DisplayName;
@@ -67,7 +70,19 @@ namespace TNHTweaker.ObjectTemplates
 				template.SecondaryChance = SecondaryChance;
 				template.TertiaryChance = TertiaryChance;
 
-				template.ConfigTemplates = Configs.Select(o => o.GetConfigTemplate()).ToList();
+				TNHTweakerLogger.Log("TNHTweaker -- Getting sosig config", TNHTweakerLogger.LogType.Character);
+				template.ConfigTemplates = new List<SosigConfigTemplate>();
+				foreach(SosigConfig temp in Configs)
+                {
+					if(temp == null)
+                    {
+						TNHTweakerLogger.LogError("One of the sosig configs is null!");
+						continue;
+					}
+
+					template.ConfigTemplates.Add(temp.GetConfigTemplate());
+                }
+
 				template.ConfigTemplates_Easy = ConfigsEasy.Select(o => o.GetConfigTemplate()).ToList();
 				template.OutfitConfig = OutfitConfigs.Select(o => o.GetOutfitConfig()).ToList();
 			}
@@ -242,6 +257,8 @@ namespace TNHTweaker.ObjectTemplates
         {
 			if(template == null)
             {
+
+				TNHTweakerLogger.Log("TNHTweaker -- Creating new template", TNHTweakerLogger.LogType.Character);
 				template = (SosigConfigTemplate)ScriptableObject.CreateInstance(typeof(SosigConfigTemplate));
 
 				template.ViewDistance = ViewDistance;
@@ -280,7 +297,35 @@ namespace TNHTweaker.ObjectTemplates
 				template.DamMult_EMP = DamMult_EMP;
 				template.LinkDamageMultipliers = LinkDamageMultipliers;
 				template.LinkStaggerMultipliers = LinkStaggerMultipliers;
-				template.StartingLinkIntegrity = StartingLinkIntegrity.Select(o => o.GetVector2()).ToList();
+
+
+				TNHTweakerLogger.Log("TNHTweaker -- Getting vectors", TNHTweakerLogger.LogType.Character);
+
+				//We are currently in the TNHTweaker.ObjectTemplates namespace
+				//This is a list of Vector2Serializables, which have been moved to the same namespace
+				if (StartingLinkIntegrity == null)
+                {
+					TNHTweakerLogger.LogError("Our list of objects is null!");
+				}
+
+
+				else
+                {
+					template.StartingLinkIntegrity = new List<Vector2>();
+					foreach (Vector2Serializable v in StartingLinkIntegrity)
+					{
+						if (v == null)
+						{
+							TNHTweakerLogger.LogError("One of the vectors is null!");
+							continue;
+						}
+
+						template.StartingLinkIntegrity.Add(v.GetVector2());
+					}
+					TNHTweakerLogger.Log("TNHTweaker -- Got vectors", TNHTweakerLogger.LogType.Character);
+				}
+				
+
 				template.StartingChanceBrokenJoint = StartingChanceBrokenJoint;
 				template.ShudderThreshold = ShudderThreshold;
 				template.ConfusionThreshold = ConfusionThreshold;
@@ -304,11 +349,15 @@ namespace TNHTweaker.ObjectTemplates
 				template.DoesExplodeKill_Upper = DoesExplodeKill_Upper;
 				template.DoesExplodeKill_Lower = DoesExplodeKill_Lower;
 
+				TNHTweakerLogger.Log("TNHTweaker -- Almost done", TNHTweakerLogger.LogType.Character);
+
 				template.UsesLinkSpawns = false;
 				template.LinkSpawns = new List<FVRObject>();
 				template.LinkSpawnChance = new List<float>();
 				template.OverrideSpeech = false;
-            }
+
+				TNHTweakerLogger.Log("TNHTweaker -- Done", TNHTweakerLogger.LogType.Character);
+			}
 
 			return template;
         }

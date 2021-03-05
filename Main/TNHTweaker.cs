@@ -63,7 +63,6 @@ namespace TNHTweaker
             LoadConfigFile();
             SetupOutputDirectory();
 
-            stage.SetupAssetLoaders[Source, "character"] = new CharacterLoader().LoadAsset;
             stage.SetupAssetLoaders[Source, "sosig"] = new SosigLoader().LoadAsset;
             stage.SetupAssetLoaders[Source, "vault_file"] = new VaultFileLoader().LoadAsset;
         }
@@ -72,7 +71,8 @@ namespace TNHTweaker
 
         private void DuringRuntime(RuntimeStage stage)
         {
-            LoadPanelSprites(stage);
+            AnvilManager.Run(LoadPanelSprites(stage));
+            stage.RuntimeAssetLoaders[Source, "character"] = new CharacterLoader().LoadAsset;
         }
 
 

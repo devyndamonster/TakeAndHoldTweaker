@@ -90,10 +90,10 @@ namespace TNHTweaker
         }
 
 
-        public static void AddCharacterTemplate(CustomCharacter template, IDirectoryHandle dir, SetupStage stage, Sprite thumbnail)
+        public static void AddCharacterTemplate(CustomCharacter template, Sprite thumbnail)
         {
             CustomCharacters.Add(template);
-            LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, dir, stage, thumbnail), template);
+            LoadedCharactersDict.Add(template.GetCharacter(NewCharacterID, thumbnail), template);
 
             foreach(EquipmentPool pool in template.EquipmentPools)
             {

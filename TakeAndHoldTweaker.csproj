@@ -104,15 +104,13 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\h3vr_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
-    <Reference Include="Valve.Newtonsoft.Json">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\h3vr_Data\Managed\Valve.Newtonsoft.Json.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main\AsyncLoadMonitor.cs" />
     <Compile Include="Main\TNHMenuInitializer.cs" />
     <Compile Include="Main\CompatibleMagazineCache.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
+    <Compile Include="ObjectTemplates\VectorSerializable.cs" />
     <Compile Include="Utilities\FirearmUtils.cs" />
     <Compile Include="Utilities\Extensions.cs" />
     <Compile Include="Main\LoadedTemplateManager.cs" />

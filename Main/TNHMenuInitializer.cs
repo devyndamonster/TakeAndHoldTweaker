@@ -1,4 +1,6 @@
-﻿using FistVR;
+﻿using Deli.Newtonsoft.Json;
+using Deli.Newtonsoft.Json.Converters;
+using FistVR;
 using HarmonyLib;
 using System;
 using System.Collections;
@@ -9,8 +11,6 @@ using System.Text;
 using TNHTweaker.ObjectTemplates;
 using TNHTweaker.Utilities;
 using UnityEngine.UI;
-using Valve.Newtonsoft.Json;
-using Valve.Newtonsoft.Json.Converters;
 
 namespace TNHTweaker
 {
