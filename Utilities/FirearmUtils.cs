@@ -96,7 +96,42 @@ namespace TNHTweaker.Utilities
             return null;
         }
 
-        public static List<AmmoObjectDataTemplate> GetMagazinesWithinCapacity(int minCapacity, int maxCapacity, FVRObject firearm)
+
+        public static List<AmmoObjectDataTemplate> GetMagazinesWithinCapacity(FVRObject firearm, int minCapacity, int maxCapacity, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
+        {
+            List<AmmoObjectDataTemplate> validMagazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[o.ItemID]).ToList();
+
+            //TODO this can probably all be done under one for loop!
+            
+            //Remove any magazines that are in the blacklist
+            if (magazineBlacklist != null && magazineBlacklist.ContainsKey(firearm.ItemID))
+            {
+                MagazineBlacklistEntry blacklist = magazineBlacklist[firearm.ItemID];
+                for (int i = 0; i < validMagazines.Count; i++)
+                {
+                    if (blacklist.MagazineBlacklist.Contains(validMagazines[i].ObjectID))
+                    {
+                        validMagazines.RemoveAt(i);
+                        i -= 1;
+                    }
+                }
+            }
+
+            for (int i = 0; i < validMagazines.Count; i++)
+            {
+                if (validMagazines[i].Capacity < minCapacity || validMagazines[i].Capacity > maxCapacity)
+                {
+                    validMagazines.RemoveAt(i);
+                    i -= 1;
+                }
+            }
+
+            return validMagazines;
+        }
+
+
+
+        public static List<AmmoObjectDataTemplate> GetAmmoObjectsWithinCapacity(FVRObject firearm, int minCapacity, int maxCapacity, List<FVRObject.OTagEra> eras = null, List<FVRObject.OTagSet> sets = null, List<string> ammoBlacklist = null, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
             List<AmmoObjectDataTemplate> validMagazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[o.ItemID]).ToList();
 
@@ -111,6 +146,7 @@ namespace TNHTweaker.Utilities
 
             return validMagazines;
         }
+
 
         public static AmmoObjectDataTemplate GetSmallestCapacityMagazine(FVRObject firearm)
         {

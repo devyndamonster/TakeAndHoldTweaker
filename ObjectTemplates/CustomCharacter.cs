@@ -36,7 +36,7 @@ namespace TNHTweaker.ObjectTemplates
         public List<FVRObject.OTagEra> ValidAmmoEras;
         public List<FVRObject.OTagSet> ValidAmmoSets;
         public List<string> GlobalAmmoBlacklist;
-        public List<MagazineBlacklistEntry> MagazineBlacklist;
+        public Dictionary<string, MagazineBlacklistEntry> MagazineBlacklist;
         public EquipmentGroup RequireSightTable;
         public LoadoutEntry PrimaryWeapon;
         public LoadoutEntry SecondaryWeapon;
@@ -77,7 +77,7 @@ namespace TNHTweaker.ObjectTemplates
             ValidAmmoEras = character.ValidAmmoEras;
             ValidAmmoSets = character.ValidAmmoSets;
             GlobalAmmoBlacklist = new List<string>();
-            MagazineBlacklist = new List<MagazineBlacklistEntry>();
+            MagazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
 
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
             SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
@@ -150,6 +150,7 @@ namespace TNHTweaker.ObjectTemplates
                     character.Progressions_Endless[0].Levels.Add(level.GetLevel());
                 }
                 //character.Progressions_Endless[0].Levels = LevelsEndless.Select(o => o.GetLevel()).ToList();
+
             }
 
             return character;

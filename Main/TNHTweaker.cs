@@ -1484,8 +1484,8 @@ namespace TNHTweaker
                 GameObject caseFab = constructor.M.Prefab_WeaponCaseLarge;
                 if (pool.SpawnsInSmallCase) caseFab = constructor.M.Prefab_WeaponCaseSmall;
 
-                FVRObject item = IM.OD[spawnedObjects[0]];
-                GameObject itemCase = constructor.M.SpawnWeaponCase(caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, pool.Tables[0].NumMagsSpawned, pool.Tables[0].NumRoundsSpawned, pool.Tables[0].MinAmmoCapacity, pool.Tables[0].MaxAmmoCapacity);
+                FVRObject item = IM.OD[selectedGroups[0].GetObjects().GetRandom()];
+                GameObject itemCase = constructor.M.SpawnWeaponCase(caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, selectedGroups[0].NumMagsSpawned, selectedGroups[0].NumRoundsSpawned, selectedGroups[0].MinAmmoCapacity, selectedGroups[0].MaxAmmoCapacity);
 
                 constructorTraverse.Field("m_spawnedCase").SetValue(itemCase);
                 itemCase.GetComponent<TNH_WeaponCrate>().M = constructor.M;
@@ -1500,14 +1500,13 @@ namespace TNHTweaker
                 int ammoSpawnCount = 0;
                 int objectSpawnCount = 0;
 
-
-                TNHTweakerLogger.Log("TNHTWEAKER -- Pool has " + pool.Tables.Count + " tables to spawn from" ,TNHTweakerLogger.LogType.TNH);
-                for (int tableIndex = 0; tableIndex < pool.Tables.Count; tableIndex++)
+                TNHTweakerLogger.Log("TNHTWEAKER -- Pool has " + selectedGroups.Count + " groups to spawn from" ,TNHTweakerLogger.LogType.TNH);
+                for (int groupIndex = 0; groupIndex < selectedGroups.Count; groupIndex++)
                 {
-                    EquipmentGroup table = pool.Tables[tableIndex];
+                    EquipmentGroup group = selectedGroups[groupIndex];
 
-                    TNHTweakerLogger.Log("TNHTWEAKER -- Table will spawn " + table.ItemsToSpawn + " items from it", TNHTweakerLogger.LogType.TNH);
-                    for (int itemIndex = 0; itemIndex < table.ItemsToSpawn; itemIndex++)
+                    TNHTweakerLogger.Log("TNHTWEAKER -- Group will spawn " + group.ItemsToSpawn + " items from it", TNHTweakerLogger.LogType.TNH);
+                    for (int itemIndex = 0; itemIndex < group.ItemsToSpawn; itemIndex++)
                     {
                         FVRObject mainObject;
                         SavedGunSerializable vaultFile = null;
@@ -1516,10 +1515,10 @@ namespace TNHTweaker
                         Transform requiredSpawn = constructor.SpawnPoint_Object;
                         Transform ammoSpawn = constructor.SpawnPoint_Mag;
 
-                        if (table.IsCompatibleMagazine)
+                        if (group.IsCompatibleMagazine)
                         {
                             TNHTweakerLogger.Log("TNHTWEAKER -- Item will be a compatible magazine", TNHTweakerLogger.LogType.TNH);
-                            mainObject = FirearmUtils.GetMagazineForEquipped(table.MinAmmoCapacity, table.MaxAmmoCapacity);
+                            mainObject = FirearmUtils.GetMagazineForEquipped(group.MinAmmoCapacity, group.MaxAmmoCapacity);
                             if (mainObject == null)
                             {
                                 TNHTweakerLogger.LogWarning("TNHTWEAKER -- Failed to spawn a compatible magazine!");
@@ -1529,7 +1528,7 @@ namespace TNHTweaker
 
                         else
                         {
-                            string item = table.GetObjects().GetRandom();
+                            string item = group.GetObjects().GetRandom();
                             TNHTweakerLogger.Log("TNHTWEAKER -- Item selected: " + item, TNHTweakerLogger.LogType.TNH);
 
                             if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(item))
@@ -1589,18 +1588,24 @@ namespace TNHTweaker
                         }
 
 
+                        //If we are supposed to spawn magazines and clips, perform special logic for that
+                        if (group.SpawnMagAndClip && (mainObject.CompatibleClips != null && mainObject.CompatibleClips.Count > 0) && (mainObject.CompatibleMagazines != null && mainObject.CompatibleMagazines.Count > 0))
+                        {
+                            FVRObject magazineObject = mainObject.GetRandomAmmoObject(mainObject, character.ValidAmmoEras, group.MinAmmoCapacity, group.MaxAmmoCapacity, character.ValidAmmoSets);
+                        }
+
                         //If this object has compatible ammo object, then we should spawn those
-                        FVRObject ammoObject = mainObject.GetRandomAmmoObject(mainObject, character.ValidAmmoEras, table.MinAmmoCapacity, table.MaxAmmoCapacity, character.ValidAmmoSets);
+                        FVRObject ammoObject = mainObject.GetRandomAmmoObject(mainObject, character.ValidAmmoEras, group.MinAmmoCapacity, group.MaxAmmoCapacity, character.ValidAmmoSets);
                         if (ammoObject != null)
                         {
                             TNHTweakerLogger.Log("TNHTWEAKER -- Item has compatible ammo object: " + ammoObject.ItemID, TNHTweakerLogger.LogType.TNH);
 
-                            int spawnCount = table.NumMagsSpawned;
+                            int spawnCount = group.NumMagsSpawned;
 
                             if (ammoObject.Category == FVRObject.ObjectCategory.Cartridge)
                             {
                                 ammoSpawn = constructor.SpawnPoint_Ammo;
-                                spawnCount = table.NumRoundsSpawned;
+                                spawnCount = group.NumRoundsSpawned;
                             }
 
                             yield return ammoObject.GetGameObjectAsync();
@@ -1637,7 +1642,7 @@ namespace TNHTweaker
                         }
 
                         //If this object has bespoke attachments we'll try to spawn one
-                        else if (mainObject.BespokeAttachments.Count > 0 && UnityEngine.Random.value < table.BespokeAttachmentChance)
+                        else if (mainObject.BespokeAttachments.Count > 0 && UnityEngine.Random.value < group.BespokeAttachmentChance)
                         {
                             FVRObject bespoke = mainObject.BespokeAttachments.GetRandom();
                             yield return bespoke.GetGameObjectAsync();

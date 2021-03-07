@@ -124,8 +124,6 @@ namespace TNHTweaker
 
     public class MagazineBlacklistEntry
     {
-        public string FirearmID;
-
         public List<string> MagazineBlacklist;
         public List<string> ClipBlacklist;
         public List<string> BulletBlacklist;
