@@ -120,4 +120,23 @@ namespace TNHTweaker
             AmmoObject = bullet.ObjectWrapper;
         }
     }
+
+
+    public class MagazineBlacklistEntry
+    {
+        public string FirearmID;
+
+        public List<string> MagazineBlacklist;
+        public List<string> ClipBlacklist;
+        public List<string> BulletBlacklist;
+
+        public MagazineBlacklistEntry()
+        {
+            MagazineBlacklist = new List<string>();
+            ClipBlacklist = new List<string>();
+            BulletBlacklist = new List<string>();
+        }
+
+    }
+
 }

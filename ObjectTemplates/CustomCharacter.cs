@@ -20,10 +20,8 @@ namespace TNHTweaker.ObjectTemplates
     {
         public string DisplayName;
         public string Description;
-        public int CharacterID;
         public int CharacterGroup;
         public string TableID;
-        public string CharacterIconName;
         public int StartingTokens;
         public bool ForceAllAgentWeapons;
         public bool ForceDisableOutfitFunctionality;
@@ -37,6 +35,9 @@ namespace TNHTweaker.ObjectTemplates
         public bool HasShield;
         public List<FVRObject.OTagEra> ValidAmmoEras;
         public List<FVRObject.OTagSet> ValidAmmoSets;
+        public List<string> GlobalAmmoBlacklist;
+        public List<MagazineBlacklistEntry> MagazineBlacklist;
+        public EquipmentGroup RequireSightTable;
         public LoadoutEntry PrimaryWeapon;
         public LoadoutEntry SecondaryWeapon;
         public LoadoutEntry TertiaryWeapon;
@@ -44,7 +45,6 @@ namespace TNHTweaker.ObjectTemplates
         public LoadoutEntry SecondaryItem;
         public LoadoutEntry TertiaryItem;
         public LoadoutEntry Shield;
-        public ObjectPool RequireSightTable;
         public List<EquipmentPool> EquipmentPools;
         public List<Level> Levels;
         public List<Level> LevelsEndless;
@@ -61,10 +61,8 @@ namespace TNHTweaker.ObjectTemplates
         public CustomCharacter(TNH_CharacterDef character)
         {
             DisplayName = character.DisplayName;
-            CharacterID = (int)character.CharacterID;
             CharacterGroup = (int)character.Group;
             TableID = character.TableID;
-            CharacterIconName = character.Picture.name;
             StartingTokens = character.StartingTokens;
             ForceAllAgentWeapons = character.ForceAllAgentWeapons;
             Description = character.Description;
@@ -78,6 +76,8 @@ namespace TNHTweaker.ObjectTemplates
             HasShield = character.Has_Item_Shield;
             ValidAmmoEras = character.ValidAmmoEras;
             ValidAmmoSets = character.ValidAmmoSets;
+            GlobalAmmoBlacklist = new List<string>();
+            MagazineBlacklist = new List<MagazineBlacklistEntry>();
 
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
             SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
@@ -87,7 +87,7 @@ namespace TNHTweaker.ObjectTemplates
             TertiaryItem = new LoadoutEntry(character.Item_Tertiary);
             Shield = new LoadoutEntry(character.Item_Shield);
 
-            RequireSightTable = new ObjectPool(character.RequireSightTable);
+            RequireSightTable = new EquipmentGroup(character.RequireSightTable);
 
             EquipmentPools = character.EquipmentPool.Entries.Select(o => new EquipmentPool(o)).ToList();
             Levels = character.Progressions[0].Levels.Select(o => new Level(o)).ToList();
@@ -312,6 +312,10 @@ namespace TNHTweaker.ObjectTemplates
 
     }
 
+
+    /// <summary>
+    /// An equipment pool is an entry that can spawn at a constructor panel
+    /// </summary>
     public class EquipmentPool
     {
         public EquipmentPoolDef.PoolEntry.PoolEntryType Type;
@@ -320,8 +324,10 @@ namespace TNHTweaker.ObjectTemplates
         public int TokenCostLimited;
         public int MinLevelAppears;
         public int MaxLevelAppears;
-        public float Rarity;
-        public List<ObjectPool> Tables;
+        public bool SpawnsInSmallCase;
+        public bool SpawnsInLargeCase;
+        public EquipmentGroup PrimaryGroup;
+        public EquipmentGroup BackupGroup;
 
         [JsonIgnore]
         private EquipmentPoolDef.PoolEntry pool;
@@ -336,9 +342,11 @@ namespace TNHTweaker.ObjectTemplates
             TokenCostLimited = pool.TokenCost_Limited;
             MinLevelAppears = pool.MinLevelAppears;
             MaxLevelAppears = pool.MaxLevelAppears;
-            Rarity = pool.Rarity;
-            Tables = new List<ObjectPool>();
-            Tables.Add(new ObjectPool(pool.TableDef));
+            PrimaryGroup = new EquipmentGroup(pool.TableDef);
+            PrimaryGroup.Rarity = pool.Rarity;
+            SpawnsInLargeCase = pool.TableDef.SpawnsInLargeCase;
+            SpawnsInSmallCase = pool.TableDef.SpawnsInSmallCase;
+            BackupGroup = null;
 
             this.pool = pool;
         }
@@ -353,8 +361,17 @@ namespace TNHTweaker.ObjectTemplates
                 pool.TokenCost_Limited = TokenCostLimited;
                 pool.MinLevelAppears = MinLevelAppears;
                 pool.MaxLevelAppears = MaxLevelAppears;
-                pool.Rarity = Rarity;
-                pool.TableDef = Tables[0].GetObjectTableDef();
+
+                if(PrimaryGroup != null)
+                {
+                    pool.Rarity = PrimaryGroup.Rarity;
+                }
+                else
+                {
+                    pool.Rarity = 1;
+                }
+
+                pool.TableDef = PrimaryGroup.GetObjectTableDef();
             }
 
             return pool;
@@ -365,37 +382,55 @@ namespace TNHTweaker.ObjectTemplates
         {
             if (pool != null)
             {
-                bool allTablesValid = true;
-                foreach(ObjectPool table in Tables)
+                if (!PrimaryGroup.DelayedInit())
                 {
-                    if (!table.DelayedInit())
+                    PrimaryGroup = null;
+
+                    if (BackupGroup.DelayedInit())
                     {
-                        allTablesValid = false;
+                        return true;
                     }
                 }
-
-                return allTablesValid;
             }
 
             return false;
         }
+
+
+        public List<EquipmentGroup> GetSpawnedEquipmentGroups()
+        {
+            if (PrimaryGroup != null)
+            {
+                return PrimaryGroup.GetSpawnedEquipmentGroups();
+            }
+
+            else if(BackupGroup != null)
+            {
+                return BackupGroup.GetSpawnedEquipmentGroups();
+            }
+
+            TNHTweakerLogger.LogWarning("TNHTweaker -- EquipmentPool had both PrimaryGroup and BackupGroup set to null! Returning an empty list for spawned equipment");
+            return new List<EquipmentGroup>();
+        }
+
     }
 
-    public class ObjectPool
+    public class EquipmentGroup
     {
         public FVRObject.ObjectCategory Category;
+        public float Rarity;
+        public string RequiredQuest;
         public int ItemsToSpawn;
         public int MinAmmoCapacity;
         public int MaxAmmoCapacity;
         public int NumMagsSpawned;
+        public int NumClipsSpawned;
         public int NumRoundsSpawned;
+        public bool SpawnMagAndClip;
         public float BespokeAttachmentChance;
-        public int RequiredExactCapacity;
-        public bool IsBlanked;
         public bool IsCompatibleMagazine;
-        public bool SpawnsInSmallCase;
-        public bool SpawnsInLargeCase;
-        public bool UseIDOverride;
+        public bool AutoPopulateGroup;
+        public bool ForceSpawnAllSubPools;
         public List<string> IDOverride;
         public List<FVRObject.OTagEra> Eras;
         public List<FVRObject.OTagSet> Sets;
@@ -413,6 +448,7 @@ namespace TNHTweaker.ObjectTemplates
         public List<FVRObject.OTagPowerupType> PowerupTypes;
         public List<FVRObject.OTagThrownType> ThrownTypes;
         public List<FVRObject.OTagThrownDamageType> ThrownDamageTypes;
+        public List<EquipmentGroup> SubGroups;
 
         [JsonIgnore]
         private ObjectTableDef objectTableDef;
@@ -423,9 +459,9 @@ namespace TNHTweaker.ObjectTemplates
         [JsonIgnore]
         private List<string> objects = new List<string>();
 
-        public ObjectPool() { }
+        public EquipmentGroup() { }
 
-        public ObjectPool(ObjectTableDef objectTableDef)
+        public EquipmentGroup(ObjectTableDef objectTableDef)
         {
             Category = objectTableDef.Category;
             ItemsToSpawn = 1;
@@ -434,12 +470,8 @@ namespace TNHTweaker.ObjectTemplates
             NumMagsSpawned = 3;
             NumRoundsSpawned = 8;
             BespokeAttachmentChance = 0.5f;
-            RequiredExactCapacity = objectTableDef.RequiredExactCapacity;
-            IsBlanked = objectTableDef.IsBlanked;
             IsCompatibleMagazine = false;
-            SpawnsInSmallCase = objectTableDef.SpawnsInSmallCase;
-            SpawnsInLargeCase = objectTableDef.SpawnsInLargeCase;
-            UseIDOverride = objectTableDef.UseIDListOverride;
+            AutoPopulateGroup = !objectTableDef.UseIDListOverride;
             IDOverride = objectTableDef.IDOverride;
             Eras = objectTableDef.Eras;
             Sets = objectTableDef.Sets;
@@ -469,11 +501,11 @@ namespace TNHTweaker.ObjectTemplates
                 objectTableDef.Category = Category;
                 objectTableDef.MinAmmoCapacity = MinAmmoCapacity;
                 objectTableDef.MaxAmmoCapacity = MaxAmmoCapacity;
-                objectTableDef.RequiredExactCapacity = RequiredExactCapacity;
-                objectTableDef.IsBlanked = IsBlanked;
-                objectTableDef.SpawnsInSmallCase = SpawnsInSmallCase;
-                objectTableDef.SpawnsInLargeCase = SpawnsInLargeCase;
-                objectTableDef.UseIDListOverride = UseIDOverride;
+                objectTableDef.RequiredExactCapacity = -1;
+                objectTableDef.IsBlanked = false;
+                objectTableDef.SpawnsInSmallCase = false;
+                objectTableDef.SpawnsInLargeCase = false;
+                objectTableDef.UseIDListOverride = !AutoPopulateGroup;
                 objectTableDef.IDOverride = IDOverride;
                 objectTableDef.Eras = Eras;
                 objectTableDef.Sets = Sets;
@@ -505,6 +537,170 @@ namespace TNHTweaker.ObjectTemplates
             return objects;
         }
 
+
+        public List<EquipmentGroup> GetSpawnedEquipmentGroups()
+        {
+            List<EquipmentGroup> result;
+            if (IsCompatibleMagazine)
+            {
+                result = new List<EquipmentGroup>();
+                result.Add(this);
+                return result;
+            }
+
+            else if (ForceSpawnAllSubPools)
+            {
+                result = new List<EquipmentGroup>();
+
+                result.Add(this);
+                foreach(EquipmentGroup group in SubGroups)
+                {
+                    result.AddRange(group.GetSpawnedEquipmentGroups());
+                }
+                
+                return result;
+            }
+
+            else
+            {
+                float combinedRarity = objects.Count;
+                foreach (EquipmentGroup group in SubGroups)
+                {
+                    combinedRarity += group.Rarity;
+                }
+
+                float randomSelection = UnityEngine.Random.Range(0, combinedRarity);
+
+                if(randomSelection < objects.Count)
+                {
+                    result = new List<EquipmentGroup>();
+                    result.Add(this);
+                    return result;
+                }
+
+                else
+                {
+                    float progress = objects.Count;
+                    for (int i = 0; i < SubGroups.Count; i++)
+                    {
+                        progress += SubGroups[i].Rarity;
+                        if (randomSelection < progress)
+                        {
+                            return SubGroups[i].GetSpawnedEquipmentGroups();
+                        }
+                    }
+                }
+            }
+
+            return new List<EquipmentGroup>();
+        }
+
+
+        public List<string> GetSpawnedEquipment()
+        {
+            List<string> result;
+
+            //If this is a compatible magazine, we return magazines for the player and ignore everything else
+            if (IsCompatibleMagazine)
+            {
+                result = new List<string>();
+                for(int i = 0; i < ItemsToSpawn; i++)
+                {
+                    FVRObject mag = FirearmUtils.GetMagazineForEquipped(MinAmmoCapacity, MaxAmmoCapacity);
+                    if (mag != null)
+                    {
+                        result.Add(mag.ItemID);
+                    }
+                }
+                return result;
+            }
+
+
+            //If there are subgroups, there is additional logic for selecting between subgroups and normal objects
+            if(SubGroups != null)
+            {
+                //If we are forcing all subgroups to spawn, we add items from each subgroup, as well as items from this group
+                if (ForceSpawnAllSubPools)
+                {
+                    result = new List<string>();
+                    
+                    for(int i = 0; i < ItemsToSpawn && objects.Count > 0; i++)
+                    {
+                        result.Add(objects.GetRandom());
+                    }
+
+                    foreach (EquipmentGroup group in SubGroups)
+                    {
+                        result.AddRange(group.GetSpawnedEquipment());
+                    }
+
+                    return result;
+                }
+
+
+                //If we are spawning from this group normally, and have subgroups, then we must account for rarity of the subgroups when deciding what to spawn from
+                //Every normal object entry effectively has a rarity of 1, so subgroups with a rarity of 1 will have the same chance of spawning as a single item
+                else
+                {
+
+                    //Get the combined rarity, which is total rarity of both normal objects and also subgroups
+                    float combinedRarity = objects.Count;
+                    foreach (EquipmentGroup group in SubGroups)
+                    {
+                        combinedRarity += group.Rarity;
+                    }
+
+                    //An item will be selected to be spawned using a random float within the combined rarity
+                    float randomSelection = UnityEngine.Random.Range(0, combinedRarity);
+
+                    //If the selection falls withing the object list, then we can just return a random item from the list (ignoring the selection value)
+                    if(randomSelection < objects.Count)
+                    {
+                        result = new List<string>();
+
+                        for(int i = 0; i < ItemsToSpawn; i++)
+                        {
+                            result.Add(objects.GetRandom());
+                        }
+                        
+                        return result;
+                    }
+
+                    //If our selection is greater than the objects list, we select from one of the subgroups
+                    else
+                    {
+                        float progress = objects.Count;
+                        for(int i = 0; i < SubGroups.Count; i++)
+                        {
+                            progress += SubGroups[i].Rarity;
+                            if(randomSelection < progress)
+                            {
+                                return SubGroups[i].GetSpawnedEquipment();
+                            }
+                        }
+
+                        TNHTweakerLogger.LogError("TNHTweaker -- Tried to spawn a SubGroup for an EquipmentGroup, but managed to get to the end without having selected one! Returning the last SubGroup");
+                        return SubGroups.Last().GetSpawnedEquipment();
+                    }
+                }
+            }
+
+
+            //If there are no subgroups, just return items from the object list
+            else
+            {
+                result = new List<string>();
+
+                for(int i = 0; i < ItemsToSpawn; i++)
+                {
+                    result.Add(objects.GetRandom());
+                }
+
+                return result;
+            }
+        }
+
+
         /// <summary>
         /// Fills out the object table and removes any unloaded items
         /// </summary>
@@ -513,20 +709,35 @@ namespace TNHTweaker.ObjectTemplates
         {
             TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
 
-            objectTable = new ObjectTable();
-
             //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
-            if (!IsCompatibleMagazine && !UseIDOverride)
+            if (!IsCompatibleMagazine && AutoPopulateGroup)
             {
+                objectTable = new ObjectTable();
                 objectTable.Initialize(GetObjectTableDef());
                 foreach(FVRObject obj in objectTable.Objs)
                 {
                     objects.Add(obj.ItemID);
                 }
             }
+            
+            //Every item in IDOverride gets added to the list of spawnable objects
+            if(IDOverride != null)
+            {
+                objects.AddRange(IDOverride);
+            }
+
+            //Perform delayed init on all subgroups. If they are empty, we remove them
+            for(int i = 0; i < SubGroups.Count; i++)
+            {
+                if (!SubGroups[i].DelayedInit())
+                {
+                    SubGroups.RemoveAt(i);
+                    i -= 1;
+                }
+            }
 
             //The table is valid if it has items in it, or is a compatible magazine
-            return objects.Count != 0 || IsCompatibleMagazine;
+            return objects.Count != 0 || IsCompatibleMagazine || (SubGroups != null && SubGroups.Count != 0);
         }
     }
 
@@ -535,7 +746,7 @@ namespace TNHTweaker.ObjectTemplates
         public int NumMags;
         public int NumRounds;
         public string AmmoOverride;
-        public List<ObjectPool> Tables;
+        public List<EquipmentGroup> Groups;
         public List<string> ListOverride;
         
 
@@ -555,7 +766,7 @@ namespace TNHTweaker.ObjectTemplates
 
             NumMags = loadout.Num_Mags_SL_Clips;
             NumRounds = loadout.Num_Rounds;
-            if (loadout.TableDefs != null) Tables = loadout.TableDefs.Select(o => new ObjectPool(o)).ToList();
+            if (loadout.TableDefs != null) Groups = loadout.TableDefs.Select(o => new EquipmentGroup(o)).ToList();
             if (loadout.ListOverride != null) ListOverride = loadout.ListOverride.Select(o => o.ItemID).ToList();
             if (loadout.AmmoObjectOverride != null) AmmoOverride = loadout.AmmoObjectOverride.ItemID;
 
@@ -569,22 +780,24 @@ namespace TNHTweaker.ObjectTemplates
                 loadout = new TNH_CharacterDef.LoadoutEntry();
                 loadout.Num_Mags_SL_Clips = NumMags;
                 loadout.Num_Rounds = NumRounds;
-                loadout.TableDefs = Tables.Select(o => o.GetObjectTableDef()).ToList();
+                loadout.TableDefs = Groups.Select(o => o.GetObjectTableDef()).ToList();
             }
 
             return loadout;
         }
 
+
+
         public bool DelayedInit(bool isCustom)
         {
             if (loadout != null)
             {
-                for(int i = 0; i < Tables.Count; i++)
+                for(int i = 0; i < Groups.Count; i++)
                 {
-                    ObjectPool pool = Tables[i];
+                    EquipmentGroup pool = Groups[i];
                     if (!pool.DelayedInit())
                     {
-                        Tables.RemoveAt(i);
+                        Groups.RemoveAt(i);
                         loadout.TableDefs.RemoveAt(i);
                         i -= 1;
                     }
@@ -601,7 +814,7 @@ namespace TNHTweaker.ObjectTemplates
                     if (AmmoOverride != null && IM.OD.ContainsKey(AmmoOverride)) loadout.AmmoObjectOverride = IM.OD[AmmoOverride];
                 }
                 
-                return Tables.Count != 0 || loadout.ListOverride.Count != 0;
+                return Groups.Count != 0 || loadout.ListOverride.Count != 0;
             }
 
             return false;

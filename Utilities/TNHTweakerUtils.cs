@@ -299,7 +299,7 @@ namespace TNHTweaker.Utilities
         {
             if (character.HasPrimaryWeapon)
             {
-                foreach (ObjectPool table in character.PrimaryWeapon.Tables)
+                foreach (EquipmentGroup table in character.PrimaryWeapon.Groups)
                 {
                     RemoveUnloadedObjectIDs(table);
                 }
@@ -307,7 +307,7 @@ namespace TNHTweaker.Utilities
 
             if (character.HasSecondaryWeapon)
             {
-                foreach (ObjectPool table in character.SecondaryWeapon.Tables)
+                foreach (EquipmentGroup table in character.SecondaryWeapon.Groups)
                 {
                     RemoveUnloadedObjectIDs(table);
                 }
@@ -315,7 +315,7 @@ namespace TNHTweaker.Utilities
 
             if (character.HasTertiaryWeapon)
             {
-                foreach (ObjectPool table in character.TertiaryWeapon.Tables)
+                foreach (EquipmentGroup table in character.TertiaryWeapon.Groups)
                 {
                     RemoveUnloadedObjectIDs(table);
                 }
@@ -323,7 +323,7 @@ namespace TNHTweaker.Utilities
 
             if (character.HasPrimaryItem)
             {
-                foreach (ObjectPool table in character.PrimaryItem.Tables)
+                foreach (EquipmentGroup table in character.PrimaryItem.Groups)
                 {
                     RemoveUnloadedObjectIDs(table);
                 }
@@ -331,7 +331,7 @@ namespace TNHTweaker.Utilities
 
             if (character.HasSecondaryItem)
             {
-                foreach (ObjectPool table in character.SecondaryItem.Tables)
+                foreach (EquipmentGroup table in character.SecondaryItem.Groups)
                 {
                     RemoveUnloadedObjectIDs(table);
                 }
@@ -339,7 +339,7 @@ namespace TNHTweaker.Utilities
 
             if (character.HasTertiaryItem)
             {
-                foreach (ObjectPool table in character.TertiaryItem.Tables)
+                foreach (EquipmentGroup table in character.TertiaryItem.Groups)
                 {
                     RemoveUnloadedObjectIDs(table);
                 }
@@ -347,49 +347,40 @@ namespace TNHTweaker.Utilities
 
             if (character.HasShield)
             {
-                foreach (ObjectPool table in character.Shield.Tables)
+                foreach (EquipmentGroup table in character.Shield.Groups)
                 {
                     RemoveUnloadedObjectIDs(table);
                 }
             }
         }
 
-        public static void RemoveUnloadedObjectIDs(ObjectPool pool)
-        {
-            ObjectTableDef table = pool.GetObjectTableDef();
 
-            if (table.UseIDListOverride)
+        public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
+        {
+            if (group.AutoPopulateGroup && group.IDOverride != null)
             {
-                for (int i = 0; i < table.IDOverride.Count; i++)
+                for (int i = 0; i < group.IDOverride.Count; i++)
                 {
-                    if (!IM.OD.ContainsKey(table.IDOverride[i]))
+                    if (!IM.OD.ContainsKey(group.IDOverride[i]))
                     {
                         //If this is a vaulted gun with all it's components loaded, we should still have this in the object list
-                        if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(table.IDOverride[i]))
+                        if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(group.IDOverride[i]))
                         {
-                            if (LoadedTemplateManager.LoadedVaultFiles[table.IDOverride[i]].AllComponentsLoaded())
+                            if (!LoadedTemplateManager.LoadedVaultFiles[group.IDOverride[i]].AllComponentsLoaded())
                             {
-                                pool.GetObjects().Add(table.IDOverride[i]);
-                            }
-
-                            else
-                            {
-                                TNHTweakerLogger.LogWarning("TNHTweaker -- Vaulted gun in table does not have all components loaded, removing it! VaultID : " + table.IDOverride[i]);
+                                TNHTweakerLogger.LogWarning("TNHTweaker -- Vaulted gun in table does not have all components loaded, removing it! VaultID : " + group.IDOverride[i]);
+                                group.IDOverride.RemoveAt(i);
+                                i -= 1;
                             }
                         }
 
+                        //If this was not a vaulted gun, remove it
                         else
                         {
-                            TNHTweakerLogger.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + table.IDOverride[i]);
+                            TNHTweakerLogger.LogWarning("TNHTweaker -- Object in table not loaded, removing it from object table! ObjectID : " + group.IDOverride[i]);
+                            group.IDOverride.RemoveAt(i);
+                            i -= 1;
                         }
-
-                        table.IDOverride.RemoveAt(i);
-                        i--;
-                    }
-
-                    else
-                    {
-                        pool.GetObjects().Add(table.IDOverride[i]);
                     }
                 }
             }

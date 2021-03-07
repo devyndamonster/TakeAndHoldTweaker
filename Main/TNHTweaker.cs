@@ -1475,14 +1475,16 @@ namespace TNHTweaker
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[constructor.M.C];
             List<GameObject> trackedObjects = (List<GameObject>)(constructorTraverse.Field("m_trackedObjects").GetValue());
 
-            if(pool.Tables[0].SpawnsInLargeCase || pool.Tables[0].SpawnsInSmallCase)
+            List<EquipmentGroup> selectedGroups = pool.GetSpawnedEquipmentGroups();
+            
+            if(pool.SpawnsInLargeCase || pool.SpawnsInSmallCase)
             {
                 TNHTweakerLogger.Log("TNHTWEAKER -- Item will spawn in a container", TNHTweakerLogger.LogType.TNH);
 
                 GameObject caseFab = constructor.M.Prefab_WeaponCaseLarge;
-                if (pool.Tables[0].SpawnsInSmallCase) caseFab = constructor.M.Prefab_WeaponCaseSmall;
+                if (pool.SpawnsInSmallCase) caseFab = constructor.M.Prefab_WeaponCaseSmall;
 
-                FVRObject item = IM.OD[pool.Tables[0].GetObjects().GetRandom()];
+                FVRObject item = IM.OD[spawnedObjects[0]];
                 GameObject itemCase = constructor.M.SpawnWeaponCase(caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, pool.Tables[0].NumMagsSpawned, pool.Tables[0].NumRoundsSpawned, pool.Tables[0].MinAmmoCapacity, pool.Tables[0].MaxAmmoCapacity);
 
                 constructorTraverse.Field("m_spawnedCase").SetValue(itemCase);
@@ -1502,7 +1504,7 @@ namespace TNHTweaker
                 TNHTweakerLogger.Log("TNHTWEAKER -- Pool has " + pool.Tables.Count + " tables to spawn from" ,TNHTweakerLogger.LogType.TNH);
                 for (int tableIndex = 0; tableIndex < pool.Tables.Count; tableIndex++)
                 {
-                    ObjectPool table = pool.Tables[tableIndex];
+                    EquipmentGroup table = pool.Tables[tableIndex];
 
                     TNHTweakerLogger.Log("TNHTWEAKER -- Table will spawn " + table.ItemsToSpawn + " items from it", TNHTweakerLogger.LogType.TNH);
                     for (int itemIndex = 0; itemIndex < table.ItemsToSpawn; itemIndex++)

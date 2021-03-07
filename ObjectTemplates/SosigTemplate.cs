@@ -26,7 +26,7 @@ namespace TNHTweaker.ObjectTemplates
         public float SecondaryChance;
         public float TertiaryChance;
 		public float DroppedLootChance;
-		public ObjectPool DroppedObjectPool;
+		public EquipmentGroup DroppedObjectPool;
 
         [JsonIgnore]
         private SosigEnemyTemplate template;
@@ -51,7 +51,7 @@ namespace TNHTweaker.ObjectTemplates
 			OutfitConfigs = template.OutfitConfig.Select(o => new OutfitConfig(o)).ToList();
 
 			DroppedLootChance = 0;
-			DroppedObjectPool = new ObjectPool();
+			DroppedObjectPool = new EquipmentGroup();
 
 			this.template = template;
 		}
