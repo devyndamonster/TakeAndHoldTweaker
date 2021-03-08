@@ -1180,20 +1180,6 @@ namespace TNHTweaker
                 EquipSosigClothing(outfitConfig.Backpacks, sosigComponent.Links[1], outfitConfig.ForceWearAllBackpacks);
             }
 
-            //Setup link spawns
-            if (config.GetConfigTemplate().UsesLinkSpawns)
-            {
-                for(int i = 0; i < sosigComponent.Links.Count; i++)
-                {
-                    if(config.GetConfigTemplate().LinkSpawnChance[i] >= UnityEngine.Random.value)
-                    {
-                        if(config.GetConfigTemplate().LinkSpawns.Count > i && config.GetConfigTemplate().LinkSpawns[i] != null && config.GetConfigTemplate().LinkSpawns[i].Category != FVRObject.ObjectCategory.Loot)
-                        {
-                            sosigComponent.Links[i].RegisterSpawnOnDestroy(config.GetConfigTemplate().LinkSpawns[i]);
-                        }
-                    }
-                }
-            }
 
             //Setup the sosigs orders
             if (isAssault)
@@ -1224,6 +1210,7 @@ namespace TNHTweaker
                 else
                 {
                     sosigComponent.Links[2].RegisterSpawnOnDestroy(IM.OD[spawnedObject]);
+                    sosigComponent.Links[2].gameObject.AddComponent(typeof(SosigLinkLootWrapper));
                 }
                 
             }
@@ -1474,10 +1461,10 @@ namespace TNHTweaker
             EquipmentPool pool = LoadedTemplateManager.EquipmentPoolDictionary[entry];
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[constructor.M.C];
             List<GameObject> trackedObjects = (List<GameObject>)(constructorTraverse.Field("m_trackedObjects").GetValue());
-
             List<EquipmentGroup> selectedGroups = pool.GetSpawnedEquipmentGroups();
-            
-            if(pool.SpawnsInLargeCase || pool.SpawnsInSmallCase)
+            AnvilCallback<GameObject> gameObjectCallback;
+
+            if (pool.SpawnsInLargeCase || pool.SpawnsInSmallCase)
             {
                 TNHTweakerLogger.Log("TNHTWEAKER -- Item will spawn in a container", TNHTweakerLogger.LogType.TNH);
 
@@ -1570,8 +1557,9 @@ namespace TNHTweaker
                         }
                         else
                         {
-                            yield return mainObject.GetGameObjectAsync();
-                            GameObject spawnedObject = Instantiate(mainObject.GetGameObject(), primarySpawn.position + Vector3.up * 0.2f * mainSpawnCount, primarySpawn.rotation);
+                            gameObjectCallback = mainObject.GetGameObjectAsync();
+                            yield return gameObjectCallback;
+                            GameObject spawnedObject = Instantiate(gameObjectCallback.Result, primarySpawn.position + Vector3.up * 0.2f * mainSpawnCount, primarySpawn.rotation);
                             trackedObjects.Add(spawnedObject);
                             TNHTweakerLogger.Log("TNHTWEAKER -- Normal item spawned", TNHTweakerLogger.LogType.TNH);
                         }
@@ -1580,43 +1568,93 @@ namespace TNHTweaker
                         //Spawn any required objects
                         for (int j = 0; j < mainObject.RequiredSecondaryPieces.Count; j++)
                         {
-                            yield return mainObject.RequiredSecondaryPieces[j].GetGameObjectAsync();
-                            GameObject requiredItem = Instantiate(mainObject.RequiredSecondaryPieces[j].GetGameObject(), requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
+                            gameObjectCallback = mainObject.RequiredSecondaryPieces[j].GetGameObjectAsync();
+                            yield return gameObjectCallback;
+                            GameObject requiredItem = Instantiate(gameObjectCallback.Result, requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
                             trackedObjects.Add(requiredItem);
                             requiredSpawnCount += 1;
                             TNHTweakerLogger.Log("TNHTWEAKER -- Required item spawned", TNHTweakerLogger.LogType.TNH);
                         }
 
 
-                        //If we are supposed to spawn magazines and clips, perform special logic for that
-                        if (group.SpawnMagAndClip && (mainObject.CompatibleClips != null && mainObject.CompatibleClips.Count > 0) && (mainObject.CompatibleMagazines != null && mainObject.CompatibleMagazines.Count > 0))
+                        //Handle spawning for ammo objects if the main object has any
+                        if (FirearmUtils.FVRObjectHasAmmoObject(mainObject))
                         {
-                            FVRObject magazineObject = mainObject.GetRandomAmmoObject(mainObject, character.ValidAmmoEras, group.MinAmmoCapacity, group.MaxAmmoCapacity, character.ValidAmmoSets);
-                        }
+                            //Get lists of ammo objects for this firearm with filters and blacklists applied
+                            List<FVRObject> compatibleMagazines = FirearmUtils.GetMagazinesWithinCapacity(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
+                            List<FVRObject> compatibleRounds = FirearmUtils.GetCompatibleBullets(mainObject, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
+                            List<FVRObject> compatibleClips = FirearmUtils.GetCompatibleClips(mainObject, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
 
-                        //If this object has compatible ammo object, then we should spawn those
-                        FVRObject ammoObject = mainObject.GetRandomAmmoObject(mainObject, character.ValidAmmoEras, group.MinAmmoCapacity, group.MaxAmmoCapacity, character.ValidAmmoSets);
-                        if (ammoObject != null)
-                        {
-                            TNHTweakerLogger.Log("TNHTWEAKER -- Item has compatible ammo object: " + ammoObject.ItemID, TNHTweakerLogger.LogType.TNH);
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Mag Count: " + compatibleMagazines.Count, TNHTweakerLogger.LogType.TNH);
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Clip Count: " + compatibleClips.Count, TNHTweakerLogger.LogType.TNH);
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Round Count: " + compatibleRounds.Count, TNHTweakerLogger.LogType.TNH);
 
-                            int spawnCount = group.NumMagsSpawned;
-
-                            if (ammoObject.Category == FVRObject.ObjectCategory.Cartridge)
+                            //If we are supposed to spawn magazines and clips, perform special logic for that
+                            if (group.SpawnMagAndClip && compatibleMagazines.Count > 0 && compatibleClips.Count > 0 && group.NumMagsSpawned > 0 && group.NumClipsSpawned > 0)
                             {
-                                ammoSpawn = constructor.SpawnPoint_Ammo;
-                                spawnCount = group.NumRoundsSpawned;
+                                TNHTweakerLogger.Log("TNHTWEAKER -- Spawning with both magazine and clips", TNHTweakerLogger.LogType.TNH);
+
+                                FVRObject magazineObject = compatibleMagazines.GetRandom();
+                                FVRObject clipObject = compatibleClips.GetRandom();
+                                ammoSpawn = constructor.SpawnPoint_Mag;
+
+                                gameObjectCallback = magazineObject.GetGameObjectAsync();
+                                yield return gameObjectCallback;
+                                GameObject spawnedMag = Instantiate(gameObjectCallback.Result, ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                trackedObjects.Add(spawnedMag);
+                                ammoSpawnCount += 1;
+
+                                gameObjectCallback = clipObject.GetGameObjectAsync();
+                                yield return gameObjectCallback;
+                                for (int i = 0; i < group.NumClipsSpawned; i++)
+                                {
+                                    GameObject spawnedClip = Instantiate(gameObjectCallback.Result, ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                    trackedObjects.Add(spawnedClip);
+                                    ammoSpawnCount += 1;
+                                }
                             }
 
-                            yield return ammoObject.GetGameObjectAsync();
-
-                            for (int j = 0; j < spawnCount; j++)
+                            //Otherwise, perform normal logic for spawning ammo objects from current group
+                            else
                             {
-                                GameObject spawnedAmmo = Instantiate(ammoObject.GetGameObject(), ammoSpawn.position + -ammoSpawn.right * 0.15f * ammoSpawnCount + ammoSpawn.up * 0.15f * j, ammoSpawn.rotation);
-                                trackedObjects.Add(spawnedAmmo);
-                            }
+                                FVRObject ammoObject;
+                                int numSpawned = 0;
 
-                            ammoSpawnCount += 1;
+                                if (compatibleMagazines.Count > 0 && group.NumMagsSpawned > 0)
+                                {
+                                    ammoObject = compatibleMagazines.GetRandom();
+                                    numSpawned = group.NumMagsSpawned;
+                                    ammoSpawn = constructor.SpawnPoint_Mag;
+                                }
+                                else if(compatibleClips.Count > 0 && group.NumClipsSpawned > 0)
+                                {
+                                    ammoObject = compatibleClips.GetRandom();
+                                    numSpawned = group.NumClipsSpawned;
+                                    ammoSpawn = constructor.SpawnPoint_Mag;
+                                }
+                                else if(mainObject.CompatibleSpeedLoaders != null && mainObject.CompatibleSpeedLoaders.Count > 0 && group.NumClipsSpawned > 0)
+                                {
+                                    ammoObject = mainObject.CompatibleSpeedLoaders.GetRandom();
+                                    numSpawned = group.NumClipsSpawned;
+                                    ammoSpawn = constructor.SpawnPoint_Mag;
+                                }
+                                else
+                                {
+                                    ammoObject = compatibleRounds.GetRandom();
+                                    numSpawned = group.NumRoundsSpawned;
+                                    ammoSpawn = constructor.SpawnPoint_Ammo;
+                                }
+
+                                gameObjectCallback = ammoObject.GetGameObjectAsync();
+                                yield return gameObjectCallback;
+
+                                for (int i = 0; i < numSpawned; i++)
+                                {
+                                    GameObject spawned = Instantiate(gameObjectCallback.Result, ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
+                                    trackedObjects.Add(spawned);
+                                    ammoSpawnCount += 1;
+                                }
+                            }
                         }
 
 
@@ -1624,16 +1662,18 @@ namespace TNHTweaker
                         if (mainObject.RequiresPicatinnySight && character.GetRequiredSightsTable() != null)
                         {
                             FVRObject sight = character.GetRequiredSightsTable().GetRandomObject();
-                            yield return sight.GetGameObjectAsync();
-                            GameObject spawnedSight = Instantiate(sight.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                            gameObjectCallback = sight.GetGameObjectAsync();
+                            yield return gameObjectCallback;
+                            GameObject spawnedSight = Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
                             trackedObjects.Add(spawnedSight);
 
                             TNHTweakerLogger.Log("TNHTWEAKER -- Required sight spawned", TNHTweakerLogger.LogType.TNH);
 
                             for (int j = 0; j < sight.RequiredSecondaryPieces.Count; j++)
                             {
-                                yield return sight.RequiredSecondaryPieces[j].GetGameObjectAsync();
-                                GameObject spawnedRequired = Instantiate(sight.RequiredSecondaryPieces[j].GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
+                                gameObjectCallback = sight.RequiredSecondaryPieces[j].GetGameObjectAsync();
+                                yield return gameObjectCallback;
+                                GameObject spawnedRequired = Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
                                 trackedObjects.Add(spawnedRequired);
                                 TNHTweakerLogger.Log("TNHTWEAKER -- Required item for sight spawned", TNHTweakerLogger.LogType.TNH);
                             }
@@ -1645,8 +1685,9 @@ namespace TNHTweaker
                         else if (mainObject.BespokeAttachments.Count > 0 && UnityEngine.Random.value < group.BespokeAttachmentChance)
                         {
                             FVRObject bespoke = mainObject.BespokeAttachments.GetRandom();
-                            yield return bespoke.GetGameObjectAsync();
-                            GameObject bespokeObject = Instantiate(bespoke.GetGameObject(), constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
+                            gameObjectCallback = bespoke.GetGameObjectAsync();
+                            yield return gameObjectCallback;
+                            GameObject bespokeObject = Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
                             trackedObjects.Add(bespokeObject);
                             objectSpawnCount += 1;
 

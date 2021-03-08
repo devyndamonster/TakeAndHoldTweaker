@@ -257,8 +257,6 @@ namespace TNHTweaker.ObjectTemplates
         {
 			if(template == null)
             {
-
-				TNHTweakerLogger.Log("TNHTweaker -- Creating new template", TNHTweakerLogger.LogType.Character);
 				template = (SosigConfigTemplate)ScriptableObject.CreateInstance(typeof(SosigConfigTemplate));
 
 				template.ViewDistance = ViewDistance;
@@ -298,33 +296,11 @@ namespace TNHTweaker.ObjectTemplates
 				template.LinkDamageMultipliers = LinkDamageMultipliers;
 				template.LinkStaggerMultipliers = LinkStaggerMultipliers;
 
-
-				TNHTweakerLogger.Log("TNHTweaker -- Getting vectors", TNHTweakerLogger.LogType.Character);
-
-				//We are currently in the TNHTweaker.ObjectTemplates namespace
-				//This is a list of Vector2Serializables, which have been moved to the same namespace
-				if (StartingLinkIntegrity == null)
-                {
-					TNHTweakerLogger.LogError("Our list of objects is null!");
+				template.StartingLinkIntegrity = new List<Vector2>();
+				foreach (Vector2Serializable v in StartingLinkIntegrity)
+				{
+					template.StartingLinkIntegrity.Add(v.GetVector2());
 				}
-
-
-				else
-                {
-					template.StartingLinkIntegrity = new List<Vector2>();
-					foreach (Vector2Serializable v in StartingLinkIntegrity)
-					{
-						if (v == null)
-						{
-							TNHTweakerLogger.LogError("One of the vectors is null!");
-							continue;
-						}
-
-						template.StartingLinkIntegrity.Add(v.GetVector2());
-					}
-					TNHTweakerLogger.Log("TNHTweaker -- Got vectors", TNHTweakerLogger.LogType.Character);
-				}
-				
 
 				template.StartingChanceBrokenJoint = StartingChanceBrokenJoint;
 				template.ShudderThreshold = ShudderThreshold;
@@ -348,15 +324,10 @@ namespace TNHTweaker.ObjectTemplates
 				template.DoesExplodeKill_Head = DoesExplodeKill_Head;
 				template.DoesExplodeKill_Upper = DoesExplodeKill_Upper;
 				template.DoesExplodeKill_Lower = DoesExplodeKill_Lower;
-
-				TNHTweakerLogger.Log("TNHTweaker -- Almost done", TNHTweakerLogger.LogType.Character);
-
 				template.UsesLinkSpawns = false;
 				template.LinkSpawns = new List<FVRObject>();
 				template.LinkSpawnChance = new List<float>();
 				template.OverrideSpeech = false;
-
-				TNHTweakerLogger.Log("TNHTweaker -- Done", TNHTweakerLogger.LogType.Character);
 			}
 
 			return template;

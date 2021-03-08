@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using TNHTweaker.ObjectTemplates;
 using TNHTweaker.Utilities;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace TNHTweaker
@@ -245,11 +246,13 @@ namespace TNHTweaker
                 List<FVRObject> clips = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Clip];
                 List<FVRObject> bullets = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Cartridge];
                 List<FVRObject> firearms = ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm];
+                AnvilCallback<GameObject> gameObjectCallback;
                 int totalObjects = magazines.Count + clips.Count + bullets.Count + firearms.Count;
                 int progress = 0;
                 DateTime start = DateTime.Now;
 
-                //NOTE: This is difficult to abstract into seperate methods because it is contained withing a coroutine, and we don't want to create additional coroutines. This can be fixed when we use multithreading instead of coroutines :)
+                
+
                 //Loop through all magazines and build a list of magazine components
                 TNHTweakerLogger.Log("TNHTweaker -- Loading all magazines", TNHTweakerLogger.LogType.General);
                 for (int i = 0; i < magazines.Count; i++)
@@ -265,8 +268,10 @@ namespace TNHTweaker
                     FVRObject magazine = magazines[i];
                     if (!magazineCache.Magazines.Contains(magazine.ItemID))
                     {
-                        yield return magazine.GetGameObjectAsync();
-                        FVRFireArmMagazine magComp = magazine.GetGameObject().GetComponent<FVRFireArmMagazine>();
+                        gameObjectCallback = magazine.GetGameObjectAsync();
+                        yield return gameObjectCallback;
+                        FVRFireArmMagazine magComp = gameObjectCallback.Result.GetComponent<FVRFireArmMagazine>();
+
                         magazineCache.Magazines.Add(magazine.ItemID);
 
                         if (magComp != null)
@@ -292,8 +297,10 @@ namespace TNHTweaker
                     FVRObject clip = clips[i];
                     if (!magazineCache.Clips.Contains(clip.ItemID))
                     {
-                        yield return clip.GetGameObjectAsync();
-                        FVRFireArmClip clipComp = clip.GetGameObject().GetComponent<FVRFireArmClip>();
+                        gameObjectCallback = clip.GetGameObjectAsync();
+                        yield return gameObjectCallback;
+                        FVRFireArmClip clipComp = gameObjectCallback.Result.GetComponent<FVRFireArmClip>();
+
                         magazineCache.Clips.Add(clip.ItemID);
 
                         if (clipComp != null)
@@ -319,8 +326,10 @@ namespace TNHTweaker
                     FVRObject bullet = bullets[i];
                     if (!magazineCache.Bullets.Contains(bullet.ItemID))
                     {
-                        yield return bullet.GetGameObjectAsync();
-                        FVRFireArmRound bulletComp = bullet.GetGameObject().GetComponent<FVRFireArmRound>();
+                        gameObjectCallback = bullet.GetGameObjectAsync();
+                        yield return gameObjectCallback;
+                        FVRFireArmRound bulletComp = gameObjectCallback.Result.GetComponent<FVRFireArmRound>();
+
                         magazineCache.Bullets.Add(bullet.ItemID);
 
                         if (bulletComp != null)
@@ -345,8 +354,11 @@ namespace TNHTweaker
 
                     //First we should try and get the component of the firearm
                     FVRObject firearm = firearms[i];
-                    yield return firearm.GetGameObjectAsync();
-                    FVRFireArm firearmComp = firearm.GetGameObject().GetComponent<FVRFireArm>();
+
+                    gameObjectCallback = firearm.GetGameObjectAsync();
+                    yield return gameObjectCallback;
+                    FVRFireArm firearmComp = gameObjectCallback.Result.GetComponent<FVRFireArm>();
+
                     magazineCache.Firearms.Add(firearm.ItemID);
 
                     if (firearmComp == null) continue;

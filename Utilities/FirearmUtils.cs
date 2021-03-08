@@ -75,17 +75,17 @@ namespace TNHTweaker.Utilities
                 if (firearm.CompatibleMagazines.Count > 0)
                 {
                     //First try to return a magazine within the specified capacity
-                    List<AmmoObjectDataTemplate> validMagazines = GetMagazinesWithinCapacity(minCapacity, maxCapacity, firearm);
+                    List<AmmoObjectDataTemplate> validMagazines = GetMagazinesWithinCapacity(firearm, minCapacity, maxCapacity);
                     if (validMagazines.Count > 0)
                     {
-                        return IM.OD[validMagazines.GetRandom().ObjectID];
+                        return validMagazines.GetRandom().AmmoObject;
                     }
 
                     //If there were no valid magazines, just return the smallest one compatible with the weapon
                     AmmoObjectDataTemplate smallestMagazine = GetSmallestCapacityMagazine(firearm);
                     if (smallestMagazine != null && IM.OD.ContainsKey(smallestMagazine.ObjectID))
                     {
-                        return IM.OD[GetSmallestCapacityMagazine(firearm).ObjectID];
+                        return GetSmallestCapacityMagazine(firearm).AmmoObject;
                     }
                 }
 
@@ -101,24 +101,15 @@ namespace TNHTweaker.Utilities
         {
             List<AmmoObjectDataTemplate> validMagazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[o.ItemID]).ToList();
 
-            //TODO this can probably all be done under one for loop!
-            
-            //Remove any magazines that are in the blacklist
-            if (magazineBlacklist != null && magazineBlacklist.ContainsKey(firearm.ItemID))
-            {
-                MagazineBlacklistEntry blacklist = magazineBlacklist[firearm.ItemID];
-                for (int i = 0; i < validMagazines.Count; i++)
-                {
-                    if (blacklist.MagazineBlacklist.Contains(validMagazines[i].ObjectID))
-                    {
-                        validMagazines.RemoveAt(i);
-                        i -= 1;
-                    }
-                }
-            }
-
             for (int i = 0; i < validMagazines.Count; i++)
             {
+                if (magazineBlacklist != null && magazineBlacklist.ContainsKey(firearm.ItemID) && magazineBlacklist[firearm.ItemID].MagazineBlacklist.Contains(validMagazines[i].ObjectID))
+                {
+                    validMagazines.RemoveAt(i);
+                    i -= 1;
+                    continue;
+                }
+
                 if (validMagazines[i].Capacity < minCapacity || validMagazines[i].Capacity > maxCapacity)
                 {
                     validMagazines.RemoveAt(i);
@@ -130,21 +121,64 @@ namespace TNHTweaker.Utilities
         }
 
 
-
-        public static List<AmmoObjectDataTemplate> GetAmmoObjectsWithinCapacity(FVRObject firearm, int minCapacity, int maxCapacity, List<FVRObject.OTagEra> eras = null, List<FVRObject.OTagSet> sets = null, List<string> ammoBlacklist = null, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
+        public static List<AmmoObjectDataTemplate> GetCompatibleClips(FVRObject firearm, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
-            List<AmmoObjectDataTemplate> validMagazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[o.ItemID]).ToList();
+            List<AmmoObjectDataTemplate> validClips = firearm.CompatibleClips.Select(o => LoadedTemplateManager.LoadedClipDict[o.ItemID]).ToList();
 
-            for (int i = 0; i < validMagazines.Count; i++)
+            for (int i = 0; i < validClips.Count; i++)
             {
-                if (validMagazines[i].Capacity < minCapacity || validMagazines[i].Capacity > maxCapacity)
+                if (magazineBlacklist != null && magazineBlacklist.ContainsKey(firearm.ItemID) && magazineBlacklist[firearm.ItemID].ClipBlacklist.Contains(validClips[i].ObjectID))
                 {
-                    validMagazines.RemoveAt(i);
+                    validClips.RemoveAt(i);
                     i -= 1;
+                    continue;
                 }
             }
 
-            return validMagazines;
+            return validClips;
+        }
+
+
+        public static List<AmmoObjectDataTemplate> GetCompatibleBullets(FVRObject firearm, List<FVRObject.OTagEra> eras = null, List<FVRObject.OTagSet> sets = null, List<string> ammoBlacklist = null, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
+        {
+            if (firearm.CompatibleSingleRounds.Count > 0)
+            {
+                List<AmmoObjectDataTemplate> validBullets = firearm.CompatibleSingleRounds.Select(o => LoadedTemplateManager.LoadedBulletDict[o.ItemID]).ToList();
+
+                for (int i = 0; i < validBullets.Count; i++)
+                {
+                    if(eras != null && !eras.Contains(validBullets[i].AmmoObject.TagEra))
+                    {
+                        validBullets.RemoveAt(i);
+                        i -= 1;
+                        continue;
+                    }
+
+                    if(sets != null && !sets.Contains(validBullets[i].AmmoObject.TagSet))
+                    {
+                        validBullets.RemoveAt(i);
+                        i -= 1;
+                        continue;
+                    }
+
+                    if(ammoBlacklist != null && ammoBlacklist.Contains(validBullets[i].ObjectID)){
+                        validBullets.RemoveAt(i);
+                        i -= 1;
+                        continue;
+                    }
+
+                    if(magazineBlacklist != null && magazineBlacklist.ContainsKey(firearm.ItemID) && magazineBlacklist[firearm.ItemID].BulletBlacklist.Contains(validBullets[i].ObjectID))
+                    {
+                        validBullets.RemoveAt(i);
+                        i -= 1;
+                        continue;
+                    }
+                }
+
+                return validBullets;
+            }
+
+            return new List<AmmoObjectDataTemplate>();
         }
 
 
@@ -194,6 +228,13 @@ namespace TNHTweaker.Utilities
         {
             if (item == null) return false;
             return item.CompatibleClips.Count != 0 || item.CompatibleMagazines.Count != 0 || item.CompatibleSpeedLoaders.Count != 0;
+        }
+
+
+        public static bool FVRObjectHasAmmoObject(FVRObject item)
+        {
+            if (item == null) return false;
+            return (item.CompatibleSingleRounds != null && item.CompatibleSingleRounds.Count != 0) || (item.CompatibleClips != null && item.CompatibleClips.Count > 0) || (item.CompatibleMagazines != null && item.CompatibleMagazines.Count > 0) || (item.CompatibleSpeedLoaders != null && item.CompatibleSpeedLoaders.Count != 0);
         }
 
 

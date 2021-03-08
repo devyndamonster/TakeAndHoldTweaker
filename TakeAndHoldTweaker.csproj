@@ -107,6 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main\AsyncLoadMonitor.cs" />
+    <Compile Include="Main\ObjectWrappers\SosigLinkLootWrapper.cs" />
     <Compile Include="Main\TNHMenuInitializer.cs" />
     <Compile Include="Main\CompatibleMagazineCache.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
@@ -115,7 +116,7 @@
     <Compile Include="Utilities\Extensions.cs" />
     <Compile Include="Main\LoadedTemplateManager.cs" />
     <Compile Include="Utilities\Logger.cs" />
-    <Compile Include="Main\ObjectPanelWrapper.cs" />
+    <Compile Include="Main\ObjectWrappers\ObjectPanelWrapper.cs" />
     <Compile Include="ObjectTemplates\SavedGunSerializable.cs" />
     <Compile Include="Main\TemplateLoaders.cs" />
     <Compile Include="ObjectTemplates\SosigTemplate.cs" />
