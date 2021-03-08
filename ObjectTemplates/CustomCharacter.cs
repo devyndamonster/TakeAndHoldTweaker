@@ -392,6 +392,11 @@ namespace TNHTweaker.ObjectTemplates
                         return true;
                     }
                 }
+
+                else
+                {
+                    return true;
+                }
             }
 
             return false;
@@ -469,6 +474,7 @@ namespace TNHTweaker.ObjectTemplates
             MinAmmoCapacity = objectTableDef.MinAmmoCapacity;
             MaxAmmoCapacity = objectTableDef.MaxAmmoCapacity;
             NumMagsSpawned = 3;
+            NumClipsSpawned = 3;
             NumRoundsSpawned = 8;
             BespokeAttachmentChance = 0.5f;
             IsCompatibleMagazine = false;
@@ -728,14 +734,18 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             //Perform delayed init on all subgroups. If they are empty, we remove them
-            for(int i = 0; i < SubGroups.Count; i++)
+            if(SubGroups != null)
             {
-                if (!SubGroups[i].DelayedInit())
+                for (int i = 0; i < SubGroups.Count; i++)
                 {
-                    SubGroups.RemoveAt(i);
-                    i -= 1;
+                    if (!SubGroups[i].DelayedInit())
+                    {
+                        SubGroups.RemoveAt(i);
+                        i -= 1;
+                    }
                 }
             }
+            
 
             //The table is valid if it has items in it, or is a compatible magazine
             return objects.Count != 0 || IsCompatibleMagazine || (SubGroups != null && SubGroups.Count != 0);
@@ -781,7 +791,11 @@ namespace TNHTweaker.ObjectTemplates
                 loadout = new TNH_CharacterDef.LoadoutEntry();
                 loadout.Num_Mags_SL_Clips = NumMags;
                 loadout.Num_Rounds = NumRounds;
-                loadout.TableDefs = Groups.Select(o => o.GetObjectTableDef()).ToList();
+
+                if(Groups != null)
+                {
+                    loadout.TableDefs = Groups.Select(o => o.GetObjectTableDef()).ToList();
+                }
             }
 
             return loadout;
