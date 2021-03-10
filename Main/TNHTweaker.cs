@@ -1200,19 +1200,8 @@ namespace TNHTweaker
             //Handle sosig dropping custom loot
             if (UnityEngine.Random.value < template.DroppedLootChance && template.DroppedObjectPool != null)
             {
-                string spawnedObject = template.DroppedObjectPool.GetObjects().GetRandom();
-
-                if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(spawnedObject))
-                {
-                    TNHTweakerLogger.LogWarning("TNHTweaker -- Tried to add vaulted gun to sosigs dropped items, but spawning of vaulted items not supported yet! Nothing will be dropped!");
-                }
-
-                else
-                {
-                    sosigComponent.Links[2].RegisterSpawnOnDestroy(IM.OD[spawnedObject]);
-                    sosigComponent.Links[2].gameObject.AddComponent(typeof(SosigLinkLootWrapper));
-                }
-                
+                SosigLinkLootWrapper component = sosigComponent.Links[2].gameObject.AddComponent<SosigLinkLootWrapper>();
+                component.group = template.DroppedObjectPool;
             }
 
             return sosigComponent;
@@ -1552,7 +1541,7 @@ namespace TNHTweaker
                         //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
                         if (vaultFile != null)
                         {
-                            AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(vaultFile, primarySpawn, trackedObjects));
+                            AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(vaultFile, primarySpawn));
                             TNHTweakerLogger.Log("TNHTWEAKER -- Vaulted gun spawned", TNHTweakerLogger.LogType.TNH);
                         }
                         else

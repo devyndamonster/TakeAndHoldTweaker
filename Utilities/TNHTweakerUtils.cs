@@ -536,7 +536,7 @@ namespace TNHTweaker.Utilities
         
 
 
-        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Transform spawnPoint, List<GameObject> trackedObjects)
+        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Transform spawnPoint)
         {
             List<GameObject> toDealWith = new List<GameObject>();
             List<GameObject> toMoveToTrays = new List<GameObject>();
@@ -557,8 +557,6 @@ namespace TNHTweaker.Utilities
             for (int j = 0; j < gun.Components.Count; j++)
             {
                 GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(callbackList[j].Result);
-
-                trackedObjects.Add(gameObject);
 
                 dicGO.Add(gameObject, gun.Components[j]);
                 dicByIndex.Add(gun.Components[j].Index, gameObject);

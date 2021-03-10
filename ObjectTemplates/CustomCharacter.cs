@@ -55,6 +55,9 @@ namespace TNHTweaker.ObjectTemplates
         [JsonIgnore]
         private ObjectTable requiredSightsTable;
 
+        [JsonIgnore]
+        public List<string> CompletedQuests;
+
 
         public CustomCharacter() { }
 
@@ -240,43 +243,43 @@ namespace TNHTweaker.ObjectTemplates
         {
             TNHTweakerLogger.Log("TNHTweaker -- Delayed init of character: " + DisplayName, TNHTweakerLogger.LogType.Character);
 
-            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(isCustom))
+            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(isCustom, CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryWeapon = false;
                 character.Has_Weapon_Primary = false;
             }
-            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(isCustom))
+            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(isCustom, CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryWeapon = false;
                 character.Has_Weapon_Secondary = false;
             }
-            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(isCustom))
+            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(isCustom, CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryWeapon = false;
                 character.Has_Weapon_Tertiary = false;
             }
-            if (HasPrimaryItem && !PrimaryItem.DelayedInit(isCustom))
+            if (HasPrimaryItem && !PrimaryItem.DelayedInit(isCustom, CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryItem = false;
                 character.Has_Item_Primary = false;
             }
-            if (HasSecondaryItem && !SecondaryItem.DelayedInit(isCustom))
+            if (HasSecondaryItem && !SecondaryItem.DelayedInit(isCustom, CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryItem = false;
                 character.Has_Item_Secondary = false;
             }
-            if (HasTertiaryItem && !TertiaryItem.DelayedInit(isCustom))
+            if (HasTertiaryItem && !TertiaryItem.DelayedInit(isCustom, CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryItem = false;
                 character.Has_Item_Tertiary = false;
             }
-            if (HasShield && !Shield.DelayedInit(isCustom))
+            if (HasShield && !Shield.DelayedInit(isCustom, CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Shield starting item had no pools to spawn from, and will not spawn equipment!");
                 HasShield = false;
@@ -292,7 +295,7 @@ namespace TNHTweaker.ObjectTemplates
             for(int i = 0; i < EquipmentPools.Count; i++)
             {
                 EquipmentPool pool = EquipmentPools[i];
-                if(!pool.DelayedInit()){
+                if(!pool.DelayedInit(CompletedQuests)){
                     TNHTweakerLogger.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
@@ -379,15 +382,15 @@ namespace TNHTweaker.ObjectTemplates
         }
 
 
-        public bool DelayedInit()
+        public bool DelayedInit(List<string> completedQuests)
         {
             if (pool != null)
             {
-                if (!PrimaryGroup.DelayedInit())
+                if (!PrimaryGroup.DelayedInit(completedQuests))
                 {
                     PrimaryGroup = null;
 
-                    if (BackupGroup.DelayedInit())
+                    if (BackupGroup.DelayedInit(completedQuests))
                     {
                         return true;
                     }
@@ -603,117 +606,22 @@ namespace TNHTweaker.ObjectTemplates
         }
 
 
-        public List<string> GetSpawnedEquipment()
-        {
-            List<string> result;
-
-            //If this is a compatible magazine, we return magazines for the player and ignore everything else
-            if (IsCompatibleMagazine)
-            {
-                result = new List<string>();
-                for(int i = 0; i < ItemsToSpawn; i++)
-                {
-                    FVRObject mag = FirearmUtils.GetMagazineForEquipped(MinAmmoCapacity, MaxAmmoCapacity);
-                    if (mag != null)
-                    {
-                        result.Add(mag.ItemID);
-                    }
-                }
-                return result;
-            }
-
-
-            //If there are subgroups, there is additional logic for selecting between subgroups and normal objects
-            if(SubGroups != null)
-            {
-                //If we are forcing all subgroups to spawn, we add items from each subgroup, as well as items from this group
-                if (ForceSpawnAllSubPools)
-                {
-                    result = new List<string>();
-                    
-                    for(int i = 0; i < ItemsToSpawn && objects.Count > 0; i++)
-                    {
-                        result.Add(objects.GetRandom());
-                    }
-
-                    foreach (EquipmentGroup group in SubGroups)
-                    {
-                        result.AddRange(group.GetSpawnedEquipment());
-                    }
-
-                    return result;
-                }
-
-
-                //If we are spawning from this group normally, and have subgroups, then we must account for rarity of the subgroups when deciding what to spawn from
-                //Every normal object entry effectively has a rarity of 1, so subgroups with a rarity of 1 will have the same chance of spawning as a single item
-                else
-                {
-
-                    //Get the combined rarity, which is total rarity of both normal objects and also subgroups
-                    float combinedRarity = objects.Count;
-                    foreach (EquipmentGroup group in SubGroups)
-                    {
-                        combinedRarity += group.Rarity;
-                    }
-
-                    //An item will be selected to be spawned using a random float within the combined rarity
-                    float randomSelection = UnityEngine.Random.Range(0, combinedRarity);
-
-                    //If the selection falls withing the object list, then we can just return a random item from the list (ignoring the selection value)
-                    if(randomSelection < objects.Count)
-                    {
-                        result = new List<string>();
-
-                        for(int i = 0; i < ItemsToSpawn; i++)
-                        {
-                            result.Add(objects.GetRandom());
-                        }
-                        
-                        return result;
-                    }
-
-                    //If our selection is greater than the objects list, we select from one of the subgroups
-                    else
-                    {
-                        float progress = objects.Count;
-                        for(int i = 0; i < SubGroups.Count; i++)
-                        {
-                            progress += SubGroups[i].Rarity;
-                            if(randomSelection < progress)
-                            {
-                                return SubGroups[i].GetSpawnedEquipment();
-                            }
-                        }
-
-                        TNHTweakerLogger.LogError("TNHTweaker -- Tried to spawn a SubGroup for an EquipmentGroup, but managed to get to the end without having selected one! Returning the last SubGroup");
-                        return SubGroups.Last().GetSpawnedEquipment();
-                    }
-                }
-            }
-
-
-            //If there are no subgroups, just return items from the object list
-            else
-            {
-                result = new List<string>();
-
-                for(int i = 0; i < ItemsToSpawn; i++)
-                {
-                    result.Add(objects.GetRandom());
-                }
-
-                return result;
-            }
-        }
-
 
         /// <summary>
         /// Fills out the object table and removes any unloaded items
         /// </summary>
         /// <returns> Returns true if valid, and false if empty </returns>
-        public bool DelayedInit()
+        public bool DelayedInit(List<string> completedQuests)
         {
+            //Start off by checking if this pool is even unlocked from a quest
+            if (!string.IsNullOrEmpty(RequiredQuest))
+            {
+                if (completedQuests == null || !completedQuests.Contains(RequiredQuest))
+                {
+                    return false;
+                }
+            }
+
             TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
 
             //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
@@ -738,7 +646,7 @@ namespace TNHTweaker.ObjectTemplates
             {
                 for (int i = 0; i < SubGroups.Count; i++)
                 {
-                    if (!SubGroups[i].DelayedInit())
+                    if (!SubGroups[i].DelayedInit(completedQuests))
                     {
                         SubGroups.RemoveAt(i);
                         i -= 1;
@@ -803,14 +711,14 @@ namespace TNHTweaker.ObjectTemplates
 
 
 
-        public bool DelayedInit(bool isCustom)
+        public bool DelayedInit(bool isCustom, List<string> completedQuests)
         {
             if (loadout != null)
             {
                 for(int i = 0; i < Groups.Count; i++)
                 {
                     EquipmentGroup pool = Groups[i];
-                    if (!pool.DelayedInit())
+                    if (!pool.DelayedInit(completedQuests))
                     {
                         Groups.RemoveAt(i);
                         loadout.TableDefs.RemoveAt(i);
