@@ -295,7 +295,7 @@ namespace TNHTweaker.ObjectTemplates
             for(int i = 0; i < EquipmentPools.Count; i++)
             {
                 EquipmentPool pool = EquipmentPools[i];
-                if(!pool.DelayedInit(CompletedQuests)){
+                if(!pool.DelayedInit()){
                     TNHTweakerLogger.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
@@ -382,15 +382,15 @@ namespace TNHTweaker.ObjectTemplates
         }
 
 
-        public bool DelayedInit(List<string> completedQuests)
+        public bool DelayedInit()
         {
             if (pool != null)
             {
-                if (!PrimaryGroup.DelayedInit(completedQuests))
+                if (!PrimaryGroup.DelayedInit())
                 {
                     PrimaryGroup = null;
 
-                    if (BackupGroup.DelayedInit(completedQuests))
+                    if (BackupGroup.DelayedInit())
                     {
                         return true;
                     }
@@ -611,9 +611,10 @@ namespace TNHTweaker.ObjectTemplates
         /// Fills out the object table and removes any unloaded items
         /// </summary>
         /// <returns> Returns true if valid, and false if empty </returns>
-        public bool DelayedInit(List<string> completedQuests)
+        public bool DelayedInit()
         {
             //Start off by checking if this pool is even unlocked from a quest
+            /*
             if (!string.IsNullOrEmpty(RequiredQuest))
             {
                 if (completedQuests == null || !completedQuests.Contains(RequiredQuest))
@@ -621,6 +622,7 @@ namespace TNHTweaker.ObjectTemplates
                     return false;
                 }
             }
+            */
 
             TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
 
@@ -646,7 +648,7 @@ namespace TNHTweaker.ObjectTemplates
             {
                 for (int i = 0; i < SubGroups.Count; i++)
                 {
-                    if (!SubGroups[i].DelayedInit(completedQuests))
+                    if (!SubGroups[i].DelayedInit())
                     {
                         SubGroups.RemoveAt(i);
                         i -= 1;
@@ -718,7 +720,7 @@ namespace TNHTweaker.ObjectTemplates
                 for(int i = 0; i < Groups.Count; i++)
                 {
                     EquipmentGroup pool = Groups[i];
-                    if (!pool.DelayedInit(completedQuests))
+                    if (!pool.DelayedInit())
                     {
                         Groups.RemoveAt(i);
                         loadout.TableDefs.RemoveAt(i);

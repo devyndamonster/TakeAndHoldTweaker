@@ -23,10 +23,8 @@ namespace TNHTweaker
 
         public static IEnumerator InitializeTNHMenuAsync(string path, Text text, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance)
         {
-            TNHTweakerLogger.Log("Getting hotdog", TNHTweakerLogger.LogType.General);
             hotdog.gameObject.SetActive(false);
 
-            TNHTweakerLogger.Log("Checking load items text", TNHTweakerLogger.LogType.General);
             //First thing we want to do is wait for all asset bundles to be loaded in
             float itemLoadProgress = 0;
             do
@@ -37,22 +35,20 @@ namespace TNHTweaker
             }
             while (itemLoadProgress <= 1);
 
-            TNHTweakerLogger.Log("Magazine cache", TNHTweakerLogger.LogType.General);
+
             //Now that everything is loaded, we can perform magazine caching
             AnvilManager.Run(LoadMagazineCacheAsync(path, text));
             while (!MagazineCacheLoaded) yield return null;
 
-            TNHTweakerLogger.Log("Templates", TNHTweakerLogger.LogType.General);
             //Now perform final steps of loading characters
             LoadTNHTemplates(CharDatabase);
             CreateTNHFiles(path);
             RefreshTNHUI(instance, Categories, CharDatabase);
 
-            TNHTweakerLogger.Log("Returning hotdog", TNHTweakerLogger.LogType.General);
+
+
             hotdog.gameObject.SetActive(true);
             TNHInitialized = true;
-
-            TNHTweakerLogger.Log("Done", TNHTweakerLogger.LogType.General);
         }
 
 
@@ -279,8 +275,19 @@ namespace TNHTweaker
                             magazineCache.MagazineObjects.Add(magComp);
                             magazineCache.AddMagazineData(magComp);
                         }
+
                     }
                 }
+
+
+                foreach(FVRFireArmMagazine mag in Resources.FindObjectsOfTypeAll<FVRFireArmMagazine>())
+                {
+                    UnityEngine.Object.Destroy(mag.gameObject);
+                }
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
 
                 //Loop through all clips and build a list of stripper clip components
                 TNHTweakerLogger.Log("TNHTweaker -- Loading all clips", TNHTweakerLogger.LogType.General);
@@ -308,8 +315,18 @@ namespace TNHTweaker
                             magazineCache.ClipObjects.Add(clipComp);
                             magazineCache.AddClipData(clipComp);
                         }
+
                     }
                 }
+
+
+                foreach (FVRFireArmClip clip in Resources.FindObjectsOfTypeAll<FVRFireArmClip>())
+                {
+                    UnityEngine.Object.Destroy(clip.gameObject);
+                }
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
 
                 //Loop through all clips and build a list of stripper clip components
                 TNHTweakerLogger.Log("TNHTweaker -- Loading all bullets", TNHTweakerLogger.LogType.General);
@@ -337,8 +354,19 @@ namespace TNHTweaker
                             magazineCache.BulletObjects.Add(bulletComp);
                             magazineCache.AddBulletData(bulletComp);
                         }
+
                     }
                 }
+
+
+
+                foreach (FVRFireArmRound round in Resources.FindObjectsOfTypeAll<FVRFireArmRound>())
+                {
+                    UnityEngine.Object.Destroy(round.gameObject);
+                }
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
 
                 //Load all firearms into the cache
                 TNHTweakerLogger.Log("TNHTweaker -- Applying cache to firearms", TNHTweakerLogger.LogType.General);
@@ -426,8 +454,8 @@ namespace TNHTweaker
                             entry.CompatibleBullets.Add(bullet.ObjectID);
                         }
                     }
-
                 }
+
 
                 LoadedTemplateManager.AddMagazineData(magazineCache);
 
@@ -438,6 +466,15 @@ namespace TNHTweaker
                     sw.WriteLine(cacheString);
                     sw.Close();
                 }
+
+
+                foreach (FVRFireArm firearm in Resources.FindObjectsOfTypeAll<FVRFireArm>())
+                {
+                    UnityEngine.Object.Destroy(firearm.gameObject);
+                }
+
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
 
             //If the cache is valid, we can just load each entry from the cache
