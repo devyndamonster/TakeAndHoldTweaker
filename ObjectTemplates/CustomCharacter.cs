@@ -295,7 +295,7 @@ namespace TNHTweaker.ObjectTemplates
             for(int i = 0; i < EquipmentPools.Count; i++)
             {
                 EquipmentPool pool = EquipmentPools[i];
-                if(!pool.DelayedInit()){
+                if(!pool.DelayedInit(CompletedQuests)){
                     TNHTweakerLogger.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
@@ -382,15 +382,15 @@ namespace TNHTweaker.ObjectTemplates
         }
 
 
-        public bool DelayedInit()
+        public bool DelayedInit(List<string> completedQuests)
         {
             if (pool != null)
             {
-                if (!PrimaryGroup.DelayedInit())
+                if (!PrimaryGroup.DelayedInit(completedQuests))
                 {
                     PrimaryGroup = null;
 
-                    if (BackupGroup.DelayedInit())
+                    if (BackupGroup.DelayedInit(completedQuests))
                     {
                         return true;
                     }
@@ -420,6 +420,26 @@ namespace TNHTweaker.ObjectTemplates
 
             TNHTweakerLogger.LogWarning("TNHTweaker -- EquipmentPool had both PrimaryGroup and BackupGroup set to null! Returning an empty list for spawned equipment");
             return new List<EquipmentGroup>();
+        }
+
+
+        public override string ToString()
+        {
+            string output = "Equipment Pool : IconName=" + IconName + " : CostLimited=" + TokenCostLimited + " : CostSpawnlock=" + TokenCost;
+
+            if(PrimaryGroup != null)
+            {
+                output += "\nPrimary Group";
+                output += PrimaryGroup.ToString(0);
+            }
+
+            if(BackupGroup != null)
+            {
+                output += "\nBackup Group";
+                output += BackupGroup.ToString(0);
+            }
+            
+            return output;
         }
 
     }
@@ -612,10 +632,9 @@ namespace TNHTweaker.ObjectTemplates
         /// Fills out the object table and removes any unloaded items
         /// </summary>
         /// <returns> Returns true if valid, and false if empty </returns>
-        public bool DelayedInit()
+        public bool DelayedInit(List<string> completedQuests = null)
         {
             //Start off by checking if this pool is even unlocked from a quest
-            /*
             if (!string.IsNullOrEmpty(RequiredQuest))
             {
                 if (completedQuests == null || !completedQuests.Contains(RequiredQuest))
@@ -623,7 +642,7 @@ namespace TNHTweaker.ObjectTemplates
                     return false;
                 }
             }
-            */
+            
 
             TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
 
@@ -649,7 +668,7 @@ namespace TNHTweaker.ObjectTemplates
             {
                 for (int i = 0; i < SubGroups.Count; i++)
                 {
-                    if (!SubGroups[i].DelayedInit())
+                    if (!SubGroups[i].DelayedInit(completedQuests))
                     {
                         SubGroups.RemoveAt(i);
                         i -= 1;
@@ -657,10 +676,42 @@ namespace TNHTweaker.ObjectTemplates
                 }
             }
             
-
             //The table is valid if it has items in it, or is a compatible magazine
             return objects.Count != 0 || IsCompatibleMagazine || (SubGroups != null && SubGroups.Count != 0);
         }
+
+
+        public string ToString(int level)
+        {
+            string prefix = "\n-";
+            for (int i = 0; i < level; i++) prefix += "-";
+
+            string output = prefix + "Group : Rarity=" + Rarity;
+            
+            if (IsCompatibleMagazine)
+            {
+                output += prefix + "Compatible Magazine";
+            }
+
+            else
+            {
+                foreach(string item in objects)
+                {
+                    output += prefix + item;
+                }
+
+                if(SubGroups != null)
+                {
+                    foreach(EquipmentGroup group in SubGroups)
+                    {
+                        output += group.ToString(level + 1);
+                    }
+                }
+            }
+
+            return output;
+        }
+
     }
 
     public class LoadoutEntry
@@ -721,7 +772,7 @@ namespace TNHTweaker.ObjectTemplates
                 for(int i = 0; i < Groups.Count; i++)
                 {
                     EquipmentGroup pool = Groups[i];
-                    if (!pool.DelayedInit())
+                    if (!pool.DelayedInit(completedQuests))
                     {
                         Groups.RemoveAt(i);
                         loadout.TableDefs.RemoveAt(i);
@@ -744,6 +795,27 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             return false;
+        }
+
+
+        public override string ToString()
+        {
+            string output = "Loadout Entry";
+
+            if(Groups != null && Groups.Count > 0)
+            {
+                foreach(EquipmentGroup group in Groups)
+                {
+                    output += group.ToString(0);
+                }
+            }
+
+            else
+            {
+                output = "Empty Loadout";
+            }
+
+            return output;
         }
     }
 

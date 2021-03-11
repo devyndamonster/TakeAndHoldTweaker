@@ -27,6 +27,7 @@ namespace TNHTweaker
         private static ConfigEntry<bool> logTNH;
         private static ConfigEntry<bool> logFileReads;
         private static ConfigEntry<bool> allowLog;
+        private static ConfigEntry<bool> buildCharacterFiles;
 
         private static string OutputFilePath;
 
@@ -51,7 +52,6 @@ namespace TNHTweaker
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
 
             Stages.Setup += OnSetup;
-            Stages.Runtime += DuringRuntime;
         }
 
 
@@ -63,17 +63,11 @@ namespace TNHTweaker
         {
             LoadConfigFile();
             SetupOutputDirectory();
+            LoadPanelSprites(stage);
 
             stage.SetupAssetLoaders[Source, "sosig"] = new SosigLoader().LoadAsset;
             stage.SetupAssetLoaders[Source, "vault_file"] = new VaultFileLoader().LoadAsset;
-        }
-
-
-
-        private void DuringRuntime(RuntimeStage stage)
-        {
-            AnvilManager.Run(LoadPanelSprites(stage));
-            stage.RuntimeAssetLoaders[Source, "character"] = new CharacterLoader().LoadAsset;
+            stage.SetupAssetLoaders[Source, "character"] = new CharacterLoader().LoadAsset;
         }
 
 
@@ -81,49 +75,31 @@ namespace TNHTweaker
         /// <summary>
         /// Loads the sprites used in secondary panels in TNH
         /// </summary>
-        private IEnumerator LoadPanelSprites(RuntimeStage stage)
+        private void LoadPanelSprites(SetupStage stage)
         {
-            //TODO I bet there's a really cool and satisfying way of rewriting all of this :)
             IFileHandle? file = Source.Resources.GetFile("mag_upgrade.png");
-            DelayedReader<Texture2D> reader = stage.GetReader<Texture2D>();
-            ResultYieldInstruction<Texture2D> resultDelayed = reader(file);
-            yield return resultDelayed;
-            LoadedTemplateManager.PanelSprites.Add(PanelType.MagUpgrader, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
-
+            Sprite result = TNHTweakerUtils.LoadSprite(file);
+            LoadedTemplateManager.PanelSprites.Add(PanelType.MagUpgrader, result);
 
             file = Source.Resources.GetFile("full_auto.png");
-            reader = stage.GetReader<Texture2D>();
-            resultDelayed = reader(file);
-            yield return resultDelayed;
-            LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
-
+            result = TNHTweakerUtils.LoadSprite(file);
+            LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, result);
 
             file = Source.Resources.GetFile("ammo_purchase.png");
-            reader = stage.GetReader<Texture2D>();
-            resultDelayed = reader(file);
-            yield return resultDelayed;
-            LoadedTemplateManager.PanelSprites.Add(PanelType.AmmoPurchase, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
-
+            result = TNHTweakerUtils.LoadSprite(file);
+            LoadedTemplateManager.PanelSprites.Add(PanelType.AmmoPurchase, result);
 
             file = Source.Resources.GetFile("mag_purchase.png");
-            reader = stage.GetReader<Texture2D>();
-            resultDelayed = reader(file);
-            yield return resultDelayed;
-            LoadedTemplateManager.PanelSprites.Add(PanelType.MagPurchase, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
-
+            result = TNHTweakerUtils.LoadSprite(file);
+            LoadedTemplateManager.PanelSprites.Add(PanelType.MagPurchase, result);
 
             file = Source.Resources.GetFile("gas_up.png");
-            reader = stage.GetReader<Texture2D>();
-            resultDelayed = reader(file);
-            yield return resultDelayed;
-            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateUp, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
-
+            result = TNHTweakerUtils.LoadSprite(file);
+            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateUp, result);
 
             file = Source.Resources.GetFile("gas_down.png");
-            reader = stage.GetReader<Texture2D>();
-            resultDelayed = reader(file);
-            yield return resultDelayed;
-            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateDown, TNHTweakerUtils.LoadSprite(resultDelayed.Result));
+            result = TNHTweakerUtils.LoadSprite(file);
+            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateDown, result);
         }
 
 
@@ -135,6 +111,12 @@ namespace TNHTweaker
         private void LoadConfigFile()
         {
             TNHTweakerLogger.Log("TNHTweaker -- Getting config file", TNHTweakerLogger.LogType.File);
+
+            buildCharacterFiles = Source.Config.Bind("General",
+                                    "BuildCharacterFiles",
+                                    false,
+                                    "If true, files useful for character creation will be generated in TNHTweaker folder");
+
 
             allowLog = Source.Config.Bind("Debug",
                                     "EnableLogging",
@@ -161,6 +143,7 @@ namespace TNHTweaker
             TNHTweakerLogger.LogTNH = logTNH.Value;
             TNHTweakerLogger.LogFile = logFileReads.Value;
         }
+
 
         /// <summary>
         /// Creates the main TNH Tweaker file folder
@@ -217,7 +200,7 @@ namespace TNHTweaker
             if (!TNHMenuInitializer.TNHInitialized)
             {
                 SceneLoader sceneHotDog = FindObjectOfType<SceneLoader>();
-                AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(OutputFilePath, magazineCacheText, sceneHotDog, ___Categories, ___CharDatabase, __instance));
+                AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(OutputFilePath, magazineCacheText, sceneHotDog, ___Categories, ___CharDatabase, __instance, buildCharacterFiles.Value));
             }
             else
             {
@@ -280,50 +263,6 @@ namespace TNHTweaker
             }
         }
 
-        
-        
-        /// <summary>
-        /// Generates a file which shows every item in the equipment pools of the character
-        /// </summary>
-        /// <param name="___m_objectTableDics"></param>
-        [HarmonyPatch(typeof(TNH_Manager), "InitTables")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPostfix]
-        public static void PrintGenerateTables(Dictionary<ObjectTableDef, ObjectTable> ___m_objectTableDics)
-        {
-            try
-            {
-                string path = OutputFilePath + "/pool_contents.txt";
-
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-
-                // Create a new file     
-                using (StreamWriter sw = File.CreateText(path))
-                {
-                    foreach (KeyValuePair<ObjectTableDef, ObjectTable> pool in ___m_objectTableDics)
-                    {
-                        sw.WriteLine("Pool: " + pool.Key.Icon.name);
-                        foreach(FVRObject obj in pool.Value.Objs)
-                        {
-                            if(obj == null)
-                            {
-                                TNHTweakerLogger.Log("TNHTWEAKER -- Null object in character table", TNHTweakerLogger.LogType.Character);
-                                continue;
-                            }
-                            sw.WriteLine("-" + obj.ItemID);
-                        }
-                        sw.WriteLine("");
-                    }
-                }
-            }
-
-            catch (Exception ex)
-            {
-                //Debug.LogError(ex.ToString());
-            }
-        }
 
 
         /////////////////////////////
@@ -1349,6 +1288,48 @@ namespace TNHTweaker
         //////////////////////////////////////////////
 
 
+        /// <summary>
+        /// This is a patch for using a characters global ammo blacklist in an ammo reloader
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="__result"></param>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        [HarmonyPatch(typeof(TNH_AmmoReloader), "GetClassFromType")]
+        [HarmonyPrefix]
+        public static bool AmmoReloaderGetAmmo(TNH_AmmoReloader __instance, FireArmRoundClass __result, FireArmRoundType t)
+        {
+            if (!__instance.m_decidedTypes.ContainsKey(t))
+            {
+                List<FireArmRoundClass> list = new List<FireArmRoundClass>();
+                CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
+
+                for (int i = 0; i < AM.SRoundDisplayDataDic[t].Classes.Length; i++)
+                {
+                    FVRObject objectID = AM.SRoundDisplayDataDic[t].Classes[i].ObjectID;
+                    if (__instance.m_validEras.Contains(objectID.TagEra) && __instance.m_validSets.Contains(objectID.TagSet))
+                    {
+                        if(character.GlobalAmmoBlacklist == null || !character.GlobalAmmoBlacklist.Contains(objectID.ItemID)){
+                            list.Add(AM.SRoundDisplayDataDic[t].Classes[i].Class);
+                        }
+                    }
+                }
+                if (list.Count > 0)
+                {
+                    __instance.m_decidedTypes.Add(t, list[UnityEngine.Random.Range(0, list.Count)]);
+                }
+                else
+                {
+                    __instance.m_decidedTypes.Add(t, AM.GetRandomValidRoundClass(t));
+                }
+            }
+
+            __result = __instance.m_decidedTypes[t];
+            return false;
+        }
+
+
+
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool ButtonClickedReplacement(int i,
@@ -1558,7 +1539,7 @@ namespace TNHTweaker
                         if (FirearmUtils.FVRObjectHasAmmoObject(mainObject))
                         {
                             //Get lists of ammo objects for this firearm with filters and blacklists applied
-                            List<FVRObject> compatibleMagazines = FirearmUtils.GetMagazinesWithinCapacity(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
+                            List<FVRObject> compatibleMagazines = FirearmUtils.GetCompatibleMagazines(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
                             List<FVRObject> compatibleRounds = FirearmUtils.GetCompatibleBullets(mainObject, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
                             List<FVRObject> compatibleClips = FirearmUtils.GetCompatibleClips(mainObject, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
 

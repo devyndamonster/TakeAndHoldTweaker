@@ -43,7 +43,7 @@ namespace TNHTweaker
 
     public class CharacterLoader
     {
-        public IEnumerator LoadAsset(RuntimeStage stage, Mod mod, IHandle handle)
+        public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
             
             if(handle is not IDirectoryHandle dir)
@@ -63,22 +63,20 @@ namespace TNHTweaker
                 }
                 else if (file.Path.EndsWith("thumb.png"))
                 {
-                    ResultYieldInstruction<Texture2D> resultDelayed = stage.GetReader<Texture2D>()(file);
-                    yield return resultDelayed;
-                    thumbnail = TNHTweakerUtils.LoadSprite(resultDelayed.Result);
+                    thumbnail = TNHTweakerUtils.LoadSprite(file);
                 }
             }
 
             if(character == null)
             {
                 TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No character.json file found");
-                yield break;
+                return;
             }
 
             else if(thumbnail == null)
             {
                 TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No thumb.png file found");
-                yield break;
+                return;
             }
 
             //Now we want to load the icons for each pool
@@ -95,9 +93,7 @@ namespace TNHTweaker
                     {
                         if (iconFile.Path.EndsWith(pool.IconName))
                         {
-                            ResultYieldInstruction<Texture2D> resultDelayed = stage.GetReader<Texture2D>()(iconFile);
-                            yield return resultDelayed;
-                            pool.GetPoolEntry().TableDef.Icon = TNHTweakerUtils.LoadSprite(resultDelayed.Result);
+                            pool.GetPoolEntry().TableDef.Icon = TNHTweakerUtils.LoadSprite(iconFile);
                         }
                     }
                 } 

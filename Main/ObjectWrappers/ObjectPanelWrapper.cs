@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TNHTweaker.ObjectTemplates;
 using TNHTweaker.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -216,12 +217,12 @@ namespace TNHTweaker
                     if (firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
                     {
                         //NOTE: We access IM.OD[] because the ObjectWrapper is not properly updated from caching for soME FUCKING REASON AHHHHHH
-                        if (FirearmUtils.FVRObjectHasAmmoContainer(IM.OD[firearm.ObjectWrapper.ItemID]))
+                        CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
+                        ammoObject = FirearmUtils.GetSmallestCapacityAmmoObject(IM.OD[firearm.ObjectWrapper.ItemID], character.MagazineBlacklist);
+
+                        if (ammoObject != null)
                         {
-                            ammoObject = FirearmUtils.GetSmallestCapacityAmmoObject(IM.OD[firearm.ObjectWrapper.ItemID]);
-
                             SetCost();
-
                             return;
                         }
                     }
@@ -294,7 +295,9 @@ namespace TNHTweaker
 
                 TNHTweakerLogger.Log("Compatible rounds count for " + detectedFirearm.ObjectWrapper.ItemID + ": " + IM.OD[detectedFirearm.ObjectWrapper.ItemID].CompatibleSingleRounds.Count, TNHTweakerLogger.LogType.General);
 
-                AnvilManager.Run(SpawnRounds(IM.OD[detectedFirearm.ObjectWrapper.ItemID].CompatibleSingleRounds.GetRandom(), numSpawned));
+                FVRObject compatibleRound = FirearmUtils.GetCompatibleBullets(IM.OD[detectedFirearm.ObjectWrapper.ItemID]).GetRandom().AmmoObject;
+
+                AnvilManager.Run(SpawnRounds(compatibleRound, numSpawned));
 
                 detectedFirearm = null;
             }

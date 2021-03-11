@@ -75,7 +75,7 @@ namespace TNHTweaker.Utilities
                 if (firearm.CompatibleMagazines.Count > 0)
                 {
                     //First try to return a magazine within the specified capacity
-                    List<AmmoObjectDataTemplate> validMagazines = GetMagazinesWithinCapacity(firearm, minCapacity, maxCapacity);
+                    List<AmmoObjectDataTemplate> validMagazines = GetCompatibleMagazines(firearm, minCapacity, maxCapacity);
                     if (validMagazines.Count > 0)
                     {
                         return validMagazines.GetRandom().AmmoObject;
@@ -97,7 +97,7 @@ namespace TNHTweaker.Utilities
         }
 
 
-        public static List<AmmoObjectDataTemplate> GetMagazinesWithinCapacity(FVRObject firearm, int minCapacity, int maxCapacity, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
+        public static List<AmmoObjectDataTemplate> GetCompatibleMagazines(FVRObject firearm, int minCapacity = 0, int maxCapacity = 9999, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
             List<AmmoObjectDataTemplate> validMagazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[o.ItemID]).ToList();
 
@@ -200,11 +200,28 @@ namespace TNHTweaker.Utilities
         }
 
 
-        public static AmmoObjectDataTemplate GetSmallestCapacityAmmoObject(FVRObject firearm)
+        public static AmmoObjectDataTemplate GetSmallestCapacityAmmoObject(List<AmmoObjectDataTemplate> objects)
         {
-            if (firearm.CompatibleMagazines.Count != 0)
+            AmmoObjectDataTemplate smallest = null;
+
+            foreach(AmmoObjectDataTemplate item in objects)
             {
-                return GetSmallestCapacityMagazine(firearm);
+                if(smallest == null || smallest.Capacity < item.Capacity)
+                {
+                    smallest = item;
+                }
+            }
+
+            return smallest;
+        }
+
+
+        public static AmmoObjectDataTemplate GetSmallestCapacityAmmoObject(FVRObject firearm, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
+        {
+            List<AmmoObjectDataTemplate> compatibleMagazines = GetCompatibleMagazines(firearm, 0, 9999, magazineBlacklist);
+            if (compatibleMagazines.Count != 0)
+            {
+                return GetSmallestCapacityAmmoObject(compatibleMagazines);
             }
 
             else if (firearm.CompatibleClips.Count != 0)

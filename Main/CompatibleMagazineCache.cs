@@ -132,7 +132,6 @@ namespace TNHTweaker
         {
             MagazineBlacklist = new List<string>();
             ClipBlacklist = new List<string>();
-            BulletBlacklist = new List<string>();
         }
 
     }

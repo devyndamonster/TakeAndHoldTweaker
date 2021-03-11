@@ -13,6 +13,7 @@ using UnityEngine.UI;
 using TNHTweaker.ObjectTemplates;
 using Deli.Newtonsoft.Json;
 using Deli.Newtonsoft.Json.Converters;
+using Deli.VFS;
 
 namespace TNHTweaker.Utilities
 {
@@ -268,6 +269,85 @@ namespace TNHTweaker.Utilities
         }
 
 
+
+        public static void CreateGeneratedTables(string path)
+        {
+            try
+            {
+                path = path + "/GeneratedEquipmentPools";
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+
+                foreach(CustomCharacter character in LoadedTemplateManager.LoadedCharactersDict.Values)
+                {
+                    // Create a new file     
+                    using (StreamWriter sw = File.CreateText(path + "/" + character.DisplayName + ".txt"))
+                    {
+                        sw.WriteLine("Primary Starting Weapon");
+                        if(character.HasPrimaryWeapon)
+                        {
+                            sw.WriteLine(character.PrimaryWeapon.ToString());
+                        }
+
+                        sw.WriteLine("\n\nSecondary Starting Weapon");
+                        if (character.HasSecondaryWeapon)
+                        {
+                            sw.WriteLine(character.SecondaryWeapon.ToString());
+                        }
+
+                        sw.WriteLine("\n\nTertiary Starting Weapon");
+                        if (character.HasTertiaryWeapon)
+                        {
+                            sw.WriteLine(character.TertiaryWeapon.ToString());
+                        }
+
+                        sw.WriteLine("\n\nPrimary Starting Item");
+                        if (character.HasPrimaryItem)
+                        {
+                            sw.WriteLine(character.PrimaryItem.ToString());
+                        }
+
+                        sw.WriteLine("\n\nSecondary Starting Item");
+                        if (character.HasSecondaryItem)
+                        {
+                            sw.WriteLine(character.SecondaryItem.ToString());
+                        }
+
+                        sw.WriteLine("\n\nTertiary Starting Item");
+                        if (character.HasTertiaryItem)
+                        {
+                            sw.WriteLine(character.TertiaryItem.ToString());
+                        }
+
+                        sw.WriteLine("\n\nStarting Shield");
+                        if (character.HasShield)
+                        {
+                            sw.WriteLine(character.Shield.ToString());
+                        }
+
+                        foreach(EquipmentPool pool in character.EquipmentPools)
+                        {
+                            sw.WriteLine("\n\n" + pool.ToString());
+                        }
+
+                        sw.Close();
+                    }
+                }
+            }
+
+            catch (Exception ex)
+            {
+                //Debug.LogError(ex.ToString());
+            }
+        }
+
+
+
+
         public static List<string> GetMagazineCacheBlacklist(string path)
         {
             List<string> blacklist = new List<string>();
@@ -484,6 +564,8 @@ namespace TNHTweaker.Utilities
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
         }
 
+
+
         /// <summary>
         /// Creates a list of the sent type. Solution found here: https://stackoverflow.com/questions/2493215/create-list-of-variable-type
         /// </summary>
@@ -495,45 +577,71 @@ namespace TNHTweaker.Utilities
             return (IList)Activator.CreateInstance(genericListType);
         }
 
+
+
+
         /// <summary>
         /// Loads a sprite from a file path. Solution found here: https://forum.unity.com/threads/generating-sprites-dynamically-from-png-or-jpeg-files-in-c.343735/
         /// </summary>
         /// <param name=""></param>
         /// <param name="pixelsPerUnit"></param>
         /// <returns></returns>
-        public static Sprite LoadSprite(string path, float pixelsPerUnit = 100f)
+        public static Sprite LoadSprite(IFileHandle file)
         {
-            Texture2D spriteTexture = LoadTexture(path);
+            Texture2D spriteTexture = LoadTexture(file);
             if (spriteTexture == null) return null;
-            Sprite sprite = Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), pixelsPerUnit);
-            sprite.name = path;
+            Sprite sprite = Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), 100f);
+            sprite.name = file.Name;
             return sprite;
         }
+
+
 
         public static Sprite LoadSprite(Texture2D spriteTexture, float pixelsPerUnit = 100f)
         {
             return Sprite.Create(spriteTexture, new Rect(0, 0, spriteTexture.width, spriteTexture.height), new Vector2(0, 0), pixelsPerUnit);
         }
 
-        public static Texture2D LoadTexture(string FilePath)
+
+
+        /// <summary>
+        /// Loads a texture2D from the sent file. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
+        public static Texture2D LoadTexture(IFileHandle file)
         {
             // Load a PNG or JPG file from disk to a Texture2D
             // Returns null if load fails
 
-            Texture2D Tex2D;
-            byte[] FileData;
+            Stream fileStream = file.OpenRead();
+            MemoryStream mem = new MemoryStream();
 
-            if (File.Exists(FilePath))
-            {
-                FileData = File.ReadAllBytes(FilePath);
-                Tex2D = new Texture2D(2, 2);           // Create new "empty" texture
-                if (Tex2D.LoadImage(FileData))           // Load the imagedata into the texture (size is set automatically)
-                    return Tex2D;                 // If data = readable -> return texture
-            }
-            return null;                     // Return null if load failed
+            CopyStream(fileStream, mem);
+
+            byte[] fileData = mem.ToArray();
+
+            Texture2D tex2D = new Texture2D(2, 2);          
+            if (tex2D.LoadImage(fileData)) return tex2D;
+
+            return null;                     
         }
 
-        
+
+
+        /// <summary>
+        /// Copies the input stream into the output stream. Source: https://stackoverflow.com/questions/1080442/how-to-convert-an-stream-into-a-byte-in-c
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="output"></param>
+        public static void CopyStream(Stream input, Stream output)
+        {
+            byte[] b = new byte[32768];
+            int r;
+            while ((r = input.Read(b, 0, b.Length)) > 0)
+                output.Write(b, 0, r);
+        }
+
 
 
         public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Transform spawnPoint)

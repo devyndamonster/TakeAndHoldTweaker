@@ -21,7 +21,7 @@ namespace TNHTweaker
         public static bool TNHInitialized = false;
         public static bool MagazineCacheLoaded = false;
 
-        public static IEnumerator InitializeTNHMenuAsync(string path, Text text, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance)
+        public static IEnumerator InitializeTNHMenuAsync(string path, Text text, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
         {
             hotdog.gameObject.SetActive(false);
 
@@ -42,7 +42,12 @@ namespace TNHTweaker
 
             //Now perform final steps of loading characters
             LoadTNHTemplates(CharDatabase);
-            CreateTNHFiles(path);
+
+            if (outputFiles)
+            {
+                CreateTNHFiles(path);
+            }
+
             RefreshTNHUI(instance, Categories, CharDatabase);
 
             hotdog.gameObject.SetActive(true);
@@ -84,6 +89,7 @@ namespace TNHTweaker
             TNHTweakerUtils.CreateObjectIDFile(path);
             TNHTweakerUtils.CreateSosigIDFile(path);
             TNHTweakerUtils.CreateJsonVaultFiles(path);
+            TNHTweakerUtils.CreateGeneratedTables(path);
         }
 
 
