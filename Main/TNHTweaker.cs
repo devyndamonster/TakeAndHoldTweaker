@@ -459,6 +459,131 @@ namespace TNHTweaker
         ///////////////////////////////////////////
 
 
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "ConfigureAtBeginning")]
+        [HarmonyPrefix]
+        public static bool SpawnStartingEquipment(TNH_SupplyPoint __instance)
+        {
+            __instance.m_trackedObjects.Clear();
+            if(__instance.M.ItemSpawnerMode == TNH_ItemSpawnerMode.On)
+            {
+                __instance.M.ItemSpawner.transform.position = __instance.SpawnPoints_Panels[0].position + Vector3.up * 0.8f;
+                __instance.M.ItemSpawner.transform.rotation = __instance.SpawnPoints_Panels[0].rotation;
+                __instance.M.ItemSpawner.SetActive(true);
+            }
+
+            for (int i = 0; i < __instance.SpawnPoint_Tables.Count; i++)
+            {
+                GameObject item = Instantiate(__instance.M.Prefab_MetalTable, __instance.SpawnPoint_Tables[i].position, __instance.SpawnPoint_Tables[i].rotation);
+                __instance.m_trackedObjects.Add(item);
+            }
+
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
+            if (character.HasPrimaryWeapon)
+            {
+                EquipmentGroup selectedGroup = character.PrimaryWeapon.PrimaryGroup;
+                if(selectedGroup == null) selectedGroup = character.PrimaryWeapon.BackupGroup;
+                
+                if(selectedGroup != null)
+                {
+                    selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    GameObject weaponCase = __instance.M.SpawnWeaponCase(__instance.M.Prefab_WeaponCaseLarge, __instance.SpawnPoint_CaseLarge.position, __instance.SpawnPoint_CaseLarge.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
+                    __instance.m_trackedObjects.Add(weaponCase);
+                    weaponCase.GetComponent<TNH_WeaponCrate>().M = __instance.M;
+                }
+            }
+
+            if (character.HasSecondaryWeapon)
+            {
+                EquipmentGroup selectedGroup = character.SecondaryWeapon.PrimaryGroup;
+                if (selectedGroup == null) selectedGroup = character.SecondaryWeapon.BackupGroup;
+
+                if (selectedGroup != null)
+                {
+                    selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    GameObject weaponCase = __instance.M.SpawnWeaponCase(__instance.M.Prefab_WeaponCaseSmall, __instance.SpawnPoint_CaseSmall.position, __instance.SpawnPoint_CaseSmall.forward, selectedItem, selectedGroup.NumMagsSpawned, selectedGroup.NumRoundsSpawned, selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
+                    __instance.m_trackedObjects.Add(weaponCase);
+                    weaponCase.GetComponent<TNH_WeaponCrate>().M = __instance.M;
+                }
+            }
+
+            if (character.HasTertiaryWeapon)
+            {
+                EquipmentGroup selectedGroup = character.TertiaryWeapon.PrimaryGroup;
+                if (selectedGroup == null) selectedGroup = character.TertiaryWeapon.BackupGroup;
+
+                if (selectedGroup != null)
+                {
+                    selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    GameObject item = Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoint_Melee.position, __instance.SpawnPoint_Melee.rotation);
+                    __instance.M.AddObjectToTrackedList(item);
+                }
+            }
+
+            if (character.HasPrimaryItem)
+            {
+                EquipmentGroup selectedGroup = character.PrimaryItem.PrimaryGroup;
+                if (selectedGroup == null) selectedGroup = character.PrimaryItem.BackupGroup;
+
+                if (selectedGroup != null)
+                {
+                    selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    GameObject item = Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoints_SmallItem[0].position, __instance.SpawnPoints_SmallItem[0].rotation);
+                    __instance.M.AddObjectToTrackedList(item);
+                }
+            }
+
+            if (character.HasSecondaryItem)
+            {
+                EquipmentGroup selectedGroup = character.SecondaryItem.PrimaryGroup;
+                if (selectedGroup == null) selectedGroup = character.SecondaryItem.BackupGroup;
+
+                if (selectedGroup != null)
+                {
+                    selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    GameObject item = Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoints_SmallItem[1].position, __instance.SpawnPoints_SmallItem[1].rotation);
+                    __instance.M.AddObjectToTrackedList(item);
+                }
+            }
+
+            if (character.HasTertiaryItem)
+            {
+                EquipmentGroup selectedGroup = character.TertiaryItem.PrimaryGroup;
+                if (selectedGroup == null) selectedGroup = character.TertiaryItem.BackupGroup;
+
+                if (selectedGroup != null)
+                {
+                    selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    GameObject item = Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoints_SmallItem[2].position, __instance.SpawnPoints_SmallItem[2].rotation);
+                    __instance.M.AddObjectToTrackedList(item);
+                }
+            }
+
+            if (character.HasShield)
+            {
+                EquipmentGroup selectedGroup = character.Shield.PrimaryGroup;
+                if (selectedGroup == null) selectedGroup = character.Shield.BackupGroup;
+
+                if (selectedGroup != null)
+                {
+                    selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
+                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                    GameObject item = Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoint_Shield.position, __instance.SpawnPoint_Shield.rotation);
+                    __instance.M.AddObjectToTrackedList(item);
+                }
+            }
+
+            return false;
+        }
+
+
+
+
         [HarmonyPatch(typeof(TNH_Manager), "SetPhase_Take")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool SetPhase_Take_Replacement(

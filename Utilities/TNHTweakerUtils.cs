@@ -375,66 +375,6 @@ namespace TNHTweaker.Utilities
         }
 
 
-        public static void RemoveUnloadedObjectIDs(CustomCharacter character)
-        {
-            if (character.HasPrimaryWeapon)
-            {
-                foreach (EquipmentGroup table in character.PrimaryWeapon.Groups)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.HasSecondaryWeapon)
-            {
-                foreach (EquipmentGroup table in character.SecondaryWeapon.Groups)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.HasTertiaryWeapon)
-            {
-                foreach (EquipmentGroup table in character.TertiaryWeapon.Groups)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.HasPrimaryItem)
-            {
-                foreach (EquipmentGroup table in character.PrimaryItem.Groups)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.HasSecondaryItem)
-            {
-                foreach (EquipmentGroup table in character.SecondaryItem.Groups)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.HasTertiaryItem)
-            {
-                foreach (EquipmentGroup table in character.TertiaryItem.Groups)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-
-            if (character.HasShield)
-            {
-                foreach (EquipmentGroup table in character.Shield.Groups)
-                {
-                    RemoveUnloadedObjectIDs(table);
-                }
-            }
-        }
-
-
         public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
         {
             if (group.AutoPopulateGroup && group.IDOverride != null)

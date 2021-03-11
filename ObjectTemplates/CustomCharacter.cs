@@ -243,43 +243,43 @@ namespace TNHTweaker.ObjectTemplates
         {
             TNHTweakerLogger.Log("TNHTweaker -- Delayed init of character: " + DisplayName, TNHTweakerLogger.LogType.Character);
 
-            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(isCustom, CompletedQuests))
+            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryWeapon = false;
                 character.Has_Weapon_Primary = false;
             }
-            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(isCustom, CompletedQuests))
+            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryWeapon = false;
                 character.Has_Weapon_Secondary = false;
             }
-            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(isCustom, CompletedQuests))
+            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryWeapon = false;
                 character.Has_Weapon_Tertiary = false;
             }
-            if (HasPrimaryItem && !PrimaryItem.DelayedInit(isCustom, CompletedQuests))
+            if (HasPrimaryItem && !PrimaryItem.DelayedInit(CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryItem = false;
                 character.Has_Item_Primary = false;
             }
-            if (HasSecondaryItem && !SecondaryItem.DelayedInit(isCustom, CompletedQuests))
+            if (HasSecondaryItem && !SecondaryItem.DelayedInit(CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryItem = false;
                 character.Has_Item_Secondary = false;
             }
-            if (HasTertiaryItem && !TertiaryItem.DelayedInit(isCustom, CompletedQuests))
+            if (HasTertiaryItem && !TertiaryItem.DelayedInit(CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryItem = false;
                 character.Has_Item_Tertiary = false;
             }
-            if (HasShield && !Shield.DelayedInit(isCustom, CompletedQuests))
+            if (HasShield && !Shield.DelayedInit(CompletedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Shield starting item had no pools to spawn from, and will not spawn equipment!");
                 HasShield = false;
@@ -634,6 +634,12 @@ namespace TNHTweaker.ObjectTemplates
         /// <returns> Returns true if valid, and false if empty </returns>
         public bool DelayedInit(List<string> completedQuests = null)
         {
+            if(Rarity <= 0)
+            {
+                TNHTweakerLogger.LogWarning("TNHTweaker -- Equipment group had a rarity of 0 or less! Setting rarity to 1");
+                Rarity = 1;
+            }
+
             //Start off by checking if this pool is even unlocked from a quest
             if (!string.IsNullOrEmpty(RequiredQuest))
             {
@@ -716,13 +722,9 @@ namespace TNHTweaker.ObjectTemplates
 
     public class LoadoutEntry
     {
-        public int NumMags;
-        public int NumRounds;
-        public string AmmoOverride;
-        public List<EquipmentGroup> Groups;
-        public List<string> ListOverride;
+        public EquipmentGroup PrimaryGroup;
+        public EquipmentGroup BackupGroup;
         
-
         [JsonIgnore]
         private TNH_CharacterDef.LoadoutEntry loadout;
 
@@ -737,11 +739,47 @@ namespace TNHTweaker.ObjectTemplates
                 loadout.ListOverride = new List<FVRObject>();
             }
 
-            NumMags = loadout.Num_Mags_SL_Clips;
-            NumRounds = loadout.Num_Rounds;
-            if (loadout.TableDefs != null) Groups = loadout.TableDefs.Select(o => new EquipmentGroup(o)).ToList();
-            if (loadout.ListOverride != null) ListOverride = loadout.ListOverride.Select(o => o.ItemID).ToList();
-            if (loadout.AmmoObjectOverride != null) AmmoOverride = loadout.AmmoObjectOverride.ItemID;
+            else if(loadout.ListOverride != null && loadout.ListOverride.Count > 0)
+            {
+                PrimaryGroup = new EquipmentGroup();
+                PrimaryGroup.Rarity = 1;
+                PrimaryGroup.IDOverride = loadout.ListOverride.Select(o => o.ItemID).ToList();
+                PrimaryGroup.ItemsToSpawn = 1;
+                PrimaryGroup.MinAmmoCapacity = -1;
+                PrimaryGroup.MaxAmmoCapacity = 9999;
+                PrimaryGroup.NumMagsSpawned = loadout.Num_Mags_SL_Clips;
+                PrimaryGroup.NumClipsSpawned = loadout.Num_Mags_SL_Clips;
+                PrimaryGroup.NumRoundsSpawned = loadout.Num_Rounds;
+            }
+
+            else if (loadout.TableDefs != null && loadout.TableDefs.Count > 0)
+            {
+                //If we have just one pool, then the primary pool becomes that pool
+                if(loadout.TableDefs.Count == 1)
+                {
+                    PrimaryGroup = new EquipmentGroup(loadout.TableDefs[0]);
+                    PrimaryGroup.Rarity = 1;
+                    PrimaryGroup.NumMagsSpawned = loadout.Num_Mags_SL_Clips;
+                    PrimaryGroup.NumClipsSpawned = loadout.Num_Mags_SL_Clips;
+                    PrimaryGroup.NumRoundsSpawned = loadout.Num_Rounds;
+                }
+
+                else
+                {
+                    PrimaryGroup = new EquipmentGroup();
+                    PrimaryGroup.Rarity = 1;
+                    PrimaryGroup.SubGroups = new List<EquipmentGroup>();
+                    foreach(ObjectTableDef table in loadout.TableDefs)
+                    {
+                        EquipmentGroup group = new EquipmentGroup(table);
+                        group.Rarity = 1;
+                        group.NumMagsSpawned = loadout.Num_Mags_SL_Clips;
+                        group.NumClipsSpawned = loadout.Num_Mags_SL_Clips;
+                        group.NumRoundsSpawned = loadout.Num_Rounds;
+                        PrimaryGroup.SubGroups.Add(group);
+                    }
+                }
+            }
 
             this.loadout = loadout;
         }
@@ -751,12 +789,13 @@ namespace TNHTweaker.ObjectTemplates
             if(loadout == null)
             {
                 loadout = new TNH_CharacterDef.LoadoutEntry();
-                loadout.Num_Mags_SL_Clips = NumMags;
-                loadout.Num_Rounds = NumRounds;
+                loadout.Num_Mags_SL_Clips = 3;
+                loadout.Num_Rounds = 9;
 
-                if(Groups != null)
+                if(PrimaryGroup != null)
                 {
-                    loadout.TableDefs = Groups.Select(o => o.GetObjectTableDef()).ToList();
+                    loadout.TableDefs = new List<ObjectTableDef>();
+                    loadout.TableDefs.Add(PrimaryGroup.GetObjectTableDef());
                 }
             }
 
@@ -765,33 +804,27 @@ namespace TNHTweaker.ObjectTemplates
 
 
 
-        public bool DelayedInit(bool isCustom, List<string> completedQuests)
+        public bool DelayedInit(List<string> completedQuests)
         {
             if (loadout != null)
             {
-                for(int i = 0; i < Groups.Count; i++)
+                if(PrimaryGroup != null)
                 {
-                    EquipmentGroup pool = Groups[i];
-                    if (!pool.DelayedInit(completedQuests))
+                    if (!PrimaryGroup.DelayedInit(completedQuests))
                     {
-                        Groups.RemoveAt(i);
-                        loadout.TableDefs.RemoveAt(i);
-                        i -= 1;
+                        PrimaryGroup = null;
                     }
                 }
 
-                if (isCustom)
+                if(BackupGroup != null)
                 {
-                    loadout.ListOverride = new List<FVRObject>();
-                    foreach (string item in ListOverride)
+                    if (!BackupGroup.DelayedInit(completedQuests))
                     {
-                        if (IM.OD.ContainsKey(item)) loadout.ListOverride.Add(IM.OD[item]);
+                        BackupGroup = null;
                     }
-
-                    if (AmmoOverride != null && IM.OD.ContainsKey(AmmoOverride)) loadout.AmmoObjectOverride = IM.OD[AmmoOverride];
                 }
-                
-                return Groups.Count != 0 || loadout.ListOverride.Count != 0;
+
+                return PrimaryGroup != null || BackupGroup != null;
             }
 
             return false;
@@ -802,17 +835,16 @@ namespace TNHTweaker.ObjectTemplates
         {
             string output = "Loadout Entry";
 
-            if(Groups != null && Groups.Count > 0)
+            if (PrimaryGroup != null)
             {
-                foreach(EquipmentGroup group in Groups)
-                {
-                    output += group.ToString(0);
-                }
+                output += "\nPrimary Group";
+                output += PrimaryGroup.ToString(0);
             }
 
-            else
+            if (BackupGroup != null)
             {
-                output = "Empty Loadout";
+                output += "\nBackup Group";
+                output += BackupGroup.ToString(0);
             }
 
             return output;
