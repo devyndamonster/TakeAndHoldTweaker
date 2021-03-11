@@ -551,7 +551,8 @@ namespace TNHTweaker.ObjectTemplates
         public List<EquipmentGroup> GetSpawnedEquipmentGroups()
         {
             List<EquipmentGroup> result;
-            if (IsCompatibleMagazine)
+
+            if (IsCompatibleMagazine || SubGroups == null || SubGroups.Count == 0)
             {
                 result = new List<EquipmentGroup>();
                 result.Add(this);

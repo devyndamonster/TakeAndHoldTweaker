@@ -45,8 +45,6 @@ namespace TNHTweaker
             CreateTNHFiles(path);
             RefreshTNHUI(instance, Categories, CharDatabase);
 
-
-
             hotdog.gameObject.SetActive(true);
             TNHInitialized = true;
         }

@@ -110,7 +110,7 @@ namespace TNHTweaker.Utilities
                     continue;
                 }
 
-                if (validMagazines[i].Capacity < minCapacity || validMagazines[i].Capacity > maxCapacity)
+                if (validMagazines[i].Capacity < minCapacity || (validMagazines[i].Capacity > maxCapacity && maxCapacity > 0))
                 {
                     validMagazines.RemoveAt(i);
                     i -= 1;

@@ -592,8 +592,6 @@ namespace TNHTweaker
 
             supplyPoint.T = level.SupplyChallenge.GetTakeChallenge();
 
-            Traverse pointTraverse = Traverse.Create(supplyPoint);
-
             SpawnSupplyGroup(supplyPoint, level);
 
             SpawnSupplyTurrets(supplyPoint, level);
@@ -606,7 +604,7 @@ namespace TNHTweaker
 
             SpawnSupplyBoxes(supplyPoint, level);
 
-            pointTraverse.Field("m_hasBeenVisited").SetValue(false);
+            supplyPoint.m_hasBeenVisited = false;
         }
 
 
@@ -725,8 +723,6 @@ namespace TNHTweaker
         {
             point.SpawnPoints_Sosigs_Defense.Shuffle<Transform>();
 
-            Traverse pointTraverse = Traverse.Create(point);
-
             for (int i = 0; i < level.SupplyChallenge.NumGuards && i < point.SpawnPoints_Sosigs_Defense.Count; i++)
             {
                 Transform transform = point.SpawnPoints_Sosigs_Defense[i];
@@ -735,7 +731,7 @@ namespace TNHTweaker
 
                 Sosig enemy = SpawnEnemy(customTemplate, LoadedTemplateManager.LoadedCharactersDict[point.M.C], transform, point.M.AI_Difficulty, level.SupplyChallenge.IFFUsed, false, transform.position, true);
 
-                pointTraverse.Field("m_activeSosigs").Method("Add", enemy).GetValue();
+                point.m_activeSosigs.Add(enemy);
             }
         }
 
@@ -745,13 +741,11 @@ namespace TNHTweaker
             point.SpawnPoints_Turrets.Shuffle<Transform>();
             FVRObject turretPrefab = point.M.GetTurretPrefab(level.SupplyChallenge.TurretType);
 
-            Traverse pointTraverse = Traverse.Create(point);
-
             for (int i = 0; i < level.SupplyChallenge.NumTurrets && i < point.SpawnPoints_Turrets.Count; i++)
             {
                 Vector3 pos = point.SpawnPoints_Turrets[i].position + Vector3.up * 0.25f;
                 AutoMeater turret = Instantiate<GameObject>(turretPrefab.GetGameObject(), pos, point.SpawnPoints_Turrets[i].rotation).GetComponent<AutoMeater>();
-                pointTraverse.Field("m_activeTurrets").Method("Add", turret).GetValue();
+                point.m_activeTurrets.Add(turret);
             }
 
         }
@@ -759,8 +753,6 @@ namespace TNHTweaker
 
         public static void SpawnSupplyBoxes(TNH_SupplyPoint point, Level level)
         {
-            List<GameObject> boxes = (List<GameObject>)Traverse.Create(point).Field("m_spawnBoxes").GetValue();
-
             point.SpawnPoints_Boxes.Shuffle();
 
             int boxesToSpawn = UnityEngine.Random.Range(level.MinBoxesSpawned, level.MaxBoxesSpawned + 1);
@@ -773,12 +765,12 @@ namespace TNHTweaker
                 Vector3 position = spawnTransform.position + Vector3.up * 0.1f + Vector3.right * UnityEngine.Random.Range(-0.5f, 0.5f) + Vector3.forward * UnityEngine.Random.Range(-0.5f, 0.5f);
                 Quaternion rotation = Quaternion.Slerp(spawnTransform.rotation, UnityEngine.Random.rotation, 0.1f);
                 GameObject box = Instantiate(point.M.Prefabs_ShatterableCrates[UnityEngine.Random.Range(0, point.M.Prefabs_ShatterableCrates.Count)], position, rotation);
-                boxes.Add(box);
+                point.m_spawnBoxes.Add(box);
             }
 
             int tokensSpawned = 0;
 
-            foreach (GameObject boxObj in boxes)
+            foreach (GameObject boxObj in point.m_spawnBoxes)
             {
                 if (tokensSpawned < level.MinTokensPerSupply)
                 {
@@ -914,24 +906,23 @@ namespace TNHTweaker
         {
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.M.C];
             Phase currentPhase = character.GetCurrentPhase(___m_curPhase);
-            Traverse holdTraverse = Traverse.Create(__instance);
 
             //If we shouldnt spawn any targets, we exit out early
             if ((currentPhase.MaxTargets < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking) ||
                 (currentPhase.MaxTargetsLimited < 1 && __instance.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo))
             {
-                holdTraverse.Method("CompletePhase").GetValue();
+                __instance.CompletePhase();
                 return false;
             }
 
-            holdTraverse.Field("m_state").SetValue(TNH_HoldPoint.HoldState.Hacking);
-            holdTraverse.Field("m_tickDownToFailure").SetValue(120f);
+            __instance.m_state = TNH_HoldPoint.HoldState.Hacking;
+            __instance.m_tickDownToFailure = 120f;
 
             __instance.M.EnqueueEncryptionLine(currentPhase.Encryptions[0]);
-            
-            holdTraverse.Method("DeleteAllActiveWarpIns").GetValue();
+
+            __instance.DeleteAllActiveWarpIns();
             SpawnEncryptionReplacement(__instance, currentPhase);
-            holdTraverse.Field("m_systemNode").Method("SetNodeMode", TNH_HoldPointSystemNode.SystemNodeMode.Indentified).GetValue();
+            __instance.m_systemNode.SetNodeMode(TNH_HoldPointSystemNode.SystemNodeMode.Indentified);
 
             return false;
         }
@@ -962,7 +953,7 @@ namespace TNHTweaker
         public static void SpawnGrenades(List<TNH_HoldPoint.AttackVector> AttackVectors, TNH_Manager M, int m_phaseIndex)
         {
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
-            Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
+            Level currLevel = character.GetCurrentLevel(M.m_curLevel);
             Phase currPhase = currLevel.HoldPhases[m_phaseIndex];
 
             float grenadeChance = currPhase.GrenadeChance;
@@ -996,7 +987,7 @@ namespace TNHTweaker
 
             //Get the custom character data
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[M.C];
-            Level currLevel = character.GetCurrentLevel((TNH_Progression.Level)Traverse.Create(M).Field("m_curLevel").GetValue());
+            Level currLevel = character.GetCurrentLevel(M.m_curLevel);
             Phase currPhase = currLevel.HoldPhases[phaseIndex];
 
             //Set first enemy to be spawned as leader
@@ -1222,46 +1213,46 @@ namespace TNHTweaker
                 {
                     OutfitConfig outfitConfig = LoadedTemplateManager.LoadedSosigsDict[tem].OutfitConfigs.GetRandom();
 
-                    List<GameObject> clothing = Traverse.Create(___m_sosigPlayerBody).Field("m_curClothes").GetValue<List<GameObject>>();
-                    foreach (GameObject item in clothing)
+
+                    foreach (GameObject item in ___m_sosigPlayerBody.m_curClothes)
                     {
                         Destroy(item);
                     }
-                    clothing.Clear();
+                    ___m_sosigPlayerBody.m_curClothes.Clear();
 
                     if (outfitConfig.Chance_Headwear >= UnityEngine.Random.value)
                     {
-                        EquipSosigClothing(outfitConfig.Headwear, clothing, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllHead);
+                        EquipSosigClothing(outfitConfig.Headwear, ___m_sosigPlayerBody.m_curClothes, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllHead);
                     }
 
                     if (outfitConfig.Chance_Facewear >= UnityEngine.Random.value)
                     {
-                        EquipSosigClothing(outfitConfig.Facewear, clothing, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllFace);
+                        EquipSosigClothing(outfitConfig.Facewear, ___m_sosigPlayerBody.m_curClothes, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllFace);
                     }
 
                     if (outfitConfig.Chance_Eyewear >= UnityEngine.Random.value)
                     {
-                        EquipSosigClothing(outfitConfig.Eyewear, clothing, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllEye);
+                        EquipSosigClothing(outfitConfig.Eyewear, ___m_sosigPlayerBody.m_curClothes, ___m_sosigPlayerBody.Sosig_Head, outfitConfig.ForceWearAllEye);
                     }
 
                     if (outfitConfig.Chance_Torsowear >= UnityEngine.Random.value)
                     {
-                        EquipSosigClothing(outfitConfig.Torsowear, clothing, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllTorso);
+                        EquipSosigClothing(outfitConfig.Torsowear, ___m_sosigPlayerBody.m_curClothes, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllTorso);
                     }
 
                     if (outfitConfig.Chance_Pantswear >= UnityEngine.Random.value)
                     {
-                        EquipSosigClothing(outfitConfig.Pantswear, clothing, ___m_sosigPlayerBody.Sosig_Abdomen, outfitConfig.ForceWearAllPants);
+                        EquipSosigClothing(outfitConfig.Pantswear, ___m_sosigPlayerBody.m_curClothes, ___m_sosigPlayerBody.Sosig_Abdomen, outfitConfig.ForceWearAllPants);
                     }
 
                     if (outfitConfig.Chance_Pantswear_Lower >= UnityEngine.Random.value)
                     {
-                        EquipSosigClothing(outfitConfig.Pantswear_Lower, clothing, ___m_sosigPlayerBody.Sosig_Legs, outfitConfig.ForceWearAllPantsLower);
+                        EquipSosigClothing(outfitConfig.Pantswear_Lower, ___m_sosigPlayerBody.m_curClothes, ___m_sosigPlayerBody.Sosig_Legs, outfitConfig.ForceWearAllPantsLower);
                     }
 
                     if (outfitConfig.Chance_Backpacks >= UnityEngine.Random.value)
                     {
-                        EquipSosigClothing(outfitConfig.Backpacks, clothing, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllBackpacks);
+                        EquipSosigClothing(outfitConfig.Backpacks, ___m_sosigPlayerBody.m_curClothes, ___m_sosigPlayerBody.Sosig_Torso, outfitConfig.ForceWearAllBackpacks);
                     }
 
                 }
@@ -1371,9 +1362,8 @@ namespace TNHTweaker
             List<int> ___m_poolAddedCost,
             GameObject ___m_spawnedCase)
         {
-            Traverse constructorTraverse = Traverse.Create(__instance);
-
-            constructorTraverse.Method("UpdateRerollButtonState", false).GetValue();
+            
+            __instance.UpdateRerollButtonState(false);
 
             if (!___allowEntry)
             {
@@ -1386,7 +1376,7 @@ namespace TNHTweaker
                 int cost = ___m_poolEntries[i].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[i];
                 if(__instance.M.GetNumTokens() >= cost)
                 {
-                    constructorTraverse.Method("SetState", TNH_ObjectConstructor.ConstructorState.Confirm, i).GetValue();
+                    __instance.SetState(TNH_ObjectConstructor.ConstructorState.Confirm, i);
                     SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Select, __instance.transform.position);
                 }
                 else
@@ -1400,7 +1390,7 @@ namespace TNHTweaker
 
                 if (i == 0)
                 {
-                    constructorTraverse.Method("SetState", TNH_ObjectConstructor.ConstructorState.EntryList, 0).GetValue();
+                    __instance.SetState(TNH_ObjectConstructor.ConstructorState.EntryList, 0);
                     ___m_selectedEntry = -1;
                     SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Back, __instance.transform.position);
                 }
@@ -1413,7 +1403,7 @@ namespace TNHTweaker
                         if ((!___m_poolEntries[___m_selectedEntry].TableDef.SpawnsInSmallCase && !___m_poolEntries[___m_selectedEntry].TableDef.SpawnsInSmallCase) || ___m_spawnedCase == null)
                         {
 
-                            AnvilManager.Run(SpawnObjectAtConstructor(___m_poolEntries[___m_selectedEntry], __instance, constructorTraverse));
+                            AnvilManager.Run(SpawnObjectAtConstructor(___m_poolEntries[___m_selectedEntry], __instance));
                             ___m_numTokensSelected = 0;
                             __instance.M.SubtractTokens(cost);
                             SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Spawn, __instance.transform.position);
@@ -1423,7 +1413,7 @@ namespace TNHTweaker
                                 ___m_poolAddedCost[___m_selectedEntry] += 1;
                             }
 
-                            constructorTraverse.Method("SetState", TNH_ObjectConstructor.ConstructorState.EntryList, 0).GetValue();
+                            __instance.SetState(TNH_ObjectConstructor.ConstructorState.EntryList, 0);
                             ___m_selectedEntry = -1;
                         }
 
@@ -1443,14 +1433,13 @@ namespace TNHTweaker
         }
 
 
-        private static IEnumerator SpawnObjectAtConstructor(EquipmentPoolDef.PoolEntry entry, TNH_ObjectConstructor constructor, Traverse constructorTraverse)
+        private static IEnumerator SpawnObjectAtConstructor(EquipmentPoolDef.PoolEntry entry, TNH_ObjectConstructor constructor)
         {
             TNHTweakerLogger.Log("TNHTWEAKER -- Spawning item at constructor", TNHTweakerLogger.LogType.TNH);
 
-            constructorTraverse.Field("allowEntry").SetValue(false);
+            constructor.allowEntry = false;
             EquipmentPool pool = LoadedTemplateManager.EquipmentPoolDictionary[entry];
             CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[constructor.M.C];
-            List<GameObject> trackedObjects = (List<GameObject>)(constructorTraverse.Field("m_trackedObjects").GetValue());
             List<EquipmentGroup> selectedGroups = pool.GetSpawnedEquipmentGroups();
             AnvilCallback<GameObject> gameObjectCallback;
 
@@ -1464,7 +1453,7 @@ namespace TNHTweaker
                 FVRObject item = IM.OD[selectedGroups[0].GetObjects().GetRandom()];
                 GameObject itemCase = constructor.M.SpawnWeaponCase(caseFab, constructor.SpawnPoint_Case.position, constructor.SpawnPoint_Case.forward, item, selectedGroups[0].NumMagsSpawned, selectedGroups[0].NumRoundsSpawned, selectedGroups[0].MinAmmoCapacity, selectedGroups[0].MaxAmmoCapacity);
 
-                constructorTraverse.Field("m_spawnedCase").SetValue(itemCase);
+                constructor.m_spawnedCase = itemCase;
                 itemCase.GetComponent<TNH_WeaponCrate>().M = constructor.M;
             }
 
@@ -1550,7 +1539,6 @@ namespace TNHTweaker
                             gameObjectCallback = mainObject.GetGameObjectAsync();
                             yield return gameObjectCallback;
                             GameObject spawnedObject = Instantiate(gameObjectCallback.Result, primarySpawn.position + Vector3.up * 0.2f * mainSpawnCount, primarySpawn.rotation);
-                            trackedObjects.Add(spawnedObject);
                             TNHTweakerLogger.Log("TNHTWEAKER -- Normal item spawned", TNHTweakerLogger.LogType.TNH);
                         }
 
@@ -1561,7 +1549,6 @@ namespace TNHTweaker
                             gameObjectCallback = mainObject.RequiredSecondaryPieces[j].GetGameObjectAsync();
                             yield return gameObjectCallback;
                             GameObject requiredItem = Instantiate(gameObjectCallback.Result, requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
-                            trackedObjects.Add(requiredItem);
                             requiredSpawnCount += 1;
                             TNHTweakerLogger.Log("TNHTWEAKER -- Required item spawned", TNHTweakerLogger.LogType.TNH);
                         }
@@ -1591,7 +1578,6 @@ namespace TNHTweaker
                                 gameObjectCallback = magazineObject.GetGameObjectAsync();
                                 yield return gameObjectCallback;
                                 GameObject spawnedMag = Instantiate(gameObjectCallback.Result, ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
-                                trackedObjects.Add(spawnedMag);
                                 ammoSpawnCount += 1;
 
                                 gameObjectCallback = clipObject.GetGameObjectAsync();
@@ -1599,7 +1585,6 @@ namespace TNHTweaker
                                 for (int i = 0; i < group.NumClipsSpawned; i++)
                                 {
                                     GameObject spawnedClip = Instantiate(gameObjectCallback.Result, ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
-                                    trackedObjects.Add(spawnedClip);
                                     ammoSpawnCount += 1;
                                 }
                             }
@@ -1641,7 +1626,6 @@ namespace TNHTweaker
                                 for (int i = 0; i < numSpawned; i++)
                                 {
                                     GameObject spawned = Instantiate(gameObjectCallback.Result, ammoSpawn.position + ammoSpawn.up * 0.05f * ammoSpawnCount, ammoSpawn.rotation);
-                                    trackedObjects.Add(spawned);
                                     ammoSpawnCount += 1;
                                 }
                             }
@@ -1655,7 +1639,6 @@ namespace TNHTweaker
                             gameObjectCallback = sight.GetGameObjectAsync();
                             yield return gameObjectCallback;
                             GameObject spawnedSight = Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
-                            trackedObjects.Add(spawnedSight);
 
                             TNHTweakerLogger.Log("TNHTWEAKER -- Required sight spawned", TNHTweakerLogger.LogType.TNH);
 
@@ -1664,7 +1647,6 @@ namespace TNHTweaker
                                 gameObjectCallback = sight.RequiredSecondaryPieces[j].GetGameObjectAsync();
                                 yield return gameObjectCallback;
                                 GameObject spawnedRequired = Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount + Vector3.up * 0.15f * j, constructor.SpawnPoint_Object.rotation);
-                                trackedObjects.Add(spawnedRequired);
                                 TNHTweakerLogger.Log("TNHTWEAKER -- Required item for sight spawned", TNHTweakerLogger.LogType.TNH);
                             }
 
@@ -1678,7 +1660,6 @@ namespace TNHTweaker
                             gameObjectCallback = bespoke.GetGameObjectAsync();
                             yield return gameObjectCallback;
                             GameObject bespokeObject = Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);
-                            trackedObjects.Add(bespokeObject);
                             objectSpawnCount += 1;
 
                             TNHTweakerLogger.Log("TNHTWEAKER -- Bespoke item spawned", TNHTweakerLogger.LogType.TNH);
@@ -1687,7 +1668,7 @@ namespace TNHTweaker
                 }
             }
 
-            constructorTraverse.Field("allowEntry").SetValue(true);
+            constructor.allowEntry = true;
             yield break;
         }
 
