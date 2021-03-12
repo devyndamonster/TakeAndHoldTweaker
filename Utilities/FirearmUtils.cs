@@ -99,7 +99,20 @@ namespace TNHTweaker.Utilities
 
         public static List<AmmoObjectDataTemplate> GetCompatibleMagazines(FVRObject firearm, int minCapacity = 0, int maxCapacity = 9999, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
-            List<AmmoObjectDataTemplate> validMagazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[o.ItemID]).ToList();
+            List<AmmoObjectDataTemplate> validMagazines = new List<AmmoObjectDataTemplate>();
+
+            foreach (FVRObject item in firearm.CompatibleMagazines)
+            {
+                if (LoadedTemplateManager.LoadedMagazineDict.ContainsKey(item.ItemID))
+                {
+                    validMagazines.Add(LoadedTemplateManager.LoadedMagazineDict[item.ItemID]);
+                }
+
+                else
+                {
+                    TNHTweakerLogger.LogWarning("TNHTweaker -- Firearm had a compatible magazine, but it wasn't loaded in the global magazine dictionary! Magazine won't be included");
+                }
+            }
 
             for (int i = 0; i < validMagazines.Count; i++)
             {
@@ -123,8 +136,21 @@ namespace TNHTweaker.Utilities
 
         public static List<AmmoObjectDataTemplate> GetCompatibleClips(FVRObject firearm, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
-            List<AmmoObjectDataTemplate> validClips = firearm.CompatibleClips.Select(o => LoadedTemplateManager.LoadedClipDict[o.ItemID]).ToList();
+            List<AmmoObjectDataTemplate> validClips = new List<AmmoObjectDataTemplate>();
 
+            foreach(FVRObject item in firearm.CompatibleClips)
+            {
+                if (LoadedTemplateManager.LoadedClipDict.ContainsKey(item.ItemID))
+                {
+                    validClips.Add(LoadedTemplateManager.LoadedClipDict[item.ItemID]);
+                }
+
+                else
+                {
+                    TNHTweakerLogger.LogWarning("TNHTweaker -- Firearm had a compatible clip, but it wasn't loaded in the global clip dictionary! Clip won't be included");
+                }
+            }
+               
             for (int i = 0; i < validClips.Count; i++)
             {
                 if (magazineBlacklist != null && magazineBlacklist.ContainsKey(firearm.ItemID) && magazineBlacklist[firearm.ItemID].ClipBlacklist.Contains(validClips[i].ObjectID))

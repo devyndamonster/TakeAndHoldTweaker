@@ -1422,7 +1422,7 @@ namespace TNHTweaker
         /// <returns></returns>
         [HarmonyPatch(typeof(TNH_AmmoReloader), "GetClassFromType")]
         [HarmonyPrefix]
-        public static bool AmmoReloaderGetAmmo(TNH_AmmoReloader __instance, FireArmRoundClass __result, FireArmRoundType t)
+        public static bool AmmoReloaderGetAmmo(TNH_AmmoReloader __instance, ref FireArmRoundClass __result, FireArmRoundType t)
         {
             if (!__instance.m_decidedTypes.ContainsKey(t))
             {
