@@ -173,6 +173,36 @@ namespace TNHTweaker.Utilities
             }
         }
 
+
+        public static void CreatePopulatedCharacterTemplate(string path)
+        {
+            try
+            {
+                TNHTweakerLogger.Log("TNHTweaker -- Creating populated character template file", TNHTweakerLogger.LogType.File);
+
+                path = path + "/PopulatedCharacterTemplate.json";
+
+                if (!File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
+                using (StreamWriter sw = File.CreateText(path))
+                {
+                    CustomCharacter character = new CustomCharacter();
+                    string characterString = JsonConvert.SerializeObject(character, Formatting.Indented, new StringEnumConverter());
+                    sw.WriteLine(characterString);
+                    sw.Close();
+                }
+            }
+
+            catch (Exception ex)
+            {
+                TNHTweakerLogger.LogError(ex.ToString());
+            }
+        }
+
+
         public static void CreateDefaultSosigTemplateFiles(List<SosigEnemyTemplate> sosigs, string path)
         {
             try

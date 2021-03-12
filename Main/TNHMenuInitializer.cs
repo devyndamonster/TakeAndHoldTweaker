@@ -90,6 +90,7 @@ namespace TNHTweaker
             TNHTweakerUtils.CreateSosigIDFile(path);
             TNHTweakerUtils.CreateJsonVaultFiles(path);
             TNHTweakerUtils.CreateGeneratedTables(path);
+            TNHTweakerUtils.CreatePopulatedCharacterTemplate(path);
         }
 
 

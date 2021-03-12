@@ -59,7 +59,26 @@ namespace TNHTweaker.ObjectTemplates
         public List<string> CompletedQuests;
 
 
-        public CustomCharacter() { }
+        public CustomCharacter() {
+            ValidAmmoEras = new List<FVRObject.OTagEra>();
+            ValidAmmoSets = new List<FVRObject.OTagSet>();
+            GlobalAmmoBlacklist = new List<string>();
+            MagazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
+            MagazineBlacklist.Add("SKSClassic", new MagazineBlacklistEntry());
+            MagazineBlacklist["SKSClassic"].MagazineBlacklist.Add("MagazineSKSModern10rnd");
+            MagazineBlacklist["SKSClassic"].MagazineBlacklist.Add("MagazineSKSModern20rnd");
+            RequireSightTable = new EquipmentGroup();
+            PrimaryWeapon = new LoadoutEntry();
+            SecondaryWeapon = new LoadoutEntry();
+            TertiaryWeapon = new LoadoutEntry();
+            PrimaryItem = new LoadoutEntry();
+            SecondaryItem = new LoadoutEntry();
+            TertiaryItem = new LoadoutEntry();
+            Shield = new LoadoutEntry();
+            EquipmentPools = new List<EquipmentPool>();
+            Levels = new List<Level>();
+            LevelsEndless = new List<Level>();
+        }
 
         public CustomCharacter(TNH_CharacterDef character)
         {
@@ -81,6 +100,11 @@ namespace TNHTweaker.ObjectTemplates
             ValidAmmoSets = character.ValidAmmoSets;
             GlobalAmmoBlacklist = new List<string>();
             MagazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
+
+            //Add some sample values
+            MagazineBlacklist.Add("SKSClassic", new MagazineBlacklistEntry());
+            MagazineBlacklist["SKSClassic"].MagazineBlacklist.Add("MagazineSKSModern10rnd");
+            MagazineBlacklist["SKSClassic"].MagazineBlacklist.Add("MagazineSKSModern20rnd");
 
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
             SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
@@ -336,7 +360,10 @@ namespace TNHTweaker.ObjectTemplates
         [JsonIgnore]
         private EquipmentPoolDef.PoolEntry pool;
 
-        public EquipmentPool() { }
+        public EquipmentPool() {
+            PrimaryGroup = new EquipmentGroup();
+            BackupGroup = new EquipmentGroup();
+        }
 
         public EquipmentPool(EquipmentPoolDef.PoolEntry pool)
         {
@@ -350,7 +377,7 @@ namespace TNHTweaker.ObjectTemplates
             PrimaryGroup.Rarity = pool.Rarity;
             SpawnsInLargeCase = pool.TableDef.SpawnsInLargeCase;
             SpawnsInSmallCase = pool.TableDef.SpawnsInSmallCase;
-            BackupGroup = null;
+            BackupGroup = new EquipmentGroup();
 
             this.pool = pool;
         }
@@ -488,7 +515,25 @@ namespace TNHTweaker.ObjectTemplates
         [JsonIgnore]
         private List<string> objects = new List<string>();
 
-        public EquipmentGroup() { }
+        public EquipmentGroup() {
+            IDOverride = new List<string>();
+            Eras = new List<FVRObject.OTagEra>();
+            Sets = new List<FVRObject.OTagSet>();
+            Sizes = new List<FVRObject.OTagFirearmSize>();
+            Actions = new List<FVRObject.OTagFirearmAction>();
+            Modes = new List<FVRObject.OTagFirearmFiringMode>();
+            ExcludedModes = new List<FVRObject.OTagFirearmFiringMode>();
+            FeedOptions = new List<FVRObject.OTagFirearmFeedOption>();
+            MountsAvailable = new List<FVRObject.OTagFirearmMount>();
+            RoundPowers = new List<FVRObject.OTagFirearmRoundPower>();
+            Features = new List<FVRObject.OTagAttachmentFeature>();
+            MeleeStyles = new List<FVRObject.OTagMeleeStyle>();
+            MeleeHandedness = new List<FVRObject.OTagMeleeHandedness>();
+            MountTypes = new List<FVRObject.OTagFirearmMount>();
+            ThrownTypes = new List<FVRObject.OTagThrownType>();
+            ThrownDamageTypes = new List<FVRObject.OTagThrownDamageType>();
+            SubGroups = new List<EquipmentGroup>();
+        }
 
         public EquipmentGroup(ObjectTableDef objectTableDef)
         {
@@ -728,7 +773,10 @@ namespace TNHTweaker.ObjectTemplates
         [JsonIgnore]
         private TNH_CharacterDef.LoadoutEntry loadout;
 
-        public LoadoutEntry() { }
+        public LoadoutEntry() {
+            PrimaryGroup = new EquipmentGroup();
+            BackupGroup = new EquipmentGroup();
+        }
 
         public LoadoutEntry(TNH_CharacterDef.LoadoutEntry loadout)
         {
@@ -875,7 +923,13 @@ namespace TNHTweaker.ObjectTemplates
         [JsonIgnore]
         private TNH_Progression.Level level;
 
-        public Level() { }
+        public Level() {
+            PossiblePanelTypes = new List<PanelType>();
+            TakeChallenge = new TakeChallenge();
+            HoldPhases = new List<Phase>();
+            SupplyChallenge = new TakeChallenge();
+            Patrols = new List<Patrol>();
+        }
 
         public Level(TNH_Progression.Level level)
         {
@@ -1083,7 +1137,10 @@ namespace TNHTweaker.ObjectTemplates
         [JsonIgnore]
         private TNH_HoldChallenge.Phase phase;
 
-        public Phase() { }
+        public Phase() {
+            Encryptions = new List<TNH_EncryptionType>();
+            EnemyType = new List<string>();
+        }
 
         public Phase(TNH_HoldChallenge.Phase phase)
         {
@@ -1184,7 +1241,9 @@ namespace TNHTweaker.ObjectTemplates
         [JsonIgnore]
         private TNH_PatrolChallenge.Patrol patrol;
 
-        public Patrol() { }
+        public Patrol() {
+            EnemyType = new List<string>();
+        }
 
         public Patrol(TNH_PatrolChallenge.Patrol patrol)
         {

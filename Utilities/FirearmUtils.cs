@@ -192,13 +192,6 @@ namespace TNHTweaker.Utilities
                         i -= 1;
                         continue;
                     }
-
-                    if(magazineBlacklist != null && magazineBlacklist.ContainsKey(firearm.ItemID) && magazineBlacklist[firearm.ItemID].BulletBlacklist.Contains(validBullets[i].ObjectID))
-                    {
-                        validBullets.RemoveAt(i);
-                        i -= 1;
-                        continue;
-                    }
                 }
 
                 return validBullets;
