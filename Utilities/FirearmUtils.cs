@@ -101,6 +101,14 @@ namespace TNHTweaker.Utilities
         {
             List<AmmoObjectDataTemplate> validMagazines = new List<AmmoObjectDataTemplate>();
 
+            //If our max capacity is zero or negative, then we return the smallest magazine compatible with the firearm
+            if(maxCapacity <= 0)
+            {
+                validMagazines.Add(GetSmallestCapacityMagazine(firearm, magazineBlacklist));
+                return validMagazines;
+            }
+
+
             foreach (FVRObject item in firearm.CompatibleMagazines)
             {
                 if (LoadedTemplateManager.LoadedMagazineDict.ContainsKey(item.ItemID))
@@ -123,7 +131,7 @@ namespace TNHTweaker.Utilities
                     continue;
                 }
 
-                if (validMagazines[i].Capacity < minCapacity || (validMagazines[i].Capacity > maxCapacity && maxCapacity > 0))
+                if (validMagazines[i].Capacity < minCapacity || (validMagazines[i].Capacity > maxCapacity))
                 {
                     validMagazines.RemoveAt(i);
                     i -= 1;
@@ -201,9 +209,22 @@ namespace TNHTweaker.Utilities
         }
 
 
-        public static AmmoObjectDataTemplate GetSmallestCapacityMagazine(FVRObject firearm)
+        public static AmmoObjectDataTemplate GetSmallestCapacityMagazine(FVRObject firearm, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
-            List<AmmoObjectDataTemplate> magazines = firearm.CompatibleMagazines.Select(o => LoadedTemplateManager.LoadedMagazineDict[o.ItemID]).ToList();
+            List<AmmoObjectDataTemplate> magazines = new List<AmmoObjectDataTemplate>();
+
+            foreach (FVRObject item in firearm.CompatibleMagazines)
+            {
+                if (LoadedTemplateManager.LoadedMagazineDict.ContainsKey(item.ItemID))
+                {
+                    if(magazineBlacklist == null || !magazineBlacklist.ContainsKey(firearm.ItemID) || !magazineBlacklist[firearm.ItemID].MagazineBlacklist.Contains(item.ItemID))
+                    {
+                        magazines.Add(LoadedTemplateManager.LoadedMagazineDict[item.ItemID]);
+                    }
+                }
+            }
+
+
             if (magazines.Count == 0) return null;
 
             AmmoObjectDataTemplate smallestMagazine = magazines[0];
