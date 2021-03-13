@@ -407,7 +407,7 @@ namespace TNHTweaker.Utilities
 
         public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
         {
-            if (group.AutoPopulateGroup && group.IDOverride != null)
+            if (group.IDOverride != null)
             {
                 for (int i = 0; i < group.IDOverride.Count; i++)
                 {

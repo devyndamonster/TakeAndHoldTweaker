@@ -1739,9 +1739,11 @@ namespace TNHTweaker
 
 
                         //If this object equires picatinny sights, we should try to spawn one
-                        if (mainObject.RequiresPicatinnySight && character.GetRequiredSightsTable() != null)
+                        if (mainObject.RequiresPicatinnySight && character.RequireSightTable != null)
                         {
-                            FVRObject sight = character.GetRequiredSightsTable().GetRandomObject();
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Spawning required sights", TNHTweakerLogger.LogType.TNH);
+
+                            FVRObject sight = IM.OD[character.RequireSightTable.GetSpawnedEquipmentGroups().GetRandom().GetObjects().GetRandom()];
                             gameObjectCallback = sight.GetGameObjectAsync();
                             yield return gameObjectCallback;
                             GameObject spawnedSight = Instantiate(gameObjectCallback.Result, constructor.SpawnPoint_Object.position + -constructor.SpawnPoint_Object.right * 0.15f * objectSpawnCount, constructor.SpawnPoint_Object.rotation);

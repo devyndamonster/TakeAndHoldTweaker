@@ -11,6 +11,8 @@ namespace TNHTweaker.Utilities
 
         public static FVRObject GetMagazineForEquipped(int minCapacity = 0, int maxCapacity = 9999)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Getting magazine for equipped", TNHTweakerLogger.LogType.TNH);
+
             List<FVRObject> heldGuns = new List<FVRObject>();
 
             FVRInteractiveObject rightHandObject = GM.CurrentMovementManager.Hands[0].CurrentInteractable;
@@ -99,12 +101,18 @@ namespace TNHTweaker.Utilities
 
         public static List<AmmoObjectDataTemplate> GetCompatibleMagazines(FVRObject firearm, int minCapacity = 0, int maxCapacity = 9999, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Getting compatible magazines for: " + firearm.ItemID, TNHTweakerLogger.LogType.TNH);
+
             List<AmmoObjectDataTemplate> validMagazines = new List<AmmoObjectDataTemplate>();
 
             //If our max capacity is zero or negative, then we return the smallest magazine compatible with the firearm
-            if(maxCapacity <= 0)
+            if (maxCapacity <= 0)
             {
-                validMagazines.Add(GetSmallestCapacityMagazine(firearm, magazineBlacklist));
+                AmmoObjectDataTemplate smallest = GetSmallestCapacityMagazine(firearm, magazineBlacklist);
+                if(smallest != null)
+                {
+                    validMagazines.Add(smallest);
+                }
                 return validMagazines;
             }
 
@@ -144,6 +152,8 @@ namespace TNHTweaker.Utilities
 
         public static List<AmmoObjectDataTemplate> GetCompatibleClips(FVRObject firearm, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Getting compatible clips for: " + firearm.ItemID, TNHTweakerLogger.LogType.TNH);
+
             List<AmmoObjectDataTemplate> validClips = new List<AmmoObjectDataTemplate>();
 
             foreach(FVRObject item in firearm.CompatibleClips)
@@ -175,6 +185,8 @@ namespace TNHTweaker.Utilities
 
         public static List<AmmoObjectDataTemplate> GetCompatibleBullets(FVRObject firearm, List<FVRObject.OTagEra> eras = null, List<FVRObject.OTagSet> sets = null, List<string> ammoBlacklist = null, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Getting compatible bullets for: " + firearm.ItemID, TNHTweakerLogger.LogType.TNH);
+
             if (firearm.CompatibleSingleRounds.Count > 0)
             {
                 List<AmmoObjectDataTemplate> validBullets = firearm.CompatibleSingleRounds.Select(o => LoadedTemplateManager.LoadedBulletDict[o.ItemID]).ToList();
@@ -211,6 +223,8 @@ namespace TNHTweaker.Utilities
 
         public static AmmoObjectDataTemplate GetSmallestCapacityMagazine(FVRObject firearm, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Getting smallest compatible mag for: " + firearm.ItemID, TNHTweakerLogger.LogType.TNH);
+
             List<AmmoObjectDataTemplate> magazines = new List<AmmoObjectDataTemplate>();
 
             foreach (FVRObject item in firearm.CompatibleMagazines)
@@ -242,6 +256,8 @@ namespace TNHTweaker.Utilities
 
         public static AmmoObjectDataTemplate GetSmallestCapacityAmmoObject(List<AmmoObjectDataTemplate> objects)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Getting compatible ammo object from list", TNHTweakerLogger.LogType.TNH);
+
             AmmoObjectDataTemplate smallest = null;
 
             foreach(AmmoObjectDataTemplate item in objects)
@@ -258,6 +274,8 @@ namespace TNHTweaker.Utilities
 
         public static AmmoObjectDataTemplate GetSmallestCapacityAmmoObject(FVRObject firearm, Dictionary<string, MagazineBlacklistEntry> magazineBlacklist = null)
         {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Getting smallest compatible ammo object for: " + firearm.ItemID, TNHTweakerLogger.LogType.TNH);
+
             List<AmmoObjectDataTemplate> compatibleMagazines = GetCompatibleMagazines(firearm, 0, 9999, magazineBlacklist);
             if (compatibleMagazines.Count != 0)
             {

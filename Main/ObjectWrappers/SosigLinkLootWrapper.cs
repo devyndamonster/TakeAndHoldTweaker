@@ -19,7 +19,25 @@ namespace TNHTweaker
             TNHTweakerLogger.Log("TNHTweaker -- Lootable link was destroyed!", TNHTweakerLogger.LogType.TNH);
 
             EquipmentGroup selectedGroup = group.GetSpawnedEquipmentGroups().GetRandom();
-            string selectedItem = selectedGroup.GetObjects().GetRandom();
+            string selectedItem;
+
+            if (selectedGroup.IsCompatibleMagazine) {
+                FVRObject mag = FirearmUtils.GetMagazineForEquipped(selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
+                if(mag != null)
+                {
+                    selectedItem = mag.ItemID;
+                }
+                else
+                {
+                    TNHTweakerLogger.Log("TNHTweaker -- Spawning nothing, since group was compatible magazines, and could not find a compatible magazine for player", TNHTweakerLogger.LogType.TNH);
+                    return;
+                }
+            }
+
+            else
+            {
+                selectedItem = selectedGroup.GetObjects().GetRandom();
+            }
 
             if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(selectedItem))
             {
