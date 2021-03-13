@@ -41,7 +41,7 @@ namespace TNHTweaker
 
             if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(selectedItem))
             {
-                AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(LoadedTemplateManager.LoadedVaultFiles[selectedItem], transform));
+                AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(LoadedTemplateManager.LoadedVaultFiles[selectedItem], transform.position, transform.rotation));
             }
             else
             {

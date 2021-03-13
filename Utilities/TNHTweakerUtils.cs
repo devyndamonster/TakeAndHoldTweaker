@@ -614,7 +614,7 @@ namespace TNHTweaker.Utilities
 
 
 
-        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Transform spawnPoint)
+        public static IEnumerator SpawnFirearm(SavedGunSerializable savedGun, Vector3 position, Quaternion rotation)
         {
             List<GameObject> toDealWith = new List<GameObject>();
             List<GameObject> toMoveToTrays = new List<GameObject>();
@@ -644,7 +644,7 @@ namespace TNHTweaker.Utilities
                     savedGun.ApplyFirearmProperties(myGun);
                     
                     validIndexes.Add(j);
-                    gameObject.transform.position = spawnPoint.position;
+                    gameObject.transform.position = position;
                     gameObject.transform.rotation = Quaternion.identity;
                 }
                 else if (gun.Components[j].isMagazine)
@@ -716,8 +716,8 @@ namespace TNHTweaker.Utilities
             int itemIndex = 0;
             for (int l = 0; l < toMoveToTrays.Count; l++)
             {
-                toMoveToTrays[l].transform.position = spawnPoint.position + (float)itemIndex * 0.1f * Vector3.up;
-                toMoveToTrays[l].transform.rotation = spawnPoint.rotation;
+                toMoveToTrays[l].transform.position = position + (float)itemIndex * 0.1f * Vector3.up;
+                toMoveToTrays[l].transform.rotation = rotation;
                 itemIndex++;
                 trayIndex++;
                 if (trayIndex > 2)
@@ -727,7 +727,7 @@ namespace TNHTweaker.Utilities
             }
             myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
             myGun.SetFromFlagList(gun.SavedFlags);
-            myGun.transform.rotation = spawnPoint.rotation;
+            myGun.transform.rotation = rotation;
             yield break;
         }
 

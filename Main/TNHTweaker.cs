@@ -1637,7 +1637,7 @@ namespace TNHTweaker
                         //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
                         if (vaultFile != null)
                         {
-                            AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(vaultFile, primarySpawn));
+                            AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(vaultFile, primarySpawn.position, primarySpawn.rotation));
                             TNHTweakerLogger.Log("TNHTWEAKER -- Vaulted gun spawned", TNHTweakerLogger.LogType.TNH);
                         }
                         else

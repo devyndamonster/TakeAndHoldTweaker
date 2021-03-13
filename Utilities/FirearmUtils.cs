@@ -105,15 +105,11 @@ namespace TNHTweaker.Utilities
 
             List<AmmoObjectDataTemplate> validMagazines = new List<AmmoObjectDataTemplate>();
 
-            //If our max capacity is zero or negative, then we return the smallest magazine compatible with the firearm
+            //If our max capacity is zero or negative, the set values so that any random magazine can be selected
             if (maxCapacity <= 0)
             {
-                AmmoObjectDataTemplate smallest = GetSmallestCapacityMagazine(firearm, magazineBlacklist);
-                if(smallest != null)
-                {
-                    validMagazines.Add(smallest);
-                }
-                return validMagazines;
+                minCapacity = 0;
+                maxCapacity = 9999;
             }
 
 
@@ -143,6 +139,16 @@ namespace TNHTweaker.Utilities
                 {
                     validMagazines.RemoveAt(i);
                     i -= 1;
+                }
+            }
+
+            //If no magazines were withing set range, then default to returning the smallest magazine
+            if(validMagazines.Count == 0)
+            {
+                AmmoObjectDataTemplate smallest = GetSmallestCapacityMagazine(firearm, magazineBlacklist);
+                if(smallest != null)
+                {
+                    validMagazines.Add(smallest);
                 }
             }
 
