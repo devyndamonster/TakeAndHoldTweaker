@@ -644,7 +644,11 @@ namespace TNHTweaker.ObjectTemplates
             {
                 result = new List<EquipmentGroup>();
 
-                result.Add(this);
+                if(objects.Count > 0)
+                {
+                    result.Add(this);
+                }
+
                 foreach(EquipmentGroup group in SubGroups)
                 {
                     result.AddRange(group.GetSpawnedEquipmentGroups());
