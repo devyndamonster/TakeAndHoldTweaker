@@ -525,9 +525,6 @@ namespace TNHTweaker.ObjectTemplates
         private ObjectTableDef objectTableDef;
 
         [JsonIgnore]
-        private ObjectTable objectTable;
-
-        [JsonIgnore]
         private List<string> objects = new List<string>();
 
         public EquipmentGroup() {
@@ -563,7 +560,8 @@ namespace TNHTweaker.ObjectTemplates
             BespokeAttachmentChance = 0.5f;
             IsCompatibleMagazine = false;
             AutoPopulateGroup = !objectTableDef.UseIDListOverride;
-            IDOverride = objectTableDef.IDOverride;
+            IDOverride = new List<string>(objectTableDef.IDOverride);
+            objectTableDef.IDOverride.Clear();
             Eras = objectTableDef.Eras;
             Sets = objectTableDef.Sets;
             Sizes = objectTableDef.Sizes;
@@ -597,7 +595,7 @@ namespace TNHTweaker.ObjectTemplates
                 objectTableDef.SpawnsInSmallCase = false;
                 objectTableDef.SpawnsInLargeCase = false;
                 objectTableDef.UseIDListOverride = !AutoPopulateGroup;
-                objectTableDef.IDOverride = IDOverride;
+                objectTableDef.IDOverride = new List<string>();
                 objectTableDef.Eras = Eras;
                 objectTableDef.Sets = Sets;
                 objectTableDef.Sizes = Sizes;
@@ -618,10 +616,6 @@ namespace TNHTweaker.ObjectTemplates
             return objectTableDef;
         }
 
-        public ObjectTable GetObjectTable()
-        {
-            return objectTable;
-        }
 
         public List<string> GetObjects()
         {
@@ -707,21 +701,10 @@ namespace TNHTweaker.ObjectTemplates
                     return false;
                 }
             }
-            
-
-            //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
-            if (!IsCompatibleMagazine && AutoPopulateGroup)
-            {
-                objectTable = new ObjectTable();
-                objectTable.Initialize(GetObjectTableDef());
-                foreach(FVRObject obj in objectTable.Objs)
-                {
-                    objects.Add(obj.ItemID);
-                }
-            }
 
             //Before we add anything from the IDOverride list, remove anything that isn't loaded
             TNHTweakerUtils.RemoveUnloadedObjectIDs(this);
+
 
             //Every item in IDOverride gets added to the list of spawnable objects
             if (IDOverride != null)
@@ -729,8 +712,19 @@ namespace TNHTweaker.ObjectTemplates
                 objects.AddRange(IDOverride);
             }
 
-            
 
+            //If this pool isn't a compatible magazine or manually set, then we need to populate it based on its parameters
+            if (!IsCompatibleMagazine && AutoPopulateGroup)
+            {
+                ObjectTable objectTable = new ObjectTable();
+                objectTable.Initialize(GetObjectTableDef());
+                foreach(FVRObject obj in objectTable.Objs)
+                {
+                    objects.Add(obj.ItemID);
+                }
+            }
+
+            
             //Perform delayed init on all subgroups. If they are empty, we remove them
             if (SubGroups != null)
             {

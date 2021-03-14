@@ -268,7 +268,7 @@ namespace TNHTweaker.Utilities
 
             foreach(AmmoObjectDataTemplate item in objects)
             {
-                if(smallest == null || smallest.Capacity < item.Capacity)
+                if(smallest == null || smallest.Capacity > item.Capacity)
                 {
                     smallest = item;
                 }
