@@ -285,11 +285,6 @@ namespace TNHTweaker
                 }
 
 
-                foreach(FVRFireArmMagazine mag in Resources.FindObjectsOfTypeAll<FVRFireArmMagazine>())
-                {
-                    UnityEngine.Object.Destroy(mag.gameObject);
-                }
-
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
 
@@ -325,11 +320,6 @@ namespace TNHTweaker
                 }
 
 
-                foreach (FVRFireArmClip clip in Resources.FindObjectsOfTypeAll<FVRFireArmClip>())
-                {
-                    UnityEngine.Object.Destroy(clip.gameObject);
-                }
-
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
 
@@ -364,11 +354,6 @@ namespace TNHTweaker
                 }
 
 
-
-                foreach (FVRFireArmRound round in Resources.FindObjectsOfTypeAll<FVRFireArmRound>())
-                {
-                    UnityEngine.Object.Destroy(round.gameObject);
-                }
 
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -472,11 +457,6 @@ namespace TNHTweaker
                     sw.Close();
                 }
 
-
-                foreach (FVRFireArm firearm in Resources.FindObjectsOfTypeAll<FVRFireArm>())
-                {
-                    UnityEngine.Object.Destroy(firearm.gameObject);
-                }
 
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
