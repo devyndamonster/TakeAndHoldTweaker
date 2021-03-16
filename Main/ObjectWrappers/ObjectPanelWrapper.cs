@@ -218,7 +218,7 @@ namespace TNHTweaker
                     {
                         //NOTE: We access IM.OD[] because the ObjectWrapper is not properly updated from caching for soME FUCKING REASON AHHHHHH
                         CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
-                        ammoObject = FirearmUtils.GetSmallestCapacityAmmoObject(IM.OD[firearm.ObjectWrapper.ItemID], character.MagazineBlacklist);
+                        ammoObject = FirearmUtils.GetSmallestCapacityAmmoObject(IM.OD[firearm.ObjectWrapper.ItemID], character.magazineBlacklist);
 
                         if (ammoObject != null)
                         {

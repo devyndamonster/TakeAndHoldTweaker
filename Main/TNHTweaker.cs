@@ -1620,7 +1620,7 @@ namespace TNHTweaker
                         //Assign spawn points based on the type of item we are spawning
                         if (mainObject.Category == FVRObject.ObjectCategory.Firearm)
                         {
-                            primarySpawn = constructor.SpawnPoints_GunsSize[mainObject.TagFirearmSize - FVRObject.OTagFirearmSize.Pocket];
+                            primarySpawn = constructor.SpawnPoints_GunsSize[Mathf.Clamp(mainObject.TagFirearmSize - FVRObject.OTagFirearmSize.Pocket, 0, constructor.SpawnPoints_GunsSize.Count - 1)];
                             requiredSpawn = constructor.SpawnPoint_Grenade;
                             mainSpawnCount += 1;
                         }
@@ -1664,9 +1664,9 @@ namespace TNHTweaker
                         if (FirearmUtils.FVRObjectHasAmmoObject(mainObject))
                         {
                             //Get lists of ammo objects for this firearm with filters and blacklists applied
-                            List<FVRObject> compatibleMagazines = FirearmUtils.GetCompatibleMagazines(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
-                            List<FVRObject> compatibleRounds = FirearmUtils.GetCompatibleBullets(mainObject, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
-                            List<FVRObject> compatibleClips = FirearmUtils.GetCompatibleClips(mainObject, character.MagazineBlacklist).Select(o => o.AmmoObject).ToList();
+                            List<FVRObject> compatibleMagazines = FirearmUtils.GetCompatibleMagazines(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, character.magazineBlacklist).Select(o => o.AmmoObject).ToList();
+                            List<FVRObject> compatibleRounds = FirearmUtils.GetCompatibleBullets(mainObject, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, character.magazineBlacklist).Select(o => o.AmmoObject).ToList();
+                            List<FVRObject> compatibleClips = FirearmUtils.GetCompatibleClips(mainObject, character.magazineBlacklist).Select(o => o.AmmoObject).ToList();
 
                             TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Mag Count: " + compatibleMagazines.Count, TNHTweakerLogger.LogType.TNH);
                             TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Clip Count: " + compatibleClips.Count, TNHTweakerLogger.LogType.TNH);

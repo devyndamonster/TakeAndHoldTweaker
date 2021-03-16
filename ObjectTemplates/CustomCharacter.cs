@@ -36,7 +36,8 @@ namespace TNHTweaker.ObjectTemplates
         public List<FVRObject.OTagEra> ValidAmmoEras;
         public List<FVRObject.OTagSet> ValidAmmoSets;
         public List<string> GlobalAmmoBlacklist;
-        public Dictionary<string, MagazineBlacklistEntry> MagazineBlacklist;
+        public List<MagazineBlacklistEntry> MagazineBlacklist;
+        
         public EquipmentGroup RequireSightTable;
         public LoadoutEntry PrimaryWeapon;
         public LoadoutEntry SecondaryWeapon;
@@ -53,17 +54,32 @@ namespace TNHTweaker.ObjectTemplates
         private TNH_CharacterDef character;
 
         [JsonIgnore]
-        private List<string> CompletedQuests;
+        private List<string> completedQuests;
+
+        [JsonIgnore]
+        public Dictionary<string, MagazineBlacklistEntry> magazineBlacklist;
 
 
         public CustomCharacter() {
             ValidAmmoEras = new List<FVRObject.OTagEra>();
             ValidAmmoSets = new List<FVRObject.OTagSet>();
             GlobalAmmoBlacklist = new List<string>();
-            MagazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
-            MagazineBlacklist.Add("SKSClassic", new MagazineBlacklistEntry());
-            MagazineBlacklist["SKSClassic"].MagazineBlacklist.Add("MagazineSKSModern10rnd");
-            MagazineBlacklist["SKSClassic"].MagazineBlacklist.Add("MagazineSKSModern20rnd");
+
+
+            MagazineBlacklist = new List<MagazineBlacklistEntry>();
+            MagazineBlacklistEntry tempEntry = new MagazineBlacklistEntry();
+            tempEntry.FirearmID = "SKSClassic";
+            tempEntry.MagazineBlacklist.Add("MagazineSKSModern10rnd");
+            tempEntry.MagazineBlacklist.Add("MagazineSKSModern20rnd");
+            MagazineBlacklist.Add(new MagazineBlacklistEntry());
+
+            magazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
+            foreach(MagazineBlacklistEntry entry in MagazineBlacklist)
+            {
+                magazineBlacklist.Add(entry.FirearmID, entry);
+            }
+
+
             RequireSightTable = new EquipmentGroup();
             PrimaryWeapon = new LoadoutEntry();
             SecondaryWeapon = new LoadoutEntry();
@@ -96,12 +112,21 @@ namespace TNHTweaker.ObjectTemplates
             ValidAmmoEras = character.ValidAmmoEras;
             ValidAmmoSets = character.ValidAmmoSets;
             GlobalAmmoBlacklist = new List<string>();
-            MagazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
 
-            //Add some sample values
-            MagazineBlacklist.Add("SKSClassic", new MagazineBlacklistEntry());
-            MagazineBlacklist["SKSClassic"].MagazineBlacklist.Add("MagazineSKSModern10rnd");
-            MagazineBlacklist["SKSClassic"].MagazineBlacklist.Add("MagazineSKSModern20rnd");
+
+            MagazineBlacklist = new List<MagazineBlacklistEntry>();
+            MagazineBlacklistEntry tempEntry = new MagazineBlacklistEntry();
+            tempEntry.FirearmID = "SKSClassic";
+            tempEntry.MagazineBlacklist.Add("MagazineSKSModern10rnd");
+            tempEntry.MagazineBlacklist.Add("MagazineSKSModern20rnd");
+            MagazineBlacklist.Add(new MagazineBlacklistEntry());
+
+            magazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
+            foreach (MagazineBlacklistEntry entry in MagazineBlacklist)
+            {
+                magazineBlacklist.Add(entry.FirearmID, entry);
+            }
+
 
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
             SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
@@ -157,6 +182,17 @@ namespace TNHTweaker.ObjectTemplates
                 character.EquipmentPool = (EquipmentPoolDef)ScriptableObject.CreateInstance(typeof(EquipmentPoolDef));
                 character.EquipmentPool.Entries = EquipmentPools.Select(o => o.GetPoolEntry()).ToList();
 
+
+                magazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
+                if(MagazineBlacklist != null)
+                {
+                    foreach (MagazineBlacklistEntry entry in MagazineBlacklist)
+                    {
+                        magazineBlacklist.Add(entry.FirearmID, entry);
+                    }
+                }
+                
+
                 character.Progressions = new List<TNH_Progression>();
                 character.Progressions.Add((TNH_Progression)ScriptableObject.CreateInstance(typeof(TNH_Progression)));
                 character.Progressions[0].Levels = new List<TNH_Progression.Level>();
@@ -164,7 +200,7 @@ namespace TNHTweaker.ObjectTemplates
                 {
                     character.Progressions[0].Levels.Add(level.GetLevel());
                 }
-                //character.Progressions[0].Levels = Levels.Select(o => o.GetLevel()).ToList();
+                
 
                 character.Progressions_Endless = new List<TNH_Progression>();
                 character.Progressions_Endless.Add((TNH_Progression)ScriptableObject.CreateInstance(typeof(TNH_Progression)));
@@ -173,7 +209,7 @@ namespace TNHTweaker.ObjectTemplates
                 {
                     character.Progressions_Endless[0].Levels.Add(level.GetLevel());
                 }
-                //character.Progressions_Endless[0].Levels = LevelsEndless.Select(o => o.GetLevel()).ToList();
+                
 
             }
 
@@ -260,7 +296,7 @@ namespace TNHTweaker.ObjectTemplates
             TNHTweakerLogger.Log("TNHTweaker -- Delayed init of character: " + DisplayName, TNHTweakerLogger.LogType.Character);
 
             TNHTweakerLogger.Log("TNHTweaker -- Init of Primary Weapon", TNHTweakerLogger.LogType.Character);
-            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(CompletedQuests))
+            if (HasPrimaryWeapon && !PrimaryWeapon.DelayedInit(completedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryWeapon = false;
@@ -268,7 +304,7 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             TNHTweakerLogger.Log("TNHTweaker -- Init of Secondary Weapon", TNHTweakerLogger.LogType.Character);
-            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(CompletedQuests))
+            if (HasSecondaryWeapon && !SecondaryWeapon.DelayedInit(completedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryWeapon = false;
@@ -276,7 +312,7 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             TNHTweakerLogger.Log("TNHTweaker -- Init of Tertiary Weapon", TNHTweakerLogger.LogType.Character);
-            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(CompletedQuests))
+            if (HasTertiaryWeapon && !TertiaryWeapon.DelayedInit(completedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting weapon had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryWeapon = false;
@@ -284,7 +320,7 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             TNHTweakerLogger.Log("TNHTweaker -- Init of Primary Item", TNHTweakerLogger.LogType.Character);
-            if (HasPrimaryItem && !PrimaryItem.DelayedInit(CompletedQuests))
+            if (HasPrimaryItem && !PrimaryItem.DelayedInit(completedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Primary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasPrimaryItem = false;
@@ -292,7 +328,7 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             TNHTweakerLogger.Log("TNHTweaker -- Init of Secondary Item", TNHTweakerLogger.LogType.Character);
-            if (HasSecondaryItem && !SecondaryItem.DelayedInit(CompletedQuests))
+            if (HasSecondaryItem && !SecondaryItem.DelayedInit(completedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Secondary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasSecondaryItem = false;
@@ -300,7 +336,7 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             TNHTweakerLogger.Log("TNHTweaker -- Init of Tertiary Item", TNHTweakerLogger.LogType.Character);
-            if (HasTertiaryItem && !TertiaryItem.DelayedInit(CompletedQuests))
+            if (HasTertiaryItem && !TertiaryItem.DelayedInit(completedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Tertiary starting item had no pools to spawn from, and will not spawn equipment!");
                 HasTertiaryItem = false;
@@ -308,7 +344,7 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             TNHTweakerLogger.Log("TNHTweaker -- Init of Shield", TNHTweakerLogger.LogType.Character);
-            if (HasShield && !Shield.DelayedInit(CompletedQuests))
+            if (HasShield && !Shield.DelayedInit(completedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Shield starting item had no pools to spawn from, and will not spawn equipment!");
                 HasShield = false;
@@ -316,7 +352,7 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             TNHTweakerLogger.Log("TNHTweaker -- Init of required sights table", TNHTweakerLogger.LogType.Character);
-            if (RequireSightTable != null && !RequireSightTable.DelayedInit(CompletedQuests))
+            if (RequireSightTable != null && !RequireSightTable.DelayedInit(completedQuests))
             {
                 TNHTweakerLogger.LogWarning("TNHTweaker -- Required sight table was empty, guns will not spawn with required sights");
                 RequireSightTable = null;
@@ -326,7 +362,7 @@ namespace TNHTweaker.ObjectTemplates
             for (int i = 0; i < EquipmentPools.Count; i++)
             {
                 EquipmentPool pool = EquipmentPools[i];
-                if(!pool.DelayedInit(CompletedQuests)){
+                if(!pool.DelayedInit(completedQuests)){
                     TNHTweakerLogger.LogWarning("TNHTweaker -- Equipment pool had an empty table! Removing it so that it can't spawn!");
                     EquipmentPools.RemoveAt(i);
                     character.EquipmentPool.Entries.RemoveAt(i);
