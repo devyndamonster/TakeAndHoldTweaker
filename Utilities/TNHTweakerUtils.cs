@@ -378,21 +378,45 @@ namespace TNHTweaker.Utilities
 
 
 
-        public static List<string> GetMagazineCacheBlacklist(string path)
+        public static Dictionary<string, MagazineBlacklistEntry> GetMagazineCacheBlacklist(string path)
         {
-            List<string> blacklist = new List<string>();
+            Dictionary<string, MagazineBlacklistEntry> blacklist = new Dictionary<string, MagazineBlacklistEntry>();
 
             try
             {
-                path = path + "/MagazineCacheBlacklist.txt";
+                path = path + "/MagazineCacheBlacklist.json";
 
+                //If the magazine blacklist file does not exist, we'll create a new sample one
                 if (!File.Exists(path))
                 {
-                    File.CreateText(path);
+                    StreamWriter sw = File.CreateText(path);
+                    List<MagazineBlacklistEntry> blacklistSerialized = new List<MagazineBlacklistEntry>();
+                    MagazineBlacklistEntry sample = new MagazineBlacklistEntry();
+                    sample.FirearmID = "SKSClassic";
+                    sample.MagazineBlacklist.Add("MagazineSKSModern10rnd");
+                    sample.MagazineBlacklist.Add("MagazineSKSModern20rnd");
+                    blacklistSerialized.Add(sample);
+
+                    string blacklistString = JsonConvert.SerializeObject(blacklistSerialized, Formatting.Indented, new StringEnumConverter());
+                    sw.WriteLine(blacklistString);
+                    sw.Close();
+
+                    foreach (MagazineBlacklistEntry entry in blacklistSerialized)
+                    {
+                        blacklist.Add(entry.FirearmID, entry);
+                    }
                 }
+
+                //If the file does exist, we'll try to deserialize it
                 else
                 {
-                    blacklist.AddRange(File.ReadAllLines(path).Select(o => o.Trim()));
+                    string blacklistString = File.ReadAllText(path);
+                    List<MagazineBlacklistEntry> blacklistDeserialized = JsonConvert.DeserializeObject<List<MagazineBlacklistEntry>>(blacklistString);
+
+                    foreach(MagazineBlacklistEntry entry in blacklistDeserialized)
+                    {
+                        blacklist.Add(entry.FirearmID, entry);
+                    }
                 }
             }
 

@@ -210,7 +210,7 @@ namespace TNHTweaker
             MagazineCacheLoaded = false;
 
             string cachePath = path + "/CachedCompatibleMags.json";
-            List<string> blacklist = TNHTweakerUtils.GetMagazineCacheBlacklist(path);
+            Dictionary<string, MagazineBlacklistEntry> blacklist = TNHTweakerUtils.GetMagazineCacheBlacklist(path);
 
             text.text = "BUILDING CACHE : 0%";
             
@@ -222,7 +222,7 @@ namespace TNHTweaker
                     string cacheJson = File.ReadAllText(cachePath);
                     magazineCache = JsonConvert.DeserializeObject<CompatibleMagazineCache>(cacheJson);
 
-                    if (!IsMagazineCacheValid(magazineCache, blacklist))
+                    if (!IsMagazineCacheValid(magazineCache))
                     {
                         TNHTweakerLogger.Log("TNHTweaker -- Existing magazine cache was not valid", TNHTweakerLogger.LogType.General);
                         File.Delete(cachePath);
@@ -393,7 +393,7 @@ namespace TNHTweaker
                         foreach (AmmoObjectDataTemplate magazine in magazineCache.MagazineData[firearmComp.MagazineType])
                         {
                             //If the firearm isn't in the blacklist, and has a new magazine that isn't compatible yet, then we make it compatible
-                            if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleMagazines, magazine.ObjectID) && !blacklist.Contains(firearm.ItemID))
+                            if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleMagazines, magazine.ObjectID) && (!blacklist.ContainsKey(firearm.ItemID) || !blacklist[firearm.ItemID].MagazineBlacklist.Contains(magazine.ObjectID)))
                             {
                                 if (firearm.MaxCapacityRelated < magazine.Capacity)
                                 {
@@ -417,7 +417,7 @@ namespace TNHTweaker
                     {
                         foreach (AmmoObjectDataTemplate clip in magazineCache.ClipData[firearmComp.ClipType])
                         {
-                            if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleClips, clip.ObjectID))
+                            if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleClips, clip.ObjectID) && (!blacklist.ContainsKey(firearm.ItemID) || !blacklist[firearm.ItemID].ClipBlacklist.Contains(clip.ObjectID)))
                             {
                                 //Clips don't modify capacity of guns, so we don't modify capacity related on the firearm object
                                 firearm.CompatibleClips.Add(clip.AmmoObject);
@@ -470,22 +470,20 @@ namespace TNHTweaker
                 //Apply the magazine cache values to every firearm that is loaded
                 foreach (MagazineCacheEntry entry in magazineCache.Entries)
                 {
-                    if (blacklist.Contains(entry.FirearmID)) continue;
-
                     if (IM.OD.ContainsKey(entry.FirearmID))
                     {
                         FVRObject firearm = IM.OD[entry.FirearmID];
 
                         foreach (string mag in entry.CompatibleMagazines)
                         {
-                            if (IM.OD.ContainsKey(mag))
+                            if (IM.OD.ContainsKey(mag) && (!blacklist.ContainsKey(firearm.ItemID) || !blacklist[firearm.ItemID].MagazineBlacklist.Contains(mag)))
                             {
                                 firearm.CompatibleMagazines.Add(IM.OD[mag]);
                             }
                         }
                         foreach (string clip in entry.CompatibleClips)
                         {
-                            if (IM.OD.ContainsKey(clip))
+                            if (IM.OD.ContainsKey(clip) && (!blacklist.ContainsKey(firearm.ItemID) || !blacklist[firearm.ItemID].ClipBlacklist.Contains(clip)))
                             {
                                 firearm.CompatibleClips.Add(IM.OD[clip]);
                             }
@@ -517,7 +515,7 @@ namespace TNHTweaker
         /// </summary>
         /// <param name="magazineCache"></param>
         /// <returns></returns>
-        public static bool IsMagazineCacheValid(CompatibleMagazineCache magazineCache, List<string> blacklist)
+        public static bool IsMagazineCacheValid(CompatibleMagazineCache magazineCache)
         {
             bool cacheValid = true;
 
@@ -543,7 +541,7 @@ namespace TNHTweaker
             }
             foreach (string firearm in ManagerSingleton<IM>.Instance.odicTagCategory[FVRObject.ObjectCategory.Firearm].Select(f => f.ItemID))
             {
-                if (!magazineCache.Firearms.Contains(firearm) && !blacklist.Contains(firearm))
+                if (!magazineCache.Firearms.Contains(firearm))
                 {
                     TNHTweakerLogger.LogWarning("TNHTweaker -- Firearm not found in cache: " + firearm);
                     cacheValid = false;

@@ -57,29 +57,14 @@ namespace TNHTweaker.ObjectTemplates
         private List<string> completedQuests;
 
         [JsonIgnore]
-        public Dictionary<string, MagazineBlacklistEntry> magazineBlacklist;
+        private Dictionary<string, MagazineBlacklistEntry> magazineBlacklistDict;
 
 
         public CustomCharacter() {
             ValidAmmoEras = new List<FVRObject.OTagEra>();
             ValidAmmoSets = new List<FVRObject.OTagSet>();
             GlobalAmmoBlacklist = new List<string>();
-
-
             MagazineBlacklist = new List<MagazineBlacklistEntry>();
-            MagazineBlacklistEntry tempEntry = new MagazineBlacklistEntry();
-            tempEntry.FirearmID = "SKSClassic";
-            tempEntry.MagazineBlacklist.Add("MagazineSKSModern10rnd");
-            tempEntry.MagazineBlacklist.Add("MagazineSKSModern20rnd");
-            MagazineBlacklist.Add(new MagazineBlacklistEntry());
-
-            magazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
-            foreach(MagazineBlacklistEntry entry in MagazineBlacklist)
-            {
-                magazineBlacklist.Add(entry.FirearmID, entry);
-            }
-
-
             RequireSightTable = new EquipmentGroup();
             PrimaryWeapon = new LoadoutEntry();
             SecondaryWeapon = new LoadoutEntry();
@@ -112,22 +97,7 @@ namespace TNHTweaker.ObjectTemplates
             ValidAmmoEras = character.ValidAmmoEras;
             ValidAmmoSets = character.ValidAmmoSets;
             GlobalAmmoBlacklist = new List<string>();
-
-
             MagazineBlacklist = new List<MagazineBlacklistEntry>();
-            MagazineBlacklistEntry tempEntry = new MagazineBlacklistEntry();
-            tempEntry.FirearmID = "SKSClassic";
-            tempEntry.MagazineBlacklist.Add("MagazineSKSModern10rnd");
-            tempEntry.MagazineBlacklist.Add("MagazineSKSModern20rnd");
-            MagazineBlacklist.Add(new MagazineBlacklistEntry());
-
-            magazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
-            foreach (MagazineBlacklistEntry entry in MagazineBlacklist)
-            {
-                magazineBlacklist.Add(entry.FirearmID, entry);
-            }
-
-
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
             SecondaryWeapon = new LoadoutEntry(character.Weapon_Secondary);
             TertiaryWeapon = new LoadoutEntry(character.Weapon_Tertiary);
@@ -182,17 +152,6 @@ namespace TNHTweaker.ObjectTemplates
                 character.EquipmentPool = (EquipmentPoolDef)ScriptableObject.CreateInstance(typeof(EquipmentPoolDef));
                 character.EquipmentPool.Entries = EquipmentPools.Select(o => o.GetPoolEntry()).ToList();
 
-
-                magazineBlacklist = new Dictionary<string, MagazineBlacklistEntry>();
-                if(MagazineBlacklist != null)
-                {
-                    foreach (MagazineBlacklistEntry entry in MagazineBlacklist)
-                    {
-                        magazineBlacklist.Add(entry.FirearmID, entry);
-                    }
-                }
-                
-
                 character.Progressions = new List<TNH_Progression>();
                 character.Progressions.Add((TNH_Progression)ScriptableObject.CreateInstance(typeof(TNH_Progression)));
                 character.Progressions[0].Levels = new List<TNH_Progression.Level>();
@@ -227,6 +186,13 @@ namespace TNHTweaker.ObjectTemplates
 
             return character;
         }
+
+
+        public Dictionary<string, MagazineBlacklistEntry> GetMagazineBlacklist()
+        {
+            return magazineBlacklistDict;
+        }
+
 
         public Level GetCurrentLevel(TNH_Progression.Level currLevel)
         {
@@ -359,6 +325,15 @@ namespace TNHTweaker.ObjectTemplates
             }
 
             TNHTweakerLogger.Log("TNHTweaker -- Init of equipment pools", TNHTweakerLogger.LogType.Character);
+            magazineBlacklistDict = new Dictionary<string, MagazineBlacklistEntry>();
+            if (MagazineBlacklist != null)
+            {
+                foreach (MagazineBlacklistEntry entry in MagazineBlacklist)
+                {
+                    magazineBlacklistDict.Add(entry.FirearmID, entry);
+                }
+            }
+
             for (int i = 0; i < EquipmentPools.Count; i++)
             {
                 EquipmentPool pool = EquipmentPools[i];
