@@ -434,6 +434,11 @@ namespace TNHTweaker.ObjectTemplates
         {
             if (pool != null)
             {
+                if (LoadedTemplateManager.DefaultIconSprites.ContainsKey(IconName))
+                {
+                    pool.TableDef.Icon = LoadedTemplateManager.DefaultIconSprites[IconName];
+                }
+
                 if (PrimaryGroup != null)
                 {
                     if (!PrimaryGroup.DelayedInit(completedQuests))

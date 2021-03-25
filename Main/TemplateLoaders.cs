@@ -80,24 +80,17 @@ namespace TNHTweaker
             }
 
             //Now we want to load the icons for each pool
-            foreach(EquipmentPool pool in character.EquipmentPools)
+            foreach (IFileHandle iconFile in dir.GetFiles())
             {
-                if (LoadedTemplateManager.DefaultIconSprites.ContainsKey(pool.IconName))
+                foreach (EquipmentPool pool in character.EquipmentPools)
                 {
-                    pool.GetPoolEntry().TableDef.Icon = LoadedTemplateManager.DefaultIconSprites[pool.IconName];
-                }
-
-                else
-                {
-                    foreach (IFileHandle iconFile in dir.GetFiles())
+                    if (iconFile.Path.EndsWith(pool.IconName))
                     {
-                        if (iconFile.Path.EndsWith(pool.IconName))
-                        {
-                            pool.GetPoolEntry().TableDef.Icon = TNHTweakerUtils.LoadSprite(iconFile);
-                        }
+                        pool.GetPoolEntry().TableDef.Icon = TNHTweakerUtils.LoadSprite(iconFile);
                     }
-                } 
+                }
             }
+
 
             TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + character.DisplayName, TNHTweakerLogger.LogType.File);
 
