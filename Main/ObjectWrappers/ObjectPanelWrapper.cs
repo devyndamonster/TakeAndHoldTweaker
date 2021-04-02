@@ -295,7 +295,8 @@ namespace TNHTweaker
 
                 TNHTweakerLogger.Log("Compatible rounds count for " + detectedFirearm.ObjectWrapper.ItemID + ": " + IM.OD[detectedFirearm.ObjectWrapper.ItemID].CompatibleSingleRounds.Count, TNHTweakerLogger.LogType.General);
 
-                FVRObject compatibleRound = FirearmUtils.GetCompatibleBullets(IM.OD[detectedFirearm.ObjectWrapper.ItemID]).GetRandom().AmmoObject;
+                CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
+                FVRObject compatibleRound = FirearmUtils.GetCompatibleBullets(IM.OD[detectedFirearm.ObjectWrapper.ItemID], character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist).GetRandom().AmmoObject;
 
                 AnvilManager.Run(SpawnRounds(compatibleRound, numSpawned));
 

@@ -20,6 +20,7 @@ namespace TNHTweaker
 
         public static bool TNHInitialized = false;
         public static bool MagazineCacheLoaded = false;
+        public static bool MagazineCacheFailed = false;
 
         public static IEnumerator InitializeTNHMenuAsync(string path, Text text, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
         {
@@ -203,7 +204,7 @@ namespace TNHTweaker
         }
 
 
-
+        //TODO This should be one of those things that returns a result, and can be yielded (idk what it is called)
         public static IEnumerator LoadMagazineCacheAsync(string path, Text text)
         {
             CompatibleMagazineCache magazineCache = null;
@@ -382,68 +383,80 @@ namespace TNHTweaker
                     if (firearmComp == null) continue;
 
                     //If this firearm is valid, then we create a magazine cache entry for it
-                    MagazineCacheEntry entry = new MagazineCacheEntry();
-                    magazineCache.Entries.Add(entry);
-                    entry.FirearmID = firearm.ItemID;
-                    entry.MaxAmmo = firearm.MaxCapacityRelated;
-                    entry.MinAmmo = firearm.MinCapacityRelated;
-
-                    if (magazineCache.MagazineData.ContainsKey(firearmComp.MagazineType))
+                    try
                     {
-                        foreach (AmmoObjectDataTemplate magazine in magazineCache.MagazineData[firearmComp.MagazineType])
+                        MagazineCacheEntry entry = new MagazineCacheEntry();
+                        magazineCache.Entries.Add(entry);
+                        entry.FirearmID = firearm.ItemID;
+                        entry.MaxAmmo = firearm.MaxCapacityRelated;
+                        entry.MinAmmo = firearm.MinCapacityRelated;
+
+                        if (magazineCache.MagazineData.ContainsKey(firearmComp.MagazineType))
                         {
-                            //If the firearm isn't in the blacklist, and has a new magazine that isn't compatible yet, then we make it compatible
-                            if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleMagazines, magazine.ObjectID) && (!blacklist.ContainsKey(firearm.ItemID) || !blacklist[firearm.ItemID].MagazineBlacklist.Contains(magazine.ObjectID)))
+                            foreach (AmmoObjectDataTemplate magazine in magazineCache.MagazineData[firearmComp.MagazineType])
                             {
-                                if (firearm.MaxCapacityRelated < magazine.Capacity)
+                                //If the firearm isn't in the blacklist, and has a new magazine that isn't compatible yet, then we make it compatible
+                                if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleMagazines, magazine.ObjectID) && (!blacklist.ContainsKey(firearm.ItemID) || !blacklist[firearm.ItemID].MagazineBlacklist.Contains(magazine.ObjectID)))
                                 {
-                                    firearm.MaxCapacityRelated = magazine.Capacity;
+                                    if (firearm.MaxCapacityRelated < magazine.Capacity)
+                                    {
+                                        firearm.MaxCapacityRelated = magazine.Capacity;
+                                    }
+                                    if (firearm.MinCapacityRelated > magazine.Capacity)
+                                    {
+                                        firearm.MinCapacityRelated = magazine.Capacity;
+                                    }
+
+                                    firearm.CompatibleMagazines.Add(magazine.AmmoObject);
                                 }
-                                if (firearm.MinCapacityRelated > magazine.Capacity)
+
+                                entry.MaxAmmo = firearm.MaxCapacityRelated;
+                                entry.MinAmmo = firearm.MinCapacityRelated;
+                                entry.CompatibleMagazines.Add(magazine.ObjectID);
+                            }
+                        }
+
+                        if (magazineCache.ClipData.ContainsKey(firearmComp.ClipType))
+                        {
+                            foreach (AmmoObjectDataTemplate clip in magazineCache.ClipData[firearmComp.ClipType])
+                            {
+                                if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleClips, clip.ObjectID) && (!blacklist.ContainsKey(firearm.ItemID) || !blacklist[firearm.ItemID].ClipBlacklist.Contains(clip.ObjectID)))
                                 {
-                                    firearm.MinCapacityRelated = magazine.Capacity;
+                                    //Clips don't modify capacity of guns, so we don't modify capacity related on the firearm object
+                                    firearm.CompatibleClips.Add(clip.AmmoObject);
                                 }
 
-                                firearm.CompatibleMagazines.Add(magazine.AmmoObject);
+                                entry.MaxAmmo = firearm.MaxCapacityRelated;
+                                entry.MinAmmo = firearm.MinCapacityRelated;
+                                entry.CompatibleClips.Add(clip.ObjectID);
                             }
-
-                            entry.MaxAmmo = firearm.MaxCapacityRelated;
-                            entry.MinAmmo = firearm.MinCapacityRelated;
-                            entry.CompatibleMagazines.Add(magazine.ObjectID);
                         }
-                    }
 
-                    if (magazineCache.ClipData.ContainsKey(firearmComp.ClipType))
-                    {
-                        foreach (AmmoObjectDataTemplate clip in magazineCache.ClipData[firearmComp.ClipType])
+                        if (magazineCache.BulletData.ContainsKey(firearmComp.RoundType))
                         {
-                            if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleClips, clip.ObjectID) && (!blacklist.ContainsKey(firearm.ItemID) || !blacklist[firearm.ItemID].ClipBlacklist.Contains(clip.ObjectID)))
+                            foreach (AmmoObjectDataTemplate bullet in magazineCache.BulletData[firearmComp.RoundType])
                             {
-                                //Clips don't modify capacity of guns, so we don't modify capacity related on the firearm object
-                                firearm.CompatibleClips.Add(clip.AmmoObject);
-                            }
+                                if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleSingleRounds, bullet.ObjectID))
+                                {
+                                    //Bullets don't modify capacity of guns, so we don't modify capacity related on the firearm object
+                                    firearm.CompatibleSingleRounds.Add(bullet.AmmoObject);
+                                }
 
-                            entry.MaxAmmo = firearm.MaxCapacityRelated;
-                            entry.MinAmmo = firearm.MinCapacityRelated;
-                            entry.CompatibleClips.Add(clip.ObjectID);
+                                entry.MaxAmmo = firearm.MaxCapacityRelated;
+                                entry.MinAmmo = firearm.MinCapacityRelated;
+                                entry.CompatibleBullets.Add(bullet.ObjectID);
+                            }
                         }
                     }
-
-                    if (magazineCache.BulletData.ContainsKey(firearmComp.RoundType))
+                    catch(Exception e)
                     {
-                        foreach (AmmoObjectDataTemplate bullet in magazineCache.BulletData[firearmComp.RoundType])
-                        {
-                            if (!TNHTweakerUtils.FVRObjectListContainsID(firearm.CompatibleSingleRounds, bullet.ObjectID))
-                            {
-                                //Bullets don't modify capacity of guns, so we don't modify capacity related on the firearm object
-                                firearm.CompatibleSingleRounds.Add(bullet.AmmoObject);
-                            }
-
-                            entry.MaxAmmo = firearm.MaxCapacityRelated;
-                            entry.MinAmmo = firearm.MinCapacityRelated;
-                            entry.CompatibleBullets.Add(bullet.ObjectID);
-                        }
+                        TNHTweakerLogger.LogError("TNHTweaker -- Magazine Caching Failed! Something bad happened when trying to perform caching on firearm: " + firearm.ItemID + "\nCaused Error:");
+                        TNHTweakerLogger.LogError(e.ToString());
+                        MagazineCacheFailed = true;
+                        text.text = "FAILED! SEE LOG!";
+                        yield break;
                     }
+                    
                 }
 
 

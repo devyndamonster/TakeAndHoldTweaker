@@ -200,7 +200,19 @@ namespace TNHTweaker
             if (!TNHMenuInitializer.TNHInitialized)
             {
                 SceneLoader sceneHotDog = FindObjectOfType<SceneLoader>();
-                AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(OutputFilePath, magazineCacheText, sceneHotDog, ___Categories, ___CharDatabase, __instance, buildCharacterFiles.Value));
+
+                if (!TNHMenuInitializer.MagazineCacheFailed)
+                {
+                    AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(OutputFilePath, magazineCacheText, sceneHotDog, ___Categories, ___CharDatabase, __instance, buildCharacterFiles.Value));
+                }
+
+                //If the magazine cache has previously failed, we shouldn't let the player continue
+                else
+                {
+                    sceneHotDog.gameObject.SetActive(false);
+                    magazineCacheText.text = "FAILED! SEE LOG!";
+                }
+                
             }
             else
             {

@@ -103,21 +103,21 @@ namespace TNHTweaker
         {
             ObjectID = mag.ObjectWrapper.ItemID;
             Capacity = mag.m_capacity;
-            AmmoObject = mag.ObjectWrapper;
+            AmmoObject = IM.OD[ObjectID];
         }
 
         public AmmoObjectDataTemplate(FVRFireArmClip clip)
         {
             ObjectID = clip.ObjectWrapper.ItemID;
             Capacity = clip.m_capacity;
-            AmmoObject = clip.ObjectWrapper;
+            AmmoObject = IM.OD[ObjectID];
         }
 
         public AmmoObjectDataTemplate(FVRFireArmRound bullet)
         {
             ObjectID = bullet.ObjectWrapper.ItemID;
             Capacity = -1;
-            AmmoObject = bullet.ObjectWrapper;
+            AmmoObject = IM.OD[ObjectID];
         }
     }
 
