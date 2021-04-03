@@ -772,9 +772,24 @@ namespace TNHTweaker.Utilities
         {
             foreach (FVRObject item in list)
             {
-                if (item.ItemID.Equals(objectID)) return true;
+                if (item != null && item.ItemID.Equals(objectID)) return true;
             }
             return false;
+        }
+
+        public static bool IsFirearmDataValid(FVRObject firearm)
+        {
+            if(firearm.CompatibleMagazines == null || firearm.CompatibleClips == null || firearm.CompatibleSingleRounds == null || firearm.CompatibleSpeedLoaders == null)
+            {
+                return false;
+            }
+
+            if(firearm.CompatibleMagazines.ContainsNull() || firearm.CompatibleClips.ContainsNull() || firearm.CompatibleSingleRounds.ContainsNull() || firearm.CompatibleSpeedLoaders.ContainsNull())
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public static bool SavedGunComponentsLoaded(SavedGun gun)

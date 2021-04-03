@@ -59,7 +59,12 @@ namespace TNHTweaker
             {
                 if(file.Path.EndsWith("character.json"))
                 {
-                    character = stage.ImmediateReaders.Get<JToken>()(file).ToObject<CustomCharacter>();
+                    string charString = stage.ImmediateReaders.Get<string>()(file);
+                    JsonSerializerSettings settings = new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    };
+                    character = JsonConvert.DeserializeObject<CustomCharacter>(charString, settings);
                 }
                 else if (file.Path.EndsWith("thumb.png"))
                 {
