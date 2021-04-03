@@ -1182,8 +1182,14 @@ namespace TNHTweaker
             //Fill out the sosigs config based on the difficulty
             SosigConfig config;
 
-            if (difficulty == TNHModifier_AIDifficulty.Arcade) config = template.ConfigsEasy.GetRandom<SosigConfig>();
-            else config = template.Configs.GetRandom<SosigConfig>();
+            if (difficulty == TNHModifier_AIDifficulty.Arcade && template.ConfigsEasy.Count > 0) config = template.ConfigsEasy.GetRandom<SosigConfig>();
+            else if(template.Configs.Count > 0) config = template.Configs.GetRandom<SosigConfig>();
+            else
+            {
+                TNHTweakerLogger.LogError("TNHTweaker -- Sosig did not have normal difficulty config when playing on normal difficulty! Not spawning this enemy!");
+                return null;
+            } 
+
             sosigComponent.Configure(config.GetConfigTemplate());
             sosigComponent.E.IFFCode = IFF;
 
