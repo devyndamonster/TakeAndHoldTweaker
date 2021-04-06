@@ -373,18 +373,17 @@ namespace TNHTweaker
 
                     //First we should try and get the component of the firearm
                     FVRObject firearm = firearms[i];
-
                     gameObjectCallback = firearm.GetGameObjectAsync();
                     yield return gameObjectCallback;
-                    FVRFireArm firearmComp = gameObjectCallback.Result.GetComponent<FVRFireArm>();
-
-                    magazineCache.Firearms.Add(firearm.ItemID);
-
-                    if (firearmComp == null) continue;
 
                     //If this firearm is valid, then we create a magazine cache entry for it
                     try
                     {
+                        magazineCache.Firearms.Add(firearm.ItemID);
+
+                        FVRFireArm firearmComp = gameObjectCallback.Result.GetComponent<FVRFireArm>();
+                        if (firearmComp == null) continue;
+
                         MagazineCacheEntry entry = new MagazineCacheEntry();
                         magazineCache.Entries.Add(entry);
                         entry.FirearmID = firearm.ItemID;
@@ -450,7 +449,8 @@ namespace TNHTweaker
                     }
                     catch(Exception e)
                     {
-                        TNHTweakerLogger.LogError("TNHTweaker -- Magazine Caching Failed! Something bad happened when trying to perform caching on firearm: " + firearm.ItemID + "\nCaused Error:");
+                        TNHTweakerLogger.LogError("TNHTweaker -- Magazine Caching Failed!");
+                        TNHTweakerLogger.LogError("Something bad happened when trying to perform caching on firearm: " + firearm.ItemID + "\nCaused Error: ");
                         TNHTweakerLogger.LogError(e.ToString());
                         MagazineCacheFailed = true;
                         text.text = "FAILED! SEE LOG!";
