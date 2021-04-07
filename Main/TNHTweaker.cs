@@ -1650,7 +1650,11 @@ namespace TNHTweaker
                         {
                             primarySpawn = constructor.SpawnPoint_Melee;
                         }
-
+                        else if (mainObject.Category == FVRObject.ObjectCategory.Cartridge)
+                        {
+                            primarySpawn = constructor.SpawnPoint_Ammo;
+                            mainSpawnCount += 1;
+                        }
 
                         //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
                         if (vaultFile != null)
