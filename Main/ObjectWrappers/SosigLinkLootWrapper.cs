@@ -50,7 +50,7 @@ namespace TNHTweaker
                 }
                 else
                 {
-                    Instantiate(IM.OD[selectedItem].GetGameObject(), transform.position, transform.rotation);
+                    Instantiate(IM.OD[selectedItem].GetGameObject(), transform.position+ Vector3.up * 0.02f * itemIndex, transform.rotation);
                 }
             }
         }
