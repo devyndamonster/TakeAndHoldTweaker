@@ -16,6 +16,10 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
+  <PropertyGroup Label="UserPaths">
+    <H3VRDir>E:\Steam\steamapps\common\H3VR</H3VRDir>
+    <TnhTweakerModDir>E:\Steam\steamapps\common\H3VR\Deli\mods\TakeAndHoldTweakerTest</TnhTweakerModDir>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -44,22 +48,22 @@
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>$(H3VRDir)\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="ADepIn, Version=20.11.19.2309, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\plugins\Deli\ADepIn.dll</HintPath>
+    <Reference Include="ADepIn, Version=21.1.16.2315, Culture=neutral, PublicKeyToken=null">
+      <HintPath>packages\ADepIn.21.1.16.2315\lib\net35\ADepIn.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-Publicized">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\Uninstalled\Assembly-CSharp-Publicized.dll</HintPath>
+      <HintPath>packages\Assembly-CSharp-Publicized.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx, Version=5.4.3.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>$(H3VRDir)\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx.Harmony, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\BepInEx\core\BepInEx.Harmony.dll</HintPath>
+      <HintPath>$(H3VRDir)\BepInEx\core\BepInEx.Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Deli.Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Deli.Newtonsoft.Json.12.0.3\lib\net35\Deli.Newtonsoft.Json.dll</HintPath>
@@ -75,7 +79,7 @@
     </Reference>
     <Reference Include="ES2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\h3vr_Data\Managed\ES2.dll</HintPath>
+      <HintPath>$(H3VRDir)\h3vr_Data\Managed\ES2.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Private>True</Private>
@@ -102,7 +106,7 @@
     </Reference>
     <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\H3VR\h3vr_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>$(H3VRDir)\h3vr_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -137,5 +141,10 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\BepInEx.Core.5.4.0\build\BepInEx.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\BepInEx.Core.5.4.0\build\BepInEx.Core.targets'))" />
+  </Target>
+  <!-- This target copies dll to the folder, for quicker debbugging -->
+  <Target Name="CopyDll" AfterTargets="AfterBuild" Condition="'$(TnhTweakerModDir)' != '' ">
+    <Message Text="TnhTweakerModDir present, copying dll to $(TnhTweakerModDir)" />
+    <Copy SourceFiles="$(OutDir)TakeAndHoldTweaker.dll" DestinationFolder="$(TnhTweakerModDir)" OverwriteReadOnlyFiles="true" />
   </Target>
 </Project>
