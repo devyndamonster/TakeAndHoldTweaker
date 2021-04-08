@@ -1604,6 +1604,7 @@ namespace TNHTweaker
                         Transform primarySpawn = constructor.SpawnPoint_Object;
                         Transform requiredSpawn = constructor.SpawnPoint_Object;
                         Transform ammoSpawn = constructor.SpawnPoint_Mag;
+                        float objectDistancing = 0.2f;
 
                         if (group.IsCompatibleMagazine)
                         {
@@ -1653,6 +1654,7 @@ namespace TNHTweaker
                         else if (mainObject.Category == FVRObject.ObjectCategory.Cartridge)
                         {
                             primarySpawn = constructor.SpawnPoint_Ammo;
+                            objectDistancing = 0.05f;
                             mainSpawnCount += 1;
                         }
 
@@ -1666,7 +1668,7 @@ namespace TNHTweaker
                         {
                             gameObjectCallback = mainObject.GetGameObjectAsync();
                             yield return gameObjectCallback;
-                            GameObject spawnedObject = Instantiate(gameObjectCallback.Result, primarySpawn.position + Vector3.up * 0.2f * mainSpawnCount, primarySpawn.rotation);
+                            GameObject spawnedObject = Instantiate(gameObjectCallback.Result, primarySpawn.position + Vector3.up * objectDistancing * mainSpawnCount, primarySpawn.rotation);
                             TNHTweakerLogger.Log("TNHTWEAKER -- Normal item spawned", TNHTweakerLogger.LogType.TNH);
                         }
 
