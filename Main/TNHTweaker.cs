@@ -1872,5 +1872,51 @@ namespace TNHTweaker
         }
 
 
+
+        //////////////////////////
+        //ASSET LOADING PATCHES
+        //////////////////////////
+
+
+        [HarmonyPatch(typeof(AnvilManager), "LoadAsync")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool LoadAsyncPatch(ref AnvilCallback<GameObject> result, AssetID assetID)
+        {
+            TNHTweakerLogger.Log("TNHTweaker -- Loading file async! Asset name: " + assetID.AssetName + ", Bundle Name: " + assetID.Bundle, TNHTweakerLogger.LogType.File);
+
+            AnvilCallbackBase anvilCallbackBase;
+            if (AnvilManager.m_assets.TryGetValue(assetID, out anvilCallbackBase))
+            {
+                TNHTweakerLogger.Log("TNHTweaker -- Asset was already loaded, returning it", TNHTweakerLogger.LogType.File);
+                result = anvilCallbackBase as AnvilCallback<GameObject>;
+                return false;
+            }
+
+            
+            AnvilCallback<AssetBundle> assetBundleAsyncInternal = AnvilManager.GetAssetBundleAsyncInternal(assetID.Bundle);
+            if (assetBundleAsyncInternal.IsCompleted)
+            {
+                TNHTweakerLogger.Log("TNHTweaker -- Asset was not loaded, but the asset bundle was", TNHTweakerLogger.LogType.File);
+
+                anvilCallbackBase = new AnvilCallback<GameObject>(null, null);
+                ((AnvilCallback<GameObject>)anvilCallbackBase).Request = AnvilManager.GetCallbackRequest(assetID, assetBundleAsyncInternal.Result);
+            }
+            else
+            {
+                TNHTweakerLogger.Log("TNHTweaker -- Asset was not loaded, and neither was the asset bundle", TNHTweakerLogger.LogType.File);
+
+                anvilCallbackBase = new AnvilCallback<GameObject>(null, assetBundleAsyncInternal);
+                AnvilCallback<GameObject> tempCB = (AnvilCallback<GameObject>)anvilCallbackBase;
+                assetBundleAsyncInternal.AddCallback(delegate (AssetBundle bundle)
+                {
+                    tempCB.Request = AnvilManager.GetCallbackRequest(assetID, bundle);
+                });
+            }
+            AnvilManager.m_assets.Add(assetID, anvilCallbackBase);
+            result = (AnvilCallback<GameObject>)anvilCallbackBase;
+
+            return false;
+        }
+
     }
 }
