@@ -50,7 +50,7 @@ namespace TNHTweaker
 
                 text.text = "LOADING ITEMS : " + (int)(itemLoadProgress * 100) + "%";
             }
-            while (itemLoadProgress <= 1);
+            while (itemLoadProgress < 1);
 
 
             //Now that everything is loaded, we can perform magazine caching
@@ -357,16 +357,27 @@ namespace TNHTweaker
                     {
                         gameObjectCallback = bullet.GetGameObjectAsync();
                         yield return gameObjectCallback;
-                        FVRFireArmRound bulletComp = gameObjectCallback.Result.GetComponent<FVRFireArmRound>();
 
-                        magazineCache.Bullets.Add(bullet.ItemID);
+                        try {
+                            FVRFireArmRound bulletComp = gameObjectCallback.Result.GetComponent<FVRFireArmRound>();
 
-                        if (bulletComp != null)
-                        {
-                            magazineCache.BulletObjects.Add(bulletComp);
-                            magazineCache.AddBulletData(bulletComp);
+                            magazineCache.Bullets.Add(bullet.ItemID);
+
+                            if (bulletComp != null)
+                            {
+                                magazineCache.BulletObjects.Add(bulletComp);
+                                magazineCache.AddBulletData(bulletComp);
+                            }
                         }
-
+                        catch(Exception e)
+                        {
+                            TNHTweakerLogger.LogError("TNHTweaker -- Magazine Caching Failed!");
+                            TNHTweakerLogger.LogError("Something bad happened when trying to perform caching on bullet: " + bullet.ItemID + "\nCaused Error: ");
+                            TNHTweakerLogger.LogError(e.ToString());
+                            MagazineCacheFailed = true;
+                            text.text = "FAILED! SEE LOG!";
+                            yield break;
+                        }
                     }
                 }
 
