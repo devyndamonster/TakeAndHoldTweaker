@@ -26,12 +26,28 @@ namespace TNHTweaker
         {
             hotdog.gameObject.SetActive(false);
 
+            bool isOtherLoaderLoaded;
+            try
+            {
+                OtherLoader.LoaderStatus.GetLoaderProgress();
+                isOtherLoaderLoaded = true;
+            }
+            catch
+            {
+                isOtherLoaderLoaded = false;
+            }
+
+
+
             //First thing we want to do is wait for all asset bundles to be loaded in
             float itemLoadProgress = 0;
             do
             {
                 yield return null;
                 itemLoadProgress = AsyncLoadMonitor.GetProgress();
+
+                if (isOtherLoaderLoaded) itemLoadProgress = Mathf.Min(itemLoadProgress, OtherLoader.LoaderStatus.GetLoaderProgress());
+
                 text.text = "LOADING ITEMS : " + (int)(itemLoadProgress * 100) + "%";
             }
             while (itemLoadProgress <= 1);
