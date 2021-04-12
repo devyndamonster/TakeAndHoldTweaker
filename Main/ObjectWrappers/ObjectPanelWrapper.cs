@@ -307,10 +307,7 @@ namespace TNHTweaker
         public IEnumerator SpawnRounds(FVRObject bullet, int count)
         {
             GameObject bulletObject = bullet.GetGameObject();
-            
-            TNHTweakerUtils.InstantiateMutltiple(bulletObject, original.Spawnpoint_Mag.position, count);
-                
-            yield return null;
+            return TNHTweakerUtils.InstantiateMutltiple(bulletObject, original.Spawnpoint_Mag.position, count);;
         }
 
         public int GetRoundsToSpawn(FVRObject.OTagFirearmRoundPower roundPower)

@@ -811,15 +811,16 @@ namespace TNHTweaker.Utilities
         /// <param name="gameObjects"></param>
         /// <param name="position"></param>
         /// <param name="tolerance"></param>
-        public static void InstantiateList(IList<GameObject> gameObjects, Vector3 position, float tolerance = 1.1f)
+        public static IEnumerator InstantiateList(IList<GameObject> gameObjects, Vector3 position, float tolerance = 1.3f)
         {
             float heightNeeded = (gameObjects.First().GetMaxBounds().size.y / 2) * tolerance;
             for (var index = 0; index < gameObjects.Count; index++)
             {
                 var gameObject = gameObjects[index];
-                float current = heightNeeded;
+                float current = heightNeeded + (gameObject.GetMaxBounds().size.y / 2) * tolerance;;
                 UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current), new Quaternion());
                 heightNeeded = current + (gameObject.GetMaxBounds().size.y / 2) * tolerance;
+                yield return null;
             }
         }
 
@@ -830,8 +831,8 @@ namespace TNHTweaker.Utilities
         /// <param name="position"></param>
         /// <param name="count"></param>
         /// <param name="tolerance"></param>
-        public static void InstantiateMutltiple(GameObject gameObject, Vector3 position, int count,
-            float tolerance = 1.1f)
+        public static IEnumerator InstantiateMutltiple(GameObject gameObject, Vector3 position, int count,
+            float tolerance = 1.3f)
         {
             float heightNeeded = (gameObject.GetMaxBounds().size.y / 2) * tolerance;
             for (var index = 0; index < count; index++)
@@ -839,6 +840,7 @@ namespace TNHTweaker.Utilities
                 float current = index * heightNeeded;
                 UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current),
                     new Quaternion());
+                yield return null;
             }
         }
     }
