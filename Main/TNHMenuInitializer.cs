@@ -292,16 +292,28 @@ namespace TNHTweaker
                     {
                         gameObjectCallback = magazine.GetGameObjectAsync();
                         yield return gameObjectCallback;
-                        FVRFireArmMagazine magComp = gameObjectCallback.Result.GetComponent<FVRFireArmMagazine>();
 
-                        magazineCache.Magazines.Add(magazine.ItemID);
-
-                        if (magComp != null)
+                        try
                         {
-                            magazineCache.MagazineObjects.Add(magComp);
-                            magazineCache.AddMagazineData(magComp);
-                        }
+                            FVRFireArmMagazine magComp = gameObjectCallback.Result.GetComponent<FVRFireArmMagazine>();
 
+                            magazineCache.Magazines.Add(magazine.ItemID);
+
+                            if (magComp != null)
+                            {
+                                magazineCache.MagazineObjects.Add(magComp);
+                                magazineCache.AddMagazineData(magComp);
+                            }
+                        }
+                        catch(Exception e)
+                        {
+                            TNHTweakerLogger.LogError("TNHTweaker -- Magazine Caching Failed!");
+                            TNHTweakerLogger.LogError("Something bad happened when trying to perform caching on magazine: " + magazine.ItemID + "\nCaused Error: ");
+                            TNHTweakerLogger.LogError(e.ToString());
+                            MagazineCacheFailed = true;
+                            text.text = "FAILED! SEE LOG!";
+                            yield break;
+                        }
                     }
                 }
 
@@ -327,16 +339,28 @@ namespace TNHTweaker
                     {
                         gameObjectCallback = clip.GetGameObjectAsync();
                         yield return gameObjectCallback;
-                        FVRFireArmClip clipComp = gameObjectCallback.Result.GetComponent<FVRFireArmClip>();
 
-                        magazineCache.Clips.Add(clip.ItemID);
-
-                        if (clipComp != null)
+                        try
                         {
-                            magazineCache.ClipObjects.Add(clipComp);
-                            magazineCache.AddClipData(clipComp);
-                        }
+                            FVRFireArmClip clipComp = gameObjectCallback.Result.GetComponent<FVRFireArmClip>();
 
+                            magazineCache.Clips.Add(clip.ItemID);
+
+                            if (clipComp != null)
+                            {
+                                magazineCache.ClipObjects.Add(clipComp);
+                                magazineCache.AddClipData(clipComp);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            TNHTweakerLogger.LogError("TNHTweaker -- Magazine Caching Failed!");
+                            TNHTweakerLogger.LogError("Something bad happened when trying to perform caching on clips: " + clip.ItemID + "\nCaused Error: ");
+                            TNHTweakerLogger.LogError(e.ToString());
+                            MagazineCacheFailed = true;
+                            text.text = "FAILED! SEE LOG!";
+                            yield break;
+                        }
                     }
                 }
 
