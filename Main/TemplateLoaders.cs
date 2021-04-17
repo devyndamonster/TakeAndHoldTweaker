@@ -32,10 +32,18 @@ namespace TNHTweaker
                 throw new ArgumentException("Could not load sosig! Make sure you're pointing to a sosig template json file in the manifest");
             }
 
-            SosigTemplate sosig = stage.ImmediateReaders.Get<JToken>()(file).ToObject<SosigTemplate>();
-            TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
+            try
+            {
+                SosigTemplate sosig = stage.ImmediateReaders.Get<JToken>()(file).ToObject<SosigTemplate>();
+                TNHTweakerLogger.Log("TNHTweaker -- Sosig loaded successfuly : " + sosig.DisplayName, TNHTweakerLogger.LogType.File);
 
-            LoadedTemplateManager.AddSosigTemplate(sosig);
+                LoadedTemplateManager.AddSosigTemplate(sosig);
+            }
+            catch (Exception e)
+            {
+                TNHTweakerLogger.LogError("Failed to load setup assets for sosig file! Caused Error: " + e.ToString());
+            }
+
         }
     }
 
@@ -52,54 +60,61 @@ namespace TNHTweaker
             }
 
 
-            CustomCharacter character = null;
-            Sprite thumbnail = null;
-
-            foreach(IFileHandle file in dir.GetFiles())
+            try
             {
-                if(file.Path.EndsWith("character.json"))
+                CustomCharacter character = null;
+                Sprite thumbnail = null;
+
+                foreach (IFileHandle file in dir.GetFiles())
                 {
-                    string charString = stage.ImmediateReaders.Get<string>()(file);
-                    JsonSerializerSettings settings = new JsonSerializerSettings
+                    if (file.Path.EndsWith("character.json"))
                     {
-                        NullValueHandling = NullValueHandling.Ignore
-                    };
-                    character = JsonConvert.DeserializeObject<CustomCharacter>(charString, settings);
-                }
-                else if (file.Path.EndsWith("thumb.png"))
-                {
-                    thumbnail = TNHTweakerUtils.LoadSprite(file);
-                }
-            }
-
-            if(character == null)
-            {
-                TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No character.json file found");
-                return;
-            }
-
-            else if(thumbnail == null)
-            {
-                TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No thumb.png file found");
-                return;
-            }
-
-            //Now we want to load the icons for each pool
-            foreach (IFileHandle iconFile in dir.GetFiles())
-            {
-                foreach (EquipmentPool pool in character.EquipmentPools)
-                {
-                    if (iconFile.Path.EndsWith(pool.IconName))
+                        string charString = stage.ImmediateReaders.Get<string>()(file);
+                        JsonSerializerSettings settings = new JsonSerializerSettings
+                        {
+                            NullValueHandling = NullValueHandling.Ignore
+                        };
+                        character = JsonConvert.DeserializeObject<CustomCharacter>(charString, settings);
+                    }
+                    else if (file.Path.EndsWith("thumb.png"))
                     {
-                        pool.GetPoolEntry().TableDef.Icon = TNHTweakerUtils.LoadSprite(iconFile);
+                        thumbnail = TNHTweakerUtils.LoadSprite(file);
                     }
                 }
+
+                if (character == null)
+                {
+                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No character.json file found");
+                    return;
+                }
+
+                else if (thumbnail == null)
+                {
+                    TNHTweakerLogger.LogError("TNHTweaker -- Failed to load custom character! No thumb.png file found");
+                    return;
+                }
+
+                //Now we want to load the icons for each pool
+                foreach (IFileHandle iconFile in dir.GetFiles())
+                {
+                    foreach (EquipmentPool pool in character.EquipmentPools)
+                    {
+                        if (iconFile.Path.EndsWith(pool.IconName))
+                        {
+                            pool.GetPoolEntry().TableDef.Icon = TNHTweakerUtils.LoadSprite(iconFile);
+                        }
+                    }
+                }
+
+
+                TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + character.DisplayName, TNHTweakerLogger.LogType.File);
+
+                LoadedTemplateManager.AddCharacterTemplate(character, thumbnail);
             }
-
-
-            TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + character.DisplayName, TNHTweakerLogger.LogType.File);
-
-            LoadedTemplateManager.AddCharacterTemplate(character, thumbnail);
+            catch(Exception e)
+            {
+                TNHTweakerLogger.LogError("Failed to load setup assets for character! Caused Error: " + e.ToString());
+            }
         }
     }
 
@@ -115,11 +130,18 @@ namespace TNHTweaker
                 throw new ArgumentException("Could not load vault file! Make sure you're pointing to a vault json file in the manifest");
             }
 
-            SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<SavedGunSerializable>();
+            try
+            {
+                SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<SavedGunSerializable>();
 
-            TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
+                TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
 
-            LoadedTemplateManager.AddVaultFile(savedGun);
+                LoadedTemplateManager.AddVaultFile(savedGun);
+            }
+            catch(Exception e)
+            {
+                TNHTweakerLogger.LogError("Failed to load setup assets for vault file! Caused Error: " + e.ToString());
+            }
         }
     }
 

@@ -295,6 +295,7 @@ namespace TNHTweaker
 
                         try
                         {
+                            if (gameObjectCallback.Result == null) TNHTweakerLogger.LogError("TNHTweaker -- No object was found to use FVRObject! ItemID: " + magazine.ItemID);
                             FVRFireArmMagazine magComp = gameObjectCallback.Result.GetComponent<FVRFireArmMagazine>();
 
                             magazineCache.Magazines.Add(magazine.ItemID);
@@ -342,6 +343,7 @@ namespace TNHTweaker
 
                         try
                         {
+                            if (gameObjectCallback.Result == null) TNHTweakerLogger.LogError("TNHTweaker -- No object was found to use FVRObject! ItemID: " + clip.ItemID);;
                             FVRFireArmClip clipComp = gameObjectCallback.Result.GetComponent<FVRFireArmClip>();
 
                             magazineCache.Clips.Add(clip.ItemID);
@@ -387,6 +389,7 @@ namespace TNHTweaker
                         yield return gameObjectCallback;
 
                         try {
+                            if (gameObjectCallback.Result == null) TNHTweakerLogger.LogError("TNHTweaker -- No object was found to use FVRObject! ItemID: " + bullet.ItemID);
                             FVRFireArmRound bulletComp = gameObjectCallback.Result.GetComponent<FVRFireArmRound>();
 
                             magazineCache.Bullets.Add(bullet.ItemID);
@@ -436,6 +439,7 @@ namespace TNHTweaker
                     {
                         magazineCache.Firearms.Add(firearm.ItemID);
 
+                        if (gameObjectCallback.Result == null) TNHTweakerLogger.LogError("TNHTweaker -- No object was found to use FVRObject! ItemID: " + firearm.ItemID);
                         FVRFireArm firearmComp = gameObjectCallback.Result.GetComponent<FVRFireArm>();
                         if (firearmComp == null) continue;
 
