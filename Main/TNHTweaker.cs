@@ -194,6 +194,7 @@ namespace TNHTweaker
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
             Text magazineCacheText = CreateMagazineCacheText(__instance);
+            Text itemsText = CreateItemsText(__instance);
             ExpandCharacterUI(__instance);
 
             //Perform first time setup of all files
@@ -203,7 +204,7 @@ namespace TNHTweaker
 
                 if (!TNHMenuInitializer.MagazineCacheFailed)
                 {
-                    AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(OutputFilePath, magazineCacheText, sceneHotDog, ___Categories, ___CharDatabase, __instance, buildCharacterFiles.Value));
+                    AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(OutputFilePath, magazineCacheText, itemsText, sceneHotDog, ___Categories, ___CharDatabase, __instance, buildCharacterFiles.Value));
                 }
 
                 //If the magazine cache has previously failed, we shouldn't let the player continue
@@ -238,6 +239,19 @@ namespace TNHTweaker
             magazineCacheText.text = "EXAMPLE TEXT";
 
             return magazineCacheText;
+        }
+
+        private static Text CreateItemsText(TNH_UIManager manager)
+        {
+            Text itemsText = Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
+            itemsText.transform.localPosition = new Vector3(-30, 630, 0);
+            itemsText.transform.localScale = new Vector3(1, 1, 1);
+            itemsText.text = "";
+            itemsText.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            itemsText.alignment = TextAnchor.LowerLeft;
+            itemsText.verticalOverflow = VerticalWrapMode.Overflow;
+
+            return itemsText;
         }
 
 

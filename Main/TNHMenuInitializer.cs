@@ -22,7 +22,7 @@ namespace TNHTweaker
         public static bool MagazineCacheLoaded = false;
         public static bool MagazineCacheFailed = false;
 
-        public static IEnumerator InitializeTNHMenuAsync(string path, Text text, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
+        public static IEnumerator InitializeTNHMenuAsync(string path, Text progressText, Text itemsText, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
         {
             hotdog.gameObject.SetActive(false);
 
@@ -43,15 +43,20 @@ namespace TNHTweaker
                 yield return null;
                 itemLoadProgress = AsyncLoadMonitor.GetProgress();
 
-                if (isOtherLoaderLoaded) itemLoadProgress = Mathf.Min(itemLoadProgress, GetOtherLoaderProgress());
+                if (isOtherLoaderLoaded)
+                {
+                    itemLoadProgress = Mathf.Min(itemLoadProgress, GetOtherLoaderProgress());
+                    itemsText.text = GetLoadingItems();
+                }
+                
 
-                text.text = "LOADING ITEMS : " + (int)(itemLoadProgress * 100) + "%";
+                progressText.text = "LOADING ITEMS : " + (int)(itemLoadProgress * 100) + "%";
             }
             while (itemLoadProgress < 1);
 
 
             //Now that everything is loaded, we can perform magazine caching
-            AnvilManager.Run(LoadMagazineCacheAsync(path, text));
+            AnvilManager.Run(LoadMagazineCacheAsync(path, progressText));
             while (!MagazineCacheLoaded) yield return null;
 
             //Now perform final steps of loading characters
@@ -73,6 +78,11 @@ namespace TNHTweaker
         public static float GetOtherLoaderProgress()
         {
             return OtherLoader.LoaderStatus.GetLoaderProgress();
+        }
+
+        public static string GetLoadingItems()
+        {
+            return OtherLoader.LoaderStatus.LoadingItems;
         }
 
 
