@@ -247,9 +247,11 @@ namespace TNHTweaker
             itemsText.transform.localPosition = new Vector3(-30, 630, 0);
             itemsText.transform.localScale = new Vector3(1, 1, 1);
             itemsText.text = "";
+            itemsText.supportRichText = true;
             itemsText.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
             itemsText.alignment = TextAnchor.LowerLeft;
             itemsText.verticalOverflow = VerticalWrapMode.Overflow;
+            itemsText.horizontalOverflow = HorizontalWrapMode.Overflow;
 
             return itemsText;
         }
