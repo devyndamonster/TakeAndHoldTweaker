@@ -30,12 +30,13 @@ namespace TNHTweaker
 
             bool isOtherLoaderLoaded;
             try{
-                GetOtherLoaderProgress();
+                PokeOtherloader();
                 isOtherLoaderLoaded = true;
             }
             catch
             {
                 isOtherLoaderLoaded = false;
+                TNHTweakerLogger.LogWarning("TNHTweaker -- OtherLoader not found. If you are using OtherLoader, please ensure you have version 0.1.6 or later!");
             }
 
             //First thing we want to do is wait for all asset bundles to be loaded in
@@ -63,7 +64,7 @@ namespace TNHTweaker
                 TNHTweakerLogger.LogError("Something bad happened when trying to perform caching on item: " + lastTouchedItemID + "\nCaused Error: ");
                 TNHTweakerLogger.LogError(e.ToString());
                 MagazineCacheFailed = true;
-                progressText.text = "FAILED! SEE LOG!";
+                progressText.text = "CACHING FAILED! SEE ABOVE!";
                 itemsText.text = itemsText.text + "\nSomething bad happened when caching item (" + lastTouchedItemID + ")";
             });
 
@@ -94,9 +95,13 @@ namespace TNHTweaker
         }
 
 
-        
 
 
+        public static void PokeOtherloader()
+        {
+            OtherLoader.LoaderStatus.GetLoaderProgress();
+            List<string> items = OtherLoader.LoaderStatus.LoadingItems;
+        }
 
         public static float GetOtherLoaderProgress()
         {
@@ -442,6 +447,7 @@ namespace TNHTweaker
                     lastTouchedItemID = firearm.ItemID;
                     gameObjectCallback = firearm.GetGameObjectAsync();
                     yield return gameObjectCallback;
+
 
                     //If this firearm is valid, then we create a magazine cache entry for it
                     magazineCache.Firearms.Add(firearm.ItemID);

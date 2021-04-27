@@ -236,6 +236,7 @@ namespace TNHTweaker
             Text magazineCacheText = Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
             magazineCacheText.transform.localPosition = new Vector3(0, 550, 0);
             magazineCacheText.transform.localScale = new Vector3(2, 2, 2);
+            magazineCacheText.horizontalOverflow = HorizontalWrapMode.Overflow;
             magazineCacheText.text = "EXAMPLE TEXT";
 
             return magazineCacheText;
@@ -624,8 +625,6 @@ namespace TNHTweaker
         {
             spawnedBossIndexes.Clear();
             preventOutfitFunctionality = LoadedTemplateManager.LoadedCharactersDict[__instance.C].ForceDisableOutfitFunctionality;
-
-            TNHTweakerLogger.Log("Makarov rounds: " + IM.OD["Makarov"].CompatibleSingleRounds.Count, TNHTweakerLogger.LogType.General);
 
             //Clear the TNH radar
             if (__instance.RadarMode == TNHModifier_RadarMode.Standard)
