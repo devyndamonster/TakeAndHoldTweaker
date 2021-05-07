@@ -32,7 +32,7 @@ namespace TNHTweaker
         public static Dictionary<string, AmmoObjectDataTemplate> LoadedBulletDict = new Dictionary<string, AmmoObjectDataTemplate>();
 
         public static int NewSosigID = 30000;
-        public static int NewCharacterID = 30;
+        public static int NewCharacterID = 1000;
 
         public static Dictionary<string, Sprite> DefaultIconSprites = new Dictionary<string, Sprite>();
 
@@ -133,63 +133,6 @@ namespace TNHTweaker
         }
 
 
-        public static void AddMagazineData(CompatibleMagazineCache magazineCache)
-        {
-            //Load all of this data into the template manager
-            LoadedMagazineTypeDict = magazineCache.MagazineData;
-            foreach (List<AmmoObjectDataTemplate> magList in LoadedMagazineTypeDict.Values)
-            {
-                foreach (AmmoObjectDataTemplate template in magList)
-                {
-                    if (!LoadedMagazineDict.ContainsKey(template.ObjectID))
-                    {
-                        LoadedMagazineDict.Add(template.ObjectID, template);
-                    }
-
-                    else
-                    {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Attempted to add duplicate magazine : " + template.ObjectID);
-                    }
-                }
-            }
-
-            //Load all of this data into the template manager
-            LoadedClipTypeDict = magazineCache.ClipData;
-            foreach (List<AmmoObjectDataTemplate> clipList in LoadedClipTypeDict.Values)
-            {
-                foreach (AmmoObjectDataTemplate template in clipList)
-                {
-                    if (!LoadedClipDict.ContainsKey(template.ObjectID))
-                    {
-                        LoadedClipDict.Add(template.ObjectID, template);
-                    }
-
-                    else
-                    {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Attempted to add duplicate clip : " + template.ObjectID);
-                    }
-                }
-            }
-
-            //Load all of this data into the template manager
-            LoadedBulletTypeDict = magazineCache.BulletData;
-            foreach (List<AmmoObjectDataTemplate> bulletList in LoadedBulletTypeDict.Values)
-            {
-                foreach (AmmoObjectDataTemplate template in bulletList)
-                {
-                    if (!LoadedBulletDict.ContainsKey(template.ObjectID))
-                    {
-                        LoadedBulletDict.Add(template.ObjectID, template);
-                    }
-
-                    else
-                    {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Attempted to add duplicate bullet : " + template.ObjectID);
-                    }
-                }
-            }
-        }
-
         public static void AddMagazineDataFromLoad(CompatibleMagazineCache magazineCache)
         {
             //Loop through all magazine objects by type
@@ -201,7 +144,6 @@ namespace TNHTweaker
                     //If the magazine is not loaded, remove it
                     if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
                     {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Magazine in cache was not loaded : " + entry.Value[i].ObjectID);
                         entry.Value.RemoveAt(i);
                         i -= 1;
                     }
