@@ -81,6 +81,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(H3VRDir)\h3vr_Data\Managed\ES2.dll</HintPath>
     </Reference>
+    <Reference Include="OtherLoader">
+      <HintPath>Libs\OtherLoader.dll</HintPath>
+    </Reference>
     <Reference Include="System">
       <Private>True</Private>
     </Reference>

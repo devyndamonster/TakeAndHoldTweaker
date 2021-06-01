@@ -454,7 +454,7 @@ namespace TNHTweaker.ObjectTemplates
                 {
                     if (!BackupGroup.DelayedInit(completedQuests))
                     {
-                        TNHTweakerLogger.Log("TNHTweaker -- Backup group for equipment pool entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
+                        if(PrimaryGroup == null) TNHTweakerLogger.Log("TNHTweaker -- Backup group for equipment pool entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
                         BackupGroup = null;
                     }
                 }
@@ -749,7 +749,7 @@ namespace TNHTweaker.ObjectTemplates
                 {
                     if (!SubGroups[i].DelayedInit(completedQuests))
                     {
-                        TNHTweakerLogger.Log("TNHTweaker -- Subgroup was empty, removing it!", TNHTweakerLogger.LogType.Character);
+                        //TNHTweakerLogger.Log("TNHTweaker -- Subgroup was empty, removing it!", TNHTweakerLogger.LogType.Character);
                         SubGroups.RemoveAt(i);
                         i -= 1;
                     }
@@ -758,7 +758,7 @@ namespace TNHTweaker.ObjectTemplates
 
             if (Rarity <= 0)
             {
-                TNHTweakerLogger.Log("TNHTweaker -- Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHTweakerLogger.LogType.Character);
+                //TNHTweakerLogger.Log("TNHTweaker -- Equipment group had a rarity of 0 or less! Setting rarity to 1", TNHTweakerLogger.LogType.Character);
                 Rarity = 1;
             }
 
@@ -904,7 +904,7 @@ namespace TNHTweaker.ObjectTemplates
                 {
                     if (!BackupGroup.DelayedInit(completedQuests))
                     {
-                        TNHTweakerLogger.Log("TNHTweaker -- Backup group for loadout entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
+                        if (PrimaryGroup == null) TNHTweakerLogger.Log("TNHTweaker -- Backup group for loadout entry was empty, setting to null!", TNHTweakerLogger.LogType.Character);
                         BackupGroup = null;
                     }
                 }

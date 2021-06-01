@@ -194,6 +194,7 @@ namespace TNHTweaker
             GM.TNHOptions.Char = TNH_Char.DD_ClassicLoudoutLouis;
 
             Text magazineCacheText = CreateMagazineCacheText(__instance);
+            Text itemsText = CreateItemsText(__instance);
             ExpandCharacterUI(__instance);
 
             //Perform first time setup of all files
@@ -203,7 +204,7 @@ namespace TNHTweaker
 
                 if (!TNHMenuInitializer.MagazineCacheFailed)
                 {
-                    AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(OutputFilePath, magazineCacheText, sceneHotDog, ___Categories, ___CharDatabase, __instance, buildCharacterFiles.Value));
+                    AnvilManager.Run(TNHMenuInitializer.InitializeTNHMenuAsync(OutputFilePath, magazineCacheText, itemsText, sceneHotDog, ___Categories, ___CharDatabase, __instance, buildCharacterFiles.Value));
                 }
 
                 //If the magazine cache has previously failed, we shouldn't let the player continue
@@ -235,9 +236,25 @@ namespace TNHTweaker
             Text magazineCacheText = Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
             magazineCacheText.transform.localPosition = new Vector3(0, 550, 0);
             magazineCacheText.transform.localScale = new Vector3(2, 2, 2);
+            magazineCacheText.horizontalOverflow = HorizontalWrapMode.Overflow;
             magazineCacheText.text = "EXAMPLE TEXT";
 
             return magazineCacheText;
+        }
+
+        private static Text CreateItemsText(TNH_UIManager manager)
+        {
+            Text itemsText = Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
+            itemsText.transform.localPosition = new Vector3(-30, 630, 0);
+            itemsText.transform.localScale = new Vector3(1, 1, 1);
+            itemsText.text = "";
+            itemsText.supportRichText = true;
+            itemsText.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            itemsText.alignment = TextAnchor.LowerLeft;
+            itemsText.verticalOverflow = VerticalWrapMode.Overflow;
+            itemsText.horizontalOverflow = HorizontalWrapMode.Overflow;
+
+            return itemsText;
         }
 
 
@@ -608,8 +625,6 @@ namespace TNHTweaker
         {
             spawnedBossIndexes.Clear();
             preventOutfitFunctionality = LoadedTemplateManager.LoadedCharactersDict[__instance.C].ForceDisableOutfitFunctionality;
-
-            TNHTweakerLogger.Log("Makarov rounds: " + IM.OD["Makarov"].CompatibleSingleRounds.Count, TNHTweakerLogger.LogType.General);
 
             //Clear the TNH radar
             if (__instance.RadarMode == TNHModifier_RadarMode.Standard)
@@ -1871,52 +1886,6 @@ namespace TNHTweaker
             return !preventOutfitFunctionality;
         }
 
-
-
-        //////////////////////////
-        //ASSET LOADING PATCHES
-        //////////////////////////
-
-
-        [HarmonyPatch(typeof(AnvilManager), "LoadAsync")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPrefix]
-        public static bool LoadAsyncPatch(ref AnvilCallback<GameObject> result, AssetID assetID)
-        {
-            TNHTweakerLogger.Log("TNHTweaker -- Loading file async! Asset name: " + assetID.AssetName + ", Bundle Name: " + assetID.Bundle, TNHTweakerLogger.LogType.File);
-
-            AnvilCallbackBase anvilCallbackBase;
-            if (AnvilManager.m_assets.TryGetValue(assetID, out anvilCallbackBase))
-            {
-                TNHTweakerLogger.Log("TNHTweaker -- Asset was already loaded, returning it", TNHTweakerLogger.LogType.File);
-                result = anvilCallbackBase as AnvilCallback<GameObject>;
-                return false;
-            }
-
-            
-            AnvilCallback<AssetBundle> assetBundleAsyncInternal = AnvilManager.GetAssetBundleAsyncInternal(assetID.Bundle);
-            if (assetBundleAsyncInternal.IsCompleted)
-            {
-                TNHTweakerLogger.Log("TNHTweaker -- Asset was not loaded, but the asset bundle was", TNHTweakerLogger.LogType.File);
-
-                anvilCallbackBase = new AnvilCallback<GameObject>(null, null);
-                ((AnvilCallback<GameObject>)anvilCallbackBase).Request = AnvilManager.GetCallbackRequest(assetID, assetBundleAsyncInternal.Result);
-            }
-            else
-            {
-                TNHTweakerLogger.Log("TNHTweaker -- Asset was not loaded, and neither was the asset bundle", TNHTweakerLogger.LogType.File);
-
-                anvilCallbackBase = new AnvilCallback<GameObject>(null, assetBundleAsyncInternal);
-                AnvilCallback<GameObject> tempCB = (AnvilCallback<GameObject>)anvilCallbackBase;
-                assetBundleAsyncInternal.AddCallback(delegate (AssetBundle bundle)
-                {
-                    tempCB.Request = AnvilManager.GetCallbackRequest(assetID, bundle);
-                });
-            }
-            AnvilManager.m_assets.Add(assetID, anvilCallbackBase);
-            result = (AnvilCallback<GameObject>)anvilCallbackBase;
-
-            return false;
-        }
 
     }
 }

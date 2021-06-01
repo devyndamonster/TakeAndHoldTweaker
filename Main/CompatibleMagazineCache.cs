@@ -13,7 +13,7 @@ namespace TNHTweaker
         public List<string> Magazines;
         public List<string> Clips;
         public List<string> Bullets;
-        public List<MagazineCacheEntry> Entries;
+        public Dictionary<string, MagazineCacheEntry> Entries;
         public Dictionary<FireArmMagazineType, List<AmmoObjectDataTemplate>> MagazineData;
         public Dictionary<FireArmClipType, List<AmmoObjectDataTemplate>> ClipData;
         public Dictionary<FireArmRoundType, List<AmmoObjectDataTemplate>> BulletData;
@@ -31,7 +31,7 @@ namespace TNHTweaker
             Magazines = new List<string>();
             Clips = new List<string>();
             Bullets = new List<string>();
-            Entries = new List<MagazineCacheEntry>();
+            Entries = new Dictionary<string, MagazineCacheEntry>();
             MagazineData = new Dictionary<FireArmMagazineType, List<AmmoObjectDataTemplate>>();
             ClipData = new Dictionary<FireArmClipType, List<AmmoObjectDataTemplate>>();
             BulletData = new Dictionary<FireArmRoundType, List<AmmoObjectDataTemplate>>();
@@ -77,6 +77,9 @@ namespace TNHTweaker
         public string FirearmID;
         public int MinAmmo;
         public int MaxAmmo;
+        public FireArmMagazineType MagType;
+        public FireArmClipType ClipType;
+        public FireArmRoundType BulletType;
         public List<string> CompatibleMagazines;
         public List<string> CompatibleClips;
         public List<string> CompatibleBullets;
