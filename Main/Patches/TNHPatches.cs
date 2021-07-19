@@ -247,7 +247,8 @@ namespace TNHTweaker.Patches
             List<Vector3> PatrolPoints, 
             TNH_Manager __instance, 
             List<TNH_Manager.SosigPatrolSquad> ___m_patrolSquads, 
-            ref float ___m_timeTilPatrolCanSpawn
+            ref float ___m_timeTilPatrolCanSpawn,
+            ref TNH_Manager.SosigPatrolSquad __result
             )
         {
             TNHTweakerLogger.Log("TNHTWEAKER -- Generating a sentry patrol -- There are currently " + ___m_patrolSquads.Count + " patrols active", TNHTweakerLogger.LogType.TNH);
@@ -263,6 +264,14 @@ namespace TNHTweaker.Patches
             {
                 TNHTweakerLogger.Log("TNHTWEAKER -- No valid patrols can spawn", TNHTweakerLogger.LogType.TNH);
                 ___m_timeTilPatrolCanSpawn = 999;
+
+                //Returning an empty squad is the easiest way to not generate a patrol when no valid ones are found
+                //This could cause strange and unpredictable behaviour
+                //Good luck!
+                __result = new TNH_Manager.SosigPatrolSquad();
+                __result.PatrolPoints = new List<Vector3>();
+                __result.Squad = new List<Sosig>();
+
                 return false;
             }
 
@@ -281,6 +290,7 @@ namespace TNHTweaker.Patches
                 ___m_timeTilPatrolCanSpawn = patrol.PatrolCadenceLimited;
             }
 
+            __result = squad;
             return false;
         }
 
