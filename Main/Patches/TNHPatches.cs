@@ -151,7 +151,7 @@ namespace TNHTweaker.Patches
         /// </summary>
         /// <param name="patrols">List of patrols that can spawn</param>
         /// <returns>Returns -1 if no valid index is found, otherwise returns a random index for a patrol </returns>
-        private static int GetValidPatrolIndex(List<TNH_PatrolChallenge.Patrol> patrols)
+        private static int GetValidPatrolIndex(List<Patrol> patrols)
         {
             int index = UnityEngine.Random.Range(0, patrols.Count);
             int attempts = 0;
@@ -173,15 +173,6 @@ namespace TNHTweaker.Patches
         /// <summary>
         /// Decides the spawning location and patrol pathing for sosig patrols, and then spawns the patrol
         /// </summary>
-        /// <param name="P"></param>
-        /// <param name="curStandardIndex"></param>
-        /// <param name="excludeHoldIndex"></param>
-        /// <param name="isStart"></param>
-        /// <param name="__instance"></param>
-        /// <param name="___m_curLevel"></param>
-        /// <param name="___m_patrolSquads"></param>
-        /// <param name="___m_timeTilPatrolCanSpawn"></param>
-        /// <returns></returns>
         [HarmonyPatch(typeof(TNH_Manager), "GenerateValidPatrol")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool GenerateValidPatrolReplacement(TNH_PatrolChallenge P, int curStandardIndex, int excludeHoldIndex, bool isStart, TNH_Manager __instance, TNH_Progression.Level ___m_curLevel, List<TNH_Manager.SosigPatrolSquad> ___m_patrolSquads, ref float ___m_timeTilPatrolCanSpawn)
@@ -190,8 +181,11 @@ namespace TNHTweaker.Patches
 
             if (P.Patrols.Count < 1) return false;
 
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
+            Level currLevel = character.GetCurrentLevel(__instance.m_curLevel);
+
             //Get a valid patrol index, and exit if there are no valid patrols
-            int patrolIndex = GetValidPatrolIndex(P.Patrols);
+            int patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
             if (patrolIndex == -1)
             {
                 TNHTweakerLogger.Log("TNHTWEAKER -- No valid patrols can spawn", TNHTweakerLogger.LogType.TNH);
@@ -201,7 +195,7 @@ namespace TNHTweaker.Patches
 
             TNHTweakerLogger.Log("TNHTWEAKER -- Valid patrol found", TNHTweakerLogger.LogType.TNH);
 
-            TNH_PatrolChallenge.Patrol patrol = P.Patrols[patrolIndex];
+            Patrol patrol = currLevel.Patrols[patrolIndex];
 
             List<int> validLocations = new List<int>();
             float minDist = __instance.TAHReticle.Range * 1.2f;
@@ -228,60 +222,82 @@ namespace TNHTweaker.Patches
             if (validLocations.Count < 1) return false;
             validLocations.Shuffle();
 
-            TNH_Manager.SosigPatrolSquad squad = GeneratePatrol(validLocations[0], __instance, ___m_curLevel, patrol, patrolIndex);
+            TNH_Manager.SosigPatrolSquad squad = GeneratePatrol(validLocations[0], __instance, patrol, patrolIndex);
             ___m_patrolSquads.Add(squad);
 
             if (__instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking)
             {
-                ___m_timeTilPatrolCanSpawn = patrol.TimeTilRegen;
+                ___m_timeTilPatrolCanSpawn = patrol.PatrolCadence;
             }
             else
             {
-                ___m_timeTilPatrolCanSpawn = patrol.TimeTilRegen_LimitedAmmo;
+                ___m_timeTilPatrolCanSpawn = patrol.PatrolCadenceLimited;
             }
 
             return false;
         }
 
 
-        /// <summary>
-        /// Spawns a patrol at the desire patrol point
-        /// </summary>
-        /// <param name="HoldPointStart"></param>
-        /// <param name="instance"></param>
-        /// <param name="level"></param>
-        /// <param name="patrol"></param>
-        /// <param name="patrolIndex"></param>
-        /// <returns></returns>
-        public static TNH_Manager.SosigPatrolSquad GeneratePatrol(int HoldPointStart, TNH_Manager instance, TNH_Progression.Level level, TNH_PatrolChallenge.Patrol patrol, int patrolIndex)
-        {
-            TNH_Manager.SosigPatrolSquad squad = new TNH_Manager.SosigPatrolSquad();
 
-            squad.PatrolPoints = new List<Vector3>();
-            foreach (TNH_HoldPoint holdPoint in instance.HoldPoints)
+        [HarmonyPatch(typeof(TNH_Manager), "GenerateSentryPatrol")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool GenerateSentryPatrolPatch(
+            List<Vector3> SpawnPoints, 
+            List<Vector3> ForwardVectors, 
+            List<Vector3> PatrolPoints, 
+            TNH_Manager __instance, 
+            List<TNH_Manager.SosigPatrolSquad> ___m_patrolSquads, 
+            ref float ___m_timeTilPatrolCanSpawn
+            )
+        {
+            TNHTweakerLogger.Log("TNHTWEAKER -- Generating a sentry patrol -- There are currently " + ___m_patrolSquads.Count + " patrols active", TNHTweakerLogger.LogType.TNH);
+
+            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[__instance.C];
+            Level currLevel = character.GetCurrentLevel(__instance.m_curLevel);
+
+            if (currLevel.Patrols.Count < 1) return false;
+
+            //Get a valid patrol index, and exit if there are no valid patrols
+            int patrolIndex = GetValidPatrolIndex(currLevel.Patrols);
+            if (patrolIndex == -1)
             {
-                squad.PatrolPoints.Add(holdPoint.SpawnPoints_Sosigs_Defense.GetRandom<Transform>().position);
+                TNHTweakerLogger.Log("TNHTWEAKER -- No valid patrols can spawn", TNHTweakerLogger.LogType.TNH);
+                ___m_timeTilPatrolCanSpawn = 999;
+                return false;
             }
 
-            Vector3 startingPoint = squad.PatrolPoints[HoldPointStart];
-            squad.PatrolPoints.RemoveAt(HoldPointStart);
-            squad.PatrolPoints.Insert(0, startingPoint);
+            TNHTweakerLogger.Log("TNHTWEAKER -- Valid patrol found", TNHTweakerLogger.LogType.TNH);
 
-            int PatrolSize = Mathf.Clamp(patrol.PatrolSize, 0, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense.Count);
+            Patrol patrol = currLevel.Patrols[patrolIndex];
+            TNH_Manager.SosigPatrolSquad squad = GeneratePatrol(__instance, patrol, SpawnPoints, ForwardVectors, PatrolPoints, patrolIndex);
+            ___m_patrolSquads.Add(squad);
 
-            CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[instance.C];
-            Level currLevel = character.GetCurrentLevel(level);
-            Patrol currPatrol = currLevel.GetPatrol(patrol);
+            if (__instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking)
+            {
+                ___m_timeTilPatrolCanSpawn = patrol.PatrolCadence;
+            }
+            else
+            {
+                ___m_timeTilPatrolCanSpawn = patrol.PatrolCadenceLimited;
+            }
 
-            TNHTweakerLogger.Log("TNHTWEAKER -- Is patrol a boss?: " + currPatrol.IsBoss, TNHTweakerLogger.LogType.TNH);
+            return false;
+        }
 
-            for (int i = 0; i < PatrolSize; i++)
+
+        public static TNH_Manager.SosigPatrolSquad GeneratePatrol(TNH_Manager instance, Patrol patrol, List<Vector3> SpawnPoints, List<Vector3> ForwardVectors, List<Vector3> PatrolPoints, int patrolIndex)
+        {
+            TNH_Manager.SosigPatrolSquad squad = new TNH_Manager.SosigPatrolSquad();
+            squad.PatrolPoints = new List<Vector3>(PatrolPoints);
+
+            for (int i = 0; i < patrol.PatrolSize && i < SpawnPoints.Count; i++)
             {
                 SosigEnemyTemplate template;
+
                 bool allowAllWeapons;
 
                 //If this is a boss, then we can only spawn it once, so add it to the list of spawned bosses
-                if (currPatrol.IsBoss)
+                if (patrol.IsBoss)
                 {
                     spawnedBossIndexes.Add(patrolIndex);
                 }
@@ -289,36 +305,36 @@ namespace TNHTweaker.Patches
                 //Select a sosig template from the custom character patrol
                 if (i == 0)
                 {
-                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPatrol.LeaderType]];
+                    template = IM.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.LeaderType]];
                     allowAllWeapons = true;
                 }
 
                 else
                 {
-                    template = ManagerSingleton<IM>.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[currPatrol.EnemyType.GetRandom<string>()]];
+                    template = IM.Instance.odicSosigObjsByID[(SosigEnemyID)LoadedTemplateManager.SosigIDDict[patrol.EnemyType.GetRandom()]];
                     allowAllWeapons = false;
                 }
 
-
+                CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[instance.C];
                 SosigTemplate customTemplate = LoadedTemplateManager.LoadedSosigsDict[template];
                 FVRObject droppedObject = instance.Prefab_HealthPickupMinor;
 
                 //If squad is set to swarm, the first point they path to should be the players current position
                 Sosig sosig;
-                if (currPatrol.SwarmPlayer)
+                if (patrol.SwarmPlayer)
                 {
                     squad.PatrolPoints[0] = GM.CurrentPlayerBody.transform.position;
-                    sosig = SpawnEnemy(customTemplate, character, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense[i], instance.AI_Difficulty, currPatrol.IFFUsed, true, squad.PatrolPoints[0], allowAllWeapons);
-                    sosig.SetAssaultSpeed(currPatrol.AssualtSpeed);
+                    sosig = SpawnEnemy(customTemplate, character, SpawnPoints[i], Quaternion.LookRotation(ForwardVectors[i], Vector3.up), instance.AI_Difficulty, patrol.IFFUsed, true, squad.PatrolPoints[0], allowAllWeapons);
+                    sosig.SetAssaultSpeed(patrol.AssualtSpeed);
                 }
                 else
                 {
-                    sosig = SpawnEnemy(customTemplate, character, instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense[i], instance.AI_Difficulty, currPatrol.IFFUsed, true, squad.PatrolPoints[0], allowAllWeapons);
-                    sosig.SetAssaultSpeed(currPatrol.AssualtSpeed);
+                    sosig = SpawnEnemy(customTemplate, character, SpawnPoints[i], Quaternion.LookRotation(ForwardVectors[i], Vector3.up), instance.AI_Difficulty, patrol.IFFUsed, true, squad.PatrolPoints[0], allowAllWeapons);
+                    sosig.SetAssaultSpeed(patrol.AssualtSpeed);
                 }
 
                 //Handle patrols dropping health
-                if (i == 0 && UnityEngine.Random.value < currPatrol.DropChance)
+                if (i == 0 && UnityEngine.Random.value < patrol.DropChance)
                 {
                     sosig.Links[1].RegisterSpawnOnDestroy(droppedObject);
                 }
@@ -327,6 +343,37 @@ namespace TNHTweaker.Patches
             }
 
             return squad;
+        }
+
+
+
+
+        /// <summary>
+        /// Spawns a patrol at the desire patrol point
+        /// </summary>
+        public static TNH_Manager.SosigPatrolSquad GeneratePatrol(int HoldPointStart, TNH_Manager instance, Patrol patrol, int patrolIndex)
+        {
+            List<Vector3> SpawnPoints = new List<Vector3>();
+            List<Vector3> PatrolPoints = new List<Vector3>();
+            List<Vector3> ForwardVectors = new List<Vector3>();
+
+            foreach (TNH_HoldPoint holdPoint in instance.HoldPoints)
+            {
+                PatrolPoints.Add(holdPoint.SpawnPoints_Sosigs_Defense.GetRandom<Transform>().position);
+            }
+
+            foreach(Transform spawnPoint in instance.HoldPoints[HoldPointStart].SpawnPoints_Sosigs_Defense)
+            {
+                SpawnPoints.Add(spawnPoint.position);
+                ForwardVectors.Add(spawnPoint.forward);
+            }
+
+            //Insert spawn point as first patrol point
+            Vector3 startingPoint = PatrolPoints[HoldPointStart];
+            PatrolPoints.RemoveAt(HoldPointStart);
+            PatrolPoints.Insert(0, startingPoint);
+
+            return GeneratePatrol(instance, patrol, SpawnPoints, ForwardVectors, PatrolPoints, patrolIndex);
         }
 
 
@@ -1091,12 +1138,17 @@ namespace TNHTweaker.Patches
 
         public static Sosig SpawnEnemy(SosigTemplate template, CustomCharacter character, Transform spawnLocation, TNHModifier_AIDifficulty difficulty, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
         {
+            return SpawnEnemy(template, character, spawnLocation.position, spawnLocation.rotation, difficulty, IFF, isAssault, pointOfInterest, allowAllWeapons);
+        }
+
+        public static Sosig SpawnEnemy(SosigTemplate template, CustomCharacter character, Vector3 spawnLocation, Quaternion spawnRotation, TNHModifier_AIDifficulty difficulty, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
+        {
             if (character.ForceAllAgentWeapons) allowAllWeapons = true;
 
             TNHTweakerLogger.Log("TNHTWEAKER -- Spawning sosig: " + template.SosigEnemyID, TNHTweakerLogger.LogType.TNH);
 
             //Create the sosig object
-            GameObject sosigPrefab = UnityEngine.Object.Instantiate(IM.OD[template.SosigPrefabs.GetRandom<string>()].GetGameObject(), spawnLocation.position, spawnLocation.rotation);
+            GameObject sosigPrefab = UnityEngine.Object.Instantiate(IM.OD[template.SosigPrefabs.GetRandom<string>()].GetGameObject(), spawnLocation, spawnRotation);
             Sosig sosigComponent = sosigPrefab.GetComponentInChildren<Sosig>();
 
             //Fill out the sosigs config based on the difficulty
