@@ -1855,5 +1855,12 @@ namespace TNHTweaker.Patches
         }
 
 
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "ProcessHighScore")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool PreventScoring()
+        {
+            return false;
+        }
+
     }
 }
