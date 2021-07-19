@@ -17,6 +17,7 @@ namespace TNHTweaker
         {
             TNHTweakerLogger.Log("TNHTweaker -- Lootable link was destroyed!", TNHTweakerLogger.LogType.TNH);
 
+            List<GameObject> toSpawn = new List<GameObject>();
             EquipmentGroup selectedGroup = group.GetSpawnedEquipmentGroups().GetRandom();
             string selectedItem;
             for (int itemIndex = 0; itemIndex < selectedGroup.ItemsToSpawn; itemIndex++)
@@ -50,9 +51,11 @@ namespace TNHTweaker
                 }
                 else
                 {
-                    Instantiate(IM.OD[selectedItem].GetGameObject(), transform.position+ Vector3.up * 0.02f * itemIndex, transform.rotation);
+                    toSpawn.Add(IM.OD[selectedItem].GetGameObject());
                 }
             }
+
+            AnvilManager.Run(TNHTweakerUtils.InstantiateList(toSpawn, transform.position));
         }
     }
 }
