@@ -46,24 +46,25 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="0Harmony, Version=2.3.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(H3VRDir)\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>Libs\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="ADepIn, Version=21.1.16.2315, Culture=neutral, PublicKeyToken=null">
       <HintPath>packages\ADepIn.21.1.16.2315\lib\net35\ADepIn.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Assembly-CSharp-Publicized">
-      <HintPath>packages\Assembly-CSharp-Publicized.dll</HintPath>
-    </Reference>
-    <Reference Include="BepInEx, Version=5.4.3.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Assembly-CSharp, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(H3VRDir)\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>Libs\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx, Version=5.4.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Libs\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx.Harmony, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(H3VRDir)\BepInEx\core\BepInEx.Harmony.dll</HintPath>
+      <HintPath>Libs\BepInEx.Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Deli.Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Deli.Newtonsoft.Json.12.0.3\lib\net35\Deli.Newtonsoft.Json.dll</HintPath>
@@ -115,6 +116,7 @@
   <ItemGroup>
     <Compile Include="Main\AsyncLoadMonitor.cs" />
     <Compile Include="Main\ObjectWrappers\SosigLinkLootWrapper.cs" />
+    <Compile Include="Main\Patches\TNHPatches.cs" />
     <Compile Include="Main\TNHMenuInitializer.cs" />
     <Compile Include="Main\CompatibleMagazineCache.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
