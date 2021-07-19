@@ -102,6 +102,37 @@ namespace TNHTweaker.Utilities
             }
         }
 
+        public static void RunCoroutine(IEnumerator routine, Action<Exception> onError = null)
+        {
+            AnvilManager.Run(RunAndCatch(routine, onError));
+        }
+
+        public static IEnumerator RunAndCatch(IEnumerator routine, Action<Exception> onError = null)
+        {
+            bool more = true;
+            while (more)
+            {
+                try
+                {
+                    more = routine.MoveNext();
+                }
+                catch (Exception e)
+                {
+                    if (onError != null)
+                    {
+                        onError(e);
+                    }
+
+                    yield break;
+                }
+
+                if (more)
+                {
+                    yield return routine.Current;
+                }
+            }
+        }
+
 
         public static Dictionary<string, Sprite> GetAllIcons(List<CustomCharacter> characters)
         {
