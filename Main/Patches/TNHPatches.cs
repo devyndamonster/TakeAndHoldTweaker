@@ -22,6 +22,8 @@ namespace TNHTweaker.Patches
         private static List<GameObject> SpawnedConstructors = new List<GameObject>();
         private static List<GameObject> SpawnedPanels = new List<GameObject>();
 
+        #region Initializing TNH
+
         //////////////////////////////////
         //INITIALIZING TAKE AND HOLD SCENE
         //////////////////////////////////
@@ -141,6 +143,10 @@ namespace TNHTweaker.Patches
             }
         }
 
+        #endregion
+
+
+        #region Patrol Spawning
 
         /////////////////////////////
         //PATCHES FOR PATROL SPAWNING
@@ -388,6 +394,10 @@ namespace TNHTweaker.Patches
         }
 
 
+        #endregion
+
+
+        #region Supply and Take Points
 
         ///////////////////////////////////////////
         //PATCHES FOR SUPPLY POINTS AND TAKE POINTS
@@ -924,6 +934,10 @@ namespace TNHTweaker.Patches
         }
 
 
+        #endregion
+
+
+        #region During Hold Point
 
         ///////////////////////////////
         //PATCHES FOR DURING HOLD POINT
@@ -945,8 +959,6 @@ namespace TNHTweaker.Patches
                 __instance.CompletePhase();
                 return false;
             }
-
-            
 
             __instance.m_state = TNH_HoldPoint.HoldState.Hacking;
             __instance.m_tickDownToFailure = 120f;
@@ -1140,7 +1152,10 @@ namespace TNHTweaker.Patches
         }
 
 
+        #endregion
 
+
+        #region Sosig Spawning
 
         /////////////////////////////
         //PATCHES FOR SPAWNING SOSIGS
@@ -1407,7 +1422,10 @@ namespace TNHTweaker.Patches
         }
 
 
+        #endregion
 
+
+        #region Constructor and Secondary Panels
 
         //////////////////////////////////////////////
         //PATCHES FOR CONSTRUCTOR AND SECONDARY PANELS
@@ -1793,6 +1811,10 @@ namespace TNHTweaker.Patches
         }
 
 
+        #endregion
+
+
+        #region Misc Patches
 
         //////////////////////////
         //MISC PATCHES AND METHODS
@@ -1866,6 +1888,8 @@ namespace TNHTweaker.Patches
         {
             return false;
         }
+
+        #endregion
 
     }
 }
