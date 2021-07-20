@@ -4,6 +4,7 @@ using Deli.Newtonsoft.Json;
 using Deli.Setup;
 using Deli.VFS;
 using FistVR;
+using MagazinePatcher;
 using System;
 using System.CodeDom;
 using System.Collections.Generic;

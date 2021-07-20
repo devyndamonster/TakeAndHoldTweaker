@@ -1,6 +1,7 @@
 ﻿using Deli.Setup;
 using Deli.VFS;
 using FistVR;
+using MagazinePatcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,12 +25,6 @@ namespace TNHTweaker
         public static List<SosigTemplate> CustomSosigs = new List<SosigTemplate>();
         public static List<SosigEnemyTemplate> DefaultSosigs = new List<SosigEnemyTemplate>();
         public static Dictionary<string, int> SosigIDDict = new Dictionary<string, int>();
-        public static Dictionary<FireArmMagazineType, List<AmmoObjectDataTemplate>> LoadedMagazineTypeDict = new Dictionary<FireArmMagazineType, List<AmmoObjectDataTemplate>>();
-        public static Dictionary<FireArmClipType, List<AmmoObjectDataTemplate>> LoadedClipTypeDict = new Dictionary<FireArmClipType, List<AmmoObjectDataTemplate>>();
-        public static Dictionary<FireArmRoundType, List<AmmoObjectDataTemplate>> LoadedBulletTypeDict = new Dictionary<FireArmRoundType, List<AmmoObjectDataTemplate>>();
-        public static Dictionary<string, AmmoObjectDataTemplate> LoadedMagazineDict = new Dictionary<string, AmmoObjectDataTemplate>();
-        public static Dictionary<string, AmmoObjectDataTemplate> LoadedClipDict = new Dictionary<string, AmmoObjectDataTemplate>();
-        public static Dictionary<string, AmmoObjectDataTemplate> LoadedBulletDict = new Dictionary<string, AmmoObjectDataTemplate>();
 
         public static int NewSosigID = 30000;
         public static int NewCharacterID = 1000;
@@ -131,76 +126,6 @@ namespace TNHTweaker
                 LoadedVaultFiles.Add(template.FileName, template);
             }
         }
-
-
-        public static void AddMagazineDataFromLoad(CompatibleMagazineCache magazineCache)
-        {
-            //Loop through all magazine objects by type
-            foreach (KeyValuePair<FireArmMagazineType, List<AmmoObjectDataTemplate>> entry in magazineCache.MagazineData)
-            {
-                //Loop through the magazines of the selected type
-                for (int i = 0; i < entry.Value.Count; i++)
-                {
-                    //If the magazine is not loaded, remove it
-                    if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
-                    {
-                        entry.Value.RemoveAt(i);
-                        i -= 1;
-                    }
-
-                    else if (!LoadedMagazineDict.ContainsKey(entry.Value[i].ObjectID))
-                    {
-                        entry.Value[i].AmmoObject = IM.OD[entry.Value[i].ObjectID];
-                        LoadedMagazineDict.Add(entry.Value[i].ObjectID, entry.Value[i]);
-                    }
-                }
-            }
-            LoadedMagazineTypeDict = magazineCache.MagazineData;
-
-
-            foreach (KeyValuePair<FireArmClipType, List<AmmoObjectDataTemplate>> entry in magazineCache.ClipData)
-            {
-                for (int i = 0; i < entry.Value.Count; i++)
-                {
-                    if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
-                    {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Clip in cache was not loaded : " + entry.Value[i].ObjectID);
-                        entry.Value.RemoveAt(i);
-                        i -= 1;
-                    }
-
-                    else if (!LoadedClipDict.ContainsKey(entry.Value[i].ObjectID))
-                    {
-                        entry.Value[i].AmmoObject = IM.OD[entry.Value[i].ObjectID];
-                        LoadedClipDict.Add(entry.Value[i].ObjectID, entry.Value[i]);
-                    }
-                }
-            }
-            LoadedClipTypeDict = magazineCache.ClipData;
-
-
-            foreach (KeyValuePair<FireArmRoundType, List<AmmoObjectDataTemplate>> entry in magazineCache.BulletData)
-            {
-                for (int i = 0; i < entry.Value.Count; i++)
-                {
-                    if (!IM.OD.ContainsKey(entry.Value[i].ObjectID))
-                    {
-                        TNHTweakerLogger.LogWarning("TNHTweaker -- Bullet in cache was not loaded : " + entry.Value[i].ObjectID);
-                        entry.Value.RemoveAt(i);
-                        i -= 1;
-                    }
-
-                    else if (!LoadedBulletDict.ContainsKey(entry.Value[i].ObjectID))
-                    {
-                        entry.Value[i].AmmoObject = IM.OD[entry.Value[i].ObjectID];
-                        LoadedBulletDict.Add(entry.Value[i].ObjectID, entry.Value[i]);
-                    }
-                }
-            }
-            LoadedBulletTypeDict = magazineCache.BulletData;
-
-        }
-
 
     }
 

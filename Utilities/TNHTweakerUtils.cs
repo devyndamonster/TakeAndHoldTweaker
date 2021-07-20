@@ -154,19 +154,6 @@ namespace TNHTweaker.Utilities
         }
 
 
-        public static bool ListContainsObjectID(List<FVRObject> objs, string ID)
-        {
-            foreach(FVRObject obj in objs)
-            {
-                if (obj.ItemID.Equals(ID))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         public static void CreateDefaultCharacterFiles(List<CustomCharacter> characters, string path)
         {
 
@@ -407,59 +394,6 @@ namespace TNHTweaker.Utilities
         }
 
 
-
-
-        public static Dictionary<string, MagazineBlacklistEntry> GetMagazineCacheBlacklist(string path)
-        {
-            Dictionary<string, MagazineBlacklistEntry> blacklist = new Dictionary<string, MagazineBlacklistEntry>();
-
-            try
-            {
-                path = path + "/MagazineCacheBlacklist.json";
-
-                //If the magazine blacklist file does not exist, we'll create a new sample one
-                if (!File.Exists(path))
-                {
-                    StreamWriter sw = File.CreateText(path);
-                    List<MagazineBlacklistEntry> blacklistSerialized = new List<MagazineBlacklistEntry>();
-                    MagazineBlacklistEntry sample = new MagazineBlacklistEntry();
-                    sample.FirearmID = "SKSClassic";
-                    sample.MagazineBlacklist.Add("MagazineSKSModern10rnd");
-                    sample.MagazineBlacklist.Add("MagazineSKSModern20rnd");
-                    blacklistSerialized.Add(sample);
-
-                    string blacklistString = JsonConvert.SerializeObject(blacklistSerialized, Formatting.Indented, new StringEnumConverter());
-                    sw.WriteLine(blacklistString);
-                    sw.Close();
-
-                    foreach (MagazineBlacklistEntry entry in blacklistSerialized)
-                    {
-                        blacklist.Add(entry.FirearmID, entry);
-                    }
-                }
-
-                //If the file does exist, we'll try to deserialize it
-                else
-                {
-                    string blacklistString = File.ReadAllText(path);
-                    List<MagazineBlacklistEntry> blacklistDeserialized = JsonConvert.DeserializeObject<List<MagazineBlacklistEntry>>(blacklistString);
-
-                    foreach(MagazineBlacklistEntry entry in blacklistDeserialized)
-                    {
-                        blacklist.Add(entry.FirearmID, entry);
-                    }
-                }
-            }
-
-            catch (Exception ex)
-            {
-                TNHTweakerLogger.LogError(ex.ToString());
-            }
-
-            return blacklist;
-        }
-
-
         public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
         {
             if (group.IDOverride != null)
@@ -577,32 +511,6 @@ namespace TNHTweaker.Utilities
             }
 
         }
-
-
-        /// <summary>
-        /// Returns wether of not the type sent is a type of generic list. Solution found here: https://stackoverflow.com/questions/794198/how-do-i-check-if-a-given-value-is-a-generic-list/41687428
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static bool IsGenericList(Type type)
-        {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
-        }
-
-
-
-        /// <summary>
-        /// Creates a list of the sent type. Solution found here: https://stackoverflow.com/questions/2493215/create-list-of-variable-type
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static IList CreateGenericList(Type type)
-        {
-            Type genericListType = typeof(List<>).MakeGenericType(type);
-            return (IList)Activator.CreateInstance(genericListType);
-        }
-
-
 
 
         /// <summary>
@@ -797,43 +705,6 @@ namespace TNHTweaker.Utilities
             a += gun.up * data.PosOffset.y;
             a += gun.right * data.PosOffset.x;
             return a + gun.forward * data.PosOffset.z;
-        }
-
-        public static bool FVRObjectListContainsID(List<FVRObject> list, string objectID)
-        {
-            foreach (FVRObject item in list)
-            {
-                if (item != null && item.ItemID.Equals(objectID)) return true;
-            }
-            return false;
-        }
-
-        public static bool IsFirearmDataValid(FVRObject firearm)
-        {
-            if(firearm.CompatibleMagazines == null || firearm.CompatibleClips == null || firearm.CompatibleSingleRounds == null || firearm.CompatibleSpeedLoaders == null)
-            {
-                return false;
-            }
-
-            if(firearm.CompatibleMagazines.ContainsNull() || firearm.CompatibleClips.ContainsNull() || firearm.CompatibleSingleRounds.ContainsNull() || firearm.CompatibleSpeedLoaders.ContainsNull())
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public static bool SavedGunComponentsLoaded(SavedGun gun)
-        {
-            foreach(SavedGunComponent comp in gun.Components)
-            {
-                if (IM.OD.ContainsKey(comp.ObjectID))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
     }

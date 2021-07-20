@@ -1,4 +1,5 @@
 ﻿using FistVR;
+using MagazinePatcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,8 +24,7 @@ namespace TNHTweaker
             {
                 if (selectedGroup.IsCompatibleMagazine)
                 {
-                    FVRObject mag = FirearmUtils.GetMagazineForEquipped(selectedGroup.MinAmmoCapacity,
-                        selectedGroup.MaxAmmoCapacity);
+                    FVRObject mag = FirearmUtils.GetAmmoContainerForEquipped(selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
                     if (mag != null)
                     {
                         selectedItem = mag.ItemID;
