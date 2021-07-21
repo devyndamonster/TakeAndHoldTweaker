@@ -41,7 +41,7 @@ namespace TNHTweaker.Utilities
 					compatibleContainers.RemoveAt(i);
 				}
 
-				if (compatibleContainers[i].MagazineCapacity < minCapacity || compatibleContainers[i].MagazineCapacity > maxCapacity)
+				else if (compatibleContainers[i].MagazineCapacity < minCapacity || compatibleContainers[i].MagazineCapacity > maxCapacity)
 				{
 					compatibleContainers.RemoveAt(i);
 				}
@@ -80,7 +80,7 @@ namespace TNHTweaker.Utilities
 					compatibleMagazines.RemoveAt(i);
 				}
 
-				if (compatibleMagazines[i].MagazineCapacity < minCapacity || compatibleMagazines[i].MagazineCapacity > maxCapacity)
+				else if (compatibleMagazines[i].MagazineCapacity < minCapacity || compatibleMagazines[i].MagazineCapacity > maxCapacity)
 				{
 					compatibleMagazines.RemoveAt(i);
 				}
@@ -117,7 +117,7 @@ namespace TNHTweaker.Utilities
 					compatibleClips.RemoveAt(i);
 				}
 
-				if (compatibleClips[i].MagazineCapacity < minCapacity || compatibleClips[i].MagazineCapacity > maxCapacity)
+				else if (compatibleClips[i].MagazineCapacity < minCapacity || compatibleClips[i].MagazineCapacity > maxCapacity)
 				{
 					compatibleClips.RemoveAt(i);
 				}
@@ -144,12 +144,12 @@ namespace TNHTweaker.Utilities
 					compatibleRounds.RemoveAt(i);
 				}
 
-				if(globalBulletBlacklist is not null && globalBulletBlacklist.Contains(compatibleRounds[i].ItemID))
+				else if(globalBulletBlacklist is not null && globalBulletBlacklist.Contains(compatibleRounds[i].ItemID))
                 {
 					compatibleRounds.RemoveAt(i);
                 }
 
-				if(!eras.Contains(compatibleRounds[i].TagEra) || !sets.Contains(compatibleRounds[i].TagSet))
+				else if(!eras.Contains(compatibleRounds[i].TagEra) || !sets.Contains(compatibleRounds[i].TagSet))
                 {
 					compatibleRounds.RemoveAt(i);
                 }
