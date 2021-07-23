@@ -69,11 +69,11 @@ namespace TNHTweaker
                 if (PatcherStatus.CachingFailed)
                 {
                     MagazineCacheFailed = true;
+                    progressText.text = "CACHING FAILED! SEE ABOVE";
                     throw new Exception("Magazine Caching Failed!");
                 }
             }
             while (cachingProgress < 1);
-
 
             //Now perform final steps of loading characters
             LoadTNHTemplates(CharDatabase);
@@ -86,6 +86,7 @@ namespace TNHTweaker
             RefreshTNHUI(instance, Categories, CharDatabase);
 
             itemsText.text = "";
+            progressText.text = "CACHING COMPLETE";
             hotdog.gameObject.SetActive(true);
             TNHInitialized = true;
         }

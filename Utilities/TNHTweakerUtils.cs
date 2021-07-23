@@ -23,18 +23,35 @@ namespace TNHTweaker.Utilities
         {
             try
             {
-                if (File.Exists(path + "/ObjectIDs.txt"))
+                if (File.Exists(path + "/ObjectIDs.csv"))
                 {
-                    File.Delete(path + "/ObjectIDs.txt");
+                    File.Delete(path + "/ObjectIDs.csv");
                 }
 
                 // Create a new file     
-                using (StreamWriter sw = File.CreateText(path + "/ObjectIDs.txt"))
+                using (StreamWriter sw = File.CreateText(path + "/ObjectIDs.csv"))
                 {
-                    sw.WriteLine("#Available object IDs for overrides");
-                    foreach (string objID in IM.OD.Keys)
+                    sw.WriteLine("ObjectID,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
+                    foreach (FVRObject obj in IM.OD.Values)
                     {
-                        sw.WriteLine(objID);
+                        sw.WriteLine(
+                            obj.ItemID + "," + 
+                            obj.Category + "," +
+                            obj.TagEra + "," +
+                            obj.TagSet + "," +
+                            obj.TagFirearmCountryOfOrigin + "," +
+                            obj.TagAttachmentFeature + "," +
+                            obj.TagFirearmAction + "," +
+                            string.Join("+", obj.TagFirearmFeedOption.Select(o => o.ToString()).ToArray()) + "," +
+                            string.Join("+", obj.TagFirearmFiringModes.Select(o => o.ToString()).ToArray()) + "," +
+                            obj.TagAttachmentMount + "," +
+                            obj.TagFirearmRoundPower + "," +
+                            obj.TagFirearmSize + "," +
+                            obj.TagMeleeHandedness + "," +
+                            obj.TagMeleeStyle + "," +
+                            obj.TagPowerupType + "," +
+                            obj.TagThrownDamageType + "," +
+                            obj.TagThrownType);
                     }
                     sw.Close();
                 }
