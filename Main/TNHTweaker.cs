@@ -43,6 +43,7 @@ namespace TNHTweaker
 
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
+            //Harmony.CreateAndPatchAll(typeof(DebugPatches));
 
             Stages.Setup += OnSetup;
         }

@@ -31,7 +31,7 @@ namespace TNHTweaker.Utilities
                 // Create a new file     
                 using (StreamWriter sw = File.CreateText(path + "/ObjectIDs.csv"))
                 {
-                    sw.WriteLine("ObjectID,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
+                    sw.WriteLine("ObjectID,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Firearm Mounts,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
                     foreach (FVRObject obj in IM.OD.Values)
                     {
                         sw.WriteLine(
@@ -44,6 +44,7 @@ namespace TNHTweaker.Utilities
                             obj.TagFirearmAction + "," +
                             string.Join("+", obj.TagFirearmFeedOption.Select(o => o.ToString()).ToArray()) + "," +
                             string.Join("+", obj.TagFirearmFiringModes.Select(o => o.ToString()).ToArray()) + "," +
+                            string.Join("+", obj.TagFirearmMounts.Select(o => o.ToString()).ToArray()) + "," +
                             obj.TagAttachmentMount + "," +
                             obj.TagFirearmRoundPower + "," +
                             obj.TagFirearmSize + "," +

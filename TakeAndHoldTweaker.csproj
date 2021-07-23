@@ -119,6 +119,7 @@
   <ItemGroup>
     <Compile Include="Main\AsyncLoadMonitor.cs" />
     <Compile Include="Main\ObjectWrappers\SosigLinkLootWrapper.cs" />
+    <Compile Include="Main\Patches\DebugPatches.cs" />
     <Compile Include="Main\Patches\TNHPatches.cs" />
     <Compile Include="Main\TNHMenuInitializer.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
