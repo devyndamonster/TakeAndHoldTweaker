@@ -743,5 +743,24 @@ namespace TNHTweaker.Utilities
                 yield return null;
             }
         }
+        
+        /// <summary>
+        /// Used to spawn more than one, different objects at a position
+        /// </summary>
+        /// <param name="gameObjects"></param>
+        /// <param name="position"></param>
+        /// <param name="tolerance"></param>
+        public static IEnumerator InstantiateList(IList<GameObject> gameObjects, Vector3 position, float tolerance = 1.3f)
+        {
+            float heightNeeded = (gameObjects.First().GetMaxBounds().size.y / 2) * tolerance;
+            for (var index = 0; index < gameObjects.Count; index++)
+            {
+                var gameObject = gameObjects[index];
+                float current = heightNeeded + (gameObject.GetMaxBounds().size.y / 2) * tolerance;;
+                UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current), new Quaternion());
+                heightNeeded = current + (gameObject.GetMaxBounds().size.y / 2) * tolerance;
+                yield return null;
+            }
+        }
     }
 }

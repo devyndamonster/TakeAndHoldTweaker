@@ -29,6 +29,7 @@ namespace TNHTweaker.ObjectTemplates
         public bool ForceAllAgentWeapons;
         public bool ForceDisableOutfitFunctionality;
         public bool UsesPurchasePriceIncrement;
+        public bool DisableCleanupSosigDrops;
         public bool HasPrimaryWeapon;
         public bool HasSecondaryWeapon;
         public bool HasTertiaryWeapon;

@@ -1186,7 +1186,17 @@ namespace TNHTweaker.Patches
         //PATCHES FOR SPAWNING SOSIGS
         /////////////////////////////
 
-
+        [HarmonyPatch(typeof(Sosig), "ClearSosig")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static void ClearSosig(Sosig __instance)
+        {
+            SosigLinkLootWrapper lootWrapper = __instance.GetComponentInChildren<SosigLinkLootWrapper>();
+            if (lootWrapper != null)
+            {
+                lootWrapper.dontDrop = !lootWrapper.shouldDropOnCleanup;
+            }
+        }
+        
         public static Sosig SpawnEnemy(SosigTemplate template, CustomCharacter character, Transform spawnLocation, TNHModifier_AIDifficulty difficulty, int IFF, bool isAssault, Vector3 pointOfInterest, bool allowAllWeapons)
         {
             return SpawnEnemy(template, character, spawnLocation.position, spawnLocation.rotation, difficulty, IFF, isAssault, pointOfInterest, allowAllWeapons);
@@ -1298,6 +1308,7 @@ namespace TNHTweaker.Patches
             if (UnityEngine.Random.value < template.DroppedLootChance && template.DroppedObjectPool != null)
             {
                 SosigLinkLootWrapper component = sosigComponent.Links[2].gameObject.AddComponent<SosigLinkLootWrapper>();
+                component.shouldDropOnCleanup = !character.DisableCleanupSosigDrops;
                 component.group = template.DroppedObjectPool;
             }
 
