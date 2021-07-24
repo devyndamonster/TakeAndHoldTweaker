@@ -1684,6 +1684,24 @@ namespace TNHTweaker.Patches
                 int ammoSpawnCount = 0;
                 int objectSpawnCount = 0;
 
+                // This gathers all spawn points, so that multiple things can be spawned at the same time, on different spawnpoints.
+                //TODO: I dont like this, but it should work.
+                Dictionary<Transform, List<GameObject>> itemsToSpawn = new Dictionary<Transform, List<GameObject>>();
+                itemsToSpawn.Add(constructor.SpawnPoint_Mag, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Ammo, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Grenade, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Melee, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Shield, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Object, new List<GameObject>());
+                
+                //This should only have one, and throw when trying to spawn more.
+                itemsToSpawn.Add(constructor.SpawnPoint_Case, new List<GameObject>());
+                
+                foreach (var gunSpawnPoint in constructor.SpawnPoints_GunsSize)
+                {
+                    itemsToSpawn.Add(gunSpawnPoint, new List<GameObject>());
+                }
+
                 TNHTweakerLogger.Log("TNHTWEAKER -- Pool has " + selectedGroups.Count + " groups to spawn from", TNHTweakerLogger.LogType.TNH);
                 for (int groupIndex = 0; groupIndex < selectedGroups.Count; groupIndex++)
                 {
