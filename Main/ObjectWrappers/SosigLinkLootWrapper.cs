@@ -13,9 +13,14 @@ namespace TNHTweaker
     public class SosigLinkLootWrapper : MonoBehaviour
     {
         public EquipmentGroup group;
+        public bool dontDrop = false;
+        public bool shouldDropOnCleanup;
 
         void OnDestroy()
         {
+            if (dontDrop)
+                return;
+            
             TNHTweakerLogger.Log("TNHTweaker -- Lootable link was destroyed!", TNHTweakerLogger.LogType.TNH);
 
             List<GameObject> toSpawn = new List<GameObject>();
