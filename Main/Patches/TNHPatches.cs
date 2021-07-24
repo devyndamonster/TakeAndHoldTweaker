@@ -407,9 +407,17 @@ namespace TNHTweaker.Patches
                 if (selectedGroup != null)
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
-                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
-                    GameObject item = UnityEngine.Object.Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoints_SmallItem[0].position, __instance.SpawnPoints_SmallItem[0].rotation);
-                    __instance.M.AddObjectToTrackedList(item);
+                    
+                    List<GameObject> toSpawn = new List<GameObject>();
+                    for (int i = 0; i < selectedGroup.ItemsToSpawn; i++)
+                    {
+                        FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                        var item = selectedItem.GetGameObject();
+                        toSpawn.Add(item);
+                        __instance.M.AddObjectToTrackedList(item);
+                    }
+                    
+                    AnvilManager.Run(TNHTweakerUtils.InstantiateList(toSpawn, __instance.SpawnPoints_SmallItem[0].position));
                 }
             }
 
@@ -421,9 +429,17 @@ namespace TNHTweaker.Patches
                 if (selectedGroup != null)
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
-                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
-                    GameObject item = UnityEngine.Object.Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoints_SmallItem[1].position, __instance.SpawnPoints_SmallItem[1].rotation);
-                    __instance.M.AddObjectToTrackedList(item);
+                    
+                    List<GameObject> toSpawn = new List<GameObject>();
+                    for (int i = 0; i < selectedGroup.ItemsToSpawn; i++)
+                    {
+                        FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                        var item = selectedItem.GetGameObject();
+                        toSpawn.Add(item);
+                        __instance.M.AddObjectToTrackedList(item);
+                    }
+                    
+                    AnvilManager.Run(TNHTweakerUtils.InstantiateList(toSpawn, __instance.SpawnPoints_SmallItem[1].position));
                 }
             }
 
@@ -435,9 +451,17 @@ namespace TNHTweaker.Patches
                 if (selectedGroup != null)
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
-                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
-                    GameObject item = UnityEngine.Object.Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoints_SmallItem[2].position, __instance.SpawnPoints_SmallItem[2].rotation);
-                    __instance.M.AddObjectToTrackedList(item);
+                    
+                    List<GameObject> toSpawn = new List<GameObject>();
+                    for (int i = 0; i < selectedGroup.ItemsToSpawn; i++)
+                    {
+                        FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                        var item = selectedItem.GetGameObject();
+                        toSpawn.Add(item);
+                        __instance.M.AddObjectToTrackedList(item);
+                    }
+                    
+                    AnvilManager.Run(TNHTweakerUtils.InstantiateList(toSpawn, __instance.SpawnPoints_SmallItem[2].position));
                 }
             }
 
