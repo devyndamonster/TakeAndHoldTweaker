@@ -21,6 +21,7 @@ namespace TNHTweaker.Patches
         private static List<int> spawnedBossIndexes = new List<int>();
         private static List<GameObject> SpawnedConstructors = new List<GameObject>();
         private static List<GameObject> SpawnedPanels = new List<GameObject>();
+        private static List<EquipmentPoolDef.PoolEntry> SpawnedPools = new List<EquipmentPoolDef.PoolEntry>();
 
         #region Initializing TNH
 
@@ -1474,6 +1475,62 @@ namespace TNHTweaker.Patches
         }
 
 
+        [HarmonyPatch(typeof(TNH_ObjectConstructor), "GetPoolEntry")]
+        [HarmonyPrefix]
+        public static bool GetPoolEntryPatch(ref EquipmentPoolDef.PoolEntry __result, int level, EquipmentPoolDef poolDef, EquipmentPoolDef.PoolEntry.PoolEntryType t, EquipmentPoolDef.PoolEntry prior)
+        {
+
+            //Collect all pools that could spawn based on level and type, and sum up their rarities
+            List<EquipmentPoolDef.PoolEntry> validPools = new List<EquipmentPoolDef.PoolEntry>();
+            float summedRarity = 0;
+            foreach(EquipmentPoolDef.PoolEntry entry in poolDef.Entries)
+            {
+                if(entry.Type == t && entry.MinLevelAppears <= level && entry.MaxLevelAppears >= level)
+                {
+                    validPools.Add(entry);
+                    summedRarity += entry.Rarity;
+                }
+            }
+
+            //If we didn't find a single pool, we cry about it
+            if(validPools.Count == 0)
+            {
+                TNHTweakerLogger.LogError("TNHTWEAKER -- No valid pool could spawn at constructor for type (" + t + ")");
+                __result = poolDef.Entries[0];
+                return false;
+            }
+
+            //Go back through and remove pools that have already spawned, unless there is only one entry left
+            validPools.Shuffle();
+            for(int i = validPools.Count - 1; i >= 0 && validPools.Count > 1; i--)
+            {
+                if (SpawnedPools.Contains(validPools[i]))
+                {
+                    summedRarity -= validPools[i].Rarity;
+                    validPools.RemoveAt(i);
+                }
+            }
+
+            //Select a random value within the summed rarity, and select a pool based on that value
+            float selectValue = UnityEngine.Random.Range(0, summedRarity);
+            float currentSum = 0;
+            foreach(EquipmentPoolDef.PoolEntry entry in validPools)
+            {
+                currentSum += entry.Rarity;
+                if(selectValue <= currentSum)
+                {
+                    __result = entry;
+                    SpawnedPools.Add(entry);
+                    return false;
+                }
+            }
+
+
+            TNHTweakerLogger.LogError("TNHTWEAKER -- Somehow escaped pool entry rarity selection! This is not good!");
+            __result = poolDef.Entries[0];
+            return false;
+        }
+
 
         [HarmonyPatch(typeof(TNH_ObjectConstructor), "ButtonClicked")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
@@ -1844,7 +1901,8 @@ namespace TNHTweaker.Patches
 
         public static void ClearAllPanels()
         {
-            //Debug.Log("Destroying constructors");
+            SpawnedPools.Clear();
+
             while (SpawnedConstructors.Count > 0)
             {
                 try
@@ -1866,7 +1924,6 @@ namespace TNHTweaker.Patches
                 SpawnedConstructors.RemoveAt(0);
             }
 
-            //Debug.Log("Destroying panels");
             while (SpawnedPanels.Count > 0)
             {
                 UnityEngine.Object.Destroy(SpawnedPanels[0]);
