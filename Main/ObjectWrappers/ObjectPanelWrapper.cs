@@ -1,5 +1,6 @@
 ﻿using FistVR;
 using HarmonyLib;
+using MagazinePatcher;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -30,7 +31,7 @@ namespace TNHTweaker
         public TNH_MagDuplicator original;
 
         private FVRFireArmMagazine detectedMag = null;
-        private AmmoObjectDataTemplate upgradeMag = null;
+        private FVRObject upgradeMag = null;
         private int storedCost = 0;
         private Collider[] colBuffer = new Collider[50];
         private float scanTick = 1f;
@@ -54,7 +55,7 @@ namespace TNHTweaker
 
         public void ButtonPressed()
         {
-            if (upgradeMag == null || storedCost > original.M.GetNumTokens() || upgradeMag.ObjectID == detectedMag.ObjectWrapper.ItemID)
+            if (upgradeMag == null || storedCost > original.M.GetNumTokens() || upgradeMag.ItemID == detectedMag.ObjectWrapper.ItemID)
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
@@ -66,9 +67,9 @@ namespace TNHTweaker
                 original.M.SubtractTokens(storedCost);
                 original.M.Increment(10, false);
 
-                Debug.Log(upgradeMag.ObjectID);
+                Debug.Log(upgradeMag.ItemID);
 
-                Instantiate(IM.OD[upgradeMag.ObjectID].GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+                Instantiate(IM.OD[upgradeMag.ItemID].GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 Destroy(detectedMag.gameObject);
 
                 detectedMag = null;
@@ -106,7 +107,8 @@ namespace TNHTweaker
                     if (mag != null && mag.FireArm == null && !mag.IsHeld && mag.QuickbeltSlot == null)
                     {
                         detectedMag = mag;
-                        upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag);
+
+                        upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper, FirearmUtils.GetLoadedFVRObjectsFromTemplateList(CompatibleMagazineCache.Instance.MagazineData[mag.MagazineType]));
 
                         SetCost();
 
@@ -124,9 +126,9 @@ namespace TNHTweaker
 
         private void SetCost()
         {
-            if(upgradeMag != null && detectedMag != null && detectedMag.ObjectWrapper.ItemID != upgradeMag.ObjectID)
+            if(upgradeMag != null && detectedMag != null && detectedMag.ObjectWrapper.ItemID != upgradeMag.ItemID)
             {
-                storedCost = (upgradeMag.Capacity - detectedMag.m_capacity) / 5;
+                storedCost = (upgradeMag.MagazineCapacity - detectedMag.m_capacity) / 5;
                 storedCost = Mathf.Clamp(storedCost, 1, 6);
                 original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Item, original.OCIcon.Sprite_Accept, storedCost);
             }
@@ -146,7 +148,7 @@ namespace TNHTweaker
     {
         public TNH_MagDuplicator original;
 
-        private AmmoObjectDataTemplate ammoObject = null;
+        private FVRObject ammoObject = null;
 
         private int storedCost = 0;
         private Collider[] colBuffer = new Collider[50];
@@ -183,7 +185,7 @@ namespace TNHTweaker
                 original.M.SubtractTokens(storedCost);
                 original.M.Increment(10, false);
 
-                Instantiate(ammoObject.AmmoObject.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+                Instantiate(ammoObject.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 
                 ammoObject = null;
             }
@@ -218,7 +220,12 @@ namespace TNHTweaker
                     {
                         //NOTE: We access IM.OD[] because the ObjectWrapper is not properly updated from caching for soME FUCKING REASON AHHHHHH
                         CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
-                        ammoObject = FirearmUtils.GetSmallestCapacityAmmoObject(IM.OD[firearm.ObjectWrapper.ItemID], character.GetMagazineBlacklist());
+                        List<FVRObject> compatibleAmmoContainers = FirearmUtils.GetCompatibleAmmoContainers(firearm.ObjectWrapper);
+
+                        MagazineBlacklistEntry blacklistEntry = null;
+                        if (character.GetMagazineBlacklist().ContainsKey(firearm.ObjectWrapper.ItemID)) blacklistEntry = character.GetMagazineBlacklist()[firearm.ObjectWrapper.ItemID];
+
+                        ammoObject = FirearmUtils.GetSmallestCapacityMagazine(compatibleAmmoContainers, blacklistEntry);
 
                         if (ammoObject != null)
                         {
@@ -236,7 +243,7 @@ namespace TNHTweaker
         {
             if (ammoObject != null)
             {
-                storedCost = (ammoObject.Capacity / 5) + 1;
+                storedCost = (ammoObject.MagazineCapacity / 5) + 1;
                 original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Item, original.OCIcon.Sprite_Accept, storedCost);
             }
             else
@@ -296,7 +303,10 @@ namespace TNHTweaker
                 TNHTweakerLogger.Log("Compatible rounds count for " + detectedFirearm.ObjectWrapper.ItemID + ": " + IM.OD[detectedFirearm.ObjectWrapper.ItemID].CompatibleSingleRounds.Count, TNHTweakerLogger.LogType.General);
 
                 CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
-                FVRObject compatibleRound = FirearmUtils.GetCompatibleBullets(IM.OD[detectedFirearm.ObjectWrapper.ItemID], character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist).GetRandom().AmmoObject;
+                MagazineBlacklistEntry blacklistEntry = null;
+                if (character.GetMagazineBlacklist().ContainsKey(detectedFirearm.ObjectWrapper.ItemID)) blacklistEntry = character.GetMagazineBlacklist()[detectedFirearm.ObjectWrapper.ItemID];
+
+                FVRObject compatibleRound = FirearmUtils.GetCompatibleRounds(detectedFirearm.ObjectWrapper, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, blacklistEntry).GetRandom();
 
                 AnvilManager.Run(SpawnRounds(compatibleRound, numSpawned));
 

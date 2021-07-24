@@ -82,6 +82,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(H3VRDir)\h3vr_Data\Managed\ES2.dll</HintPath>
     </Reference>
+    <Reference Include="MagazinePatcher">
+      <HintPath>Libs\MagazinePatcher.dll</HintPath>
+    </Reference>
     <Reference Include="OtherLoader">
       <HintPath>Libs\OtherLoader.dll</HintPath>
     </Reference>
@@ -116,9 +119,9 @@
   <ItemGroup>
     <Compile Include="Main\AsyncLoadMonitor.cs" />
     <Compile Include="Main\ObjectWrappers\SosigLinkLootWrapper.cs" />
+    <Compile Include="Main\Patches\DebugPatches.cs" />
     <Compile Include="Main\Patches\TNHPatches.cs" />
     <Compile Include="Main\TNHMenuInitializer.cs" />
-    <Compile Include="Main\CompatibleMagazineCache.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
     <Compile Include="ObjectTemplates\VectorSerializable.cs" />
     <Compile Include="Utilities\FirearmUtils.cs" />

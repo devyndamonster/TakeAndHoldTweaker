@@ -23,18 +23,36 @@ namespace TNHTweaker.Utilities
         {
             try
             {
-                if (File.Exists(path + "/ObjectIDs.txt"))
+                if (File.Exists(path + "/ObjectIDs.csv"))
                 {
-                    File.Delete(path + "/ObjectIDs.txt");
+                    File.Delete(path + "/ObjectIDs.csv");
                 }
 
                 // Create a new file     
-                using (StreamWriter sw = File.CreateText(path + "/ObjectIDs.txt"))
+                using (StreamWriter sw = File.CreateText(path + "/ObjectIDs.csv"))
                 {
-                    sw.WriteLine("#Available object IDs for overrides");
-                    foreach (string objID in IM.OD.Keys)
+                    sw.WriteLine("ObjectID,Category,Era,Set,Country of Origin,Attachment Feature,Firearm Action,Firearm Feed Option,Firing Modes,Firearm Mounts,Attachment Mount,Round Power,Size,Melee Handedness,Melee Style,Powerup Type,Thrown Damage Type,Thrown Type");
+                    foreach (FVRObject obj in IM.OD.Values)
                     {
-                        sw.WriteLine(objID);
+                        sw.WriteLine(
+                            obj.ItemID + "," + 
+                            obj.Category + "," +
+                            obj.TagEra + "," +
+                            obj.TagSet + "," +
+                            obj.TagFirearmCountryOfOrigin + "," +
+                            obj.TagAttachmentFeature + "," +
+                            obj.TagFirearmAction + "," +
+                            string.Join("+", obj.TagFirearmFeedOption.Select(o => o.ToString()).ToArray()) + "," +
+                            string.Join("+", obj.TagFirearmFiringModes.Select(o => o.ToString()).ToArray()) + "," +
+                            string.Join("+", obj.TagFirearmMounts.Select(o => o.ToString()).ToArray()) + "," +
+                            obj.TagAttachmentMount + "," +
+                            obj.TagFirearmRoundPower + "," +
+                            obj.TagFirearmSize + "," +
+                            obj.TagMeleeHandedness + "," +
+                            obj.TagMeleeStyle + "," +
+                            obj.TagPowerupType + "," +
+                            obj.TagThrownDamageType + "," +
+                            obj.TagThrownType);
                     }
                     sw.Close();
                 }
@@ -153,19 +171,6 @@ namespace TNHTweaker.Utilities
             return icons;
         }
 
-
-        public static bool ListContainsObjectID(List<FVRObject> objs, string ID)
-        {
-            foreach(FVRObject obj in objs)
-            {
-                if (obj.ItemID.Equals(ID))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
 
         public static void CreateDefaultCharacterFiles(List<CustomCharacter> characters, string path)
         {
@@ -407,59 +412,6 @@ namespace TNHTweaker.Utilities
         }
 
 
-
-
-        public static Dictionary<string, MagazineBlacklistEntry> GetMagazineCacheBlacklist(string path)
-        {
-            Dictionary<string, MagazineBlacklistEntry> blacklist = new Dictionary<string, MagazineBlacklistEntry>();
-
-            try
-            {
-                path = path + "/MagazineCacheBlacklist.json";
-
-                //If the magazine blacklist file does not exist, we'll create a new sample one
-                if (!File.Exists(path))
-                {
-                    StreamWriter sw = File.CreateText(path);
-                    List<MagazineBlacklistEntry> blacklistSerialized = new List<MagazineBlacklistEntry>();
-                    MagazineBlacklistEntry sample = new MagazineBlacklistEntry();
-                    sample.FirearmID = "SKSClassic";
-                    sample.MagazineBlacklist.Add("MagazineSKSModern10rnd");
-                    sample.MagazineBlacklist.Add("MagazineSKSModern20rnd");
-                    blacklistSerialized.Add(sample);
-
-                    string blacklistString = JsonConvert.SerializeObject(blacklistSerialized, Formatting.Indented, new StringEnumConverter());
-                    sw.WriteLine(blacklistString);
-                    sw.Close();
-
-                    foreach (MagazineBlacklistEntry entry in blacklistSerialized)
-                    {
-                        blacklist.Add(entry.FirearmID, entry);
-                    }
-                }
-
-                //If the file does exist, we'll try to deserialize it
-                else
-                {
-                    string blacklistString = File.ReadAllText(path);
-                    List<MagazineBlacklistEntry> blacklistDeserialized = JsonConvert.DeserializeObject<List<MagazineBlacklistEntry>>(blacklistString);
-
-                    foreach(MagazineBlacklistEntry entry in blacklistDeserialized)
-                    {
-                        blacklist.Add(entry.FirearmID, entry);
-                    }
-                }
-            }
-
-            catch (Exception ex)
-            {
-                TNHTweakerLogger.LogError(ex.ToString());
-            }
-
-            return blacklist;
-        }
-
-
         public static void RemoveUnloadedObjectIDs(EquipmentGroup group)
         {
             if (group.IDOverride != null)
@@ -577,32 +529,6 @@ namespace TNHTweaker.Utilities
             }
 
         }
-
-
-        /// <summary>
-        /// Returns wether of not the type sent is a type of generic list. Solution found here: https://stackoverflow.com/questions/794198/how-do-i-check-if-a-given-value-is-a-generic-list/41687428
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static bool IsGenericList(Type type)
-        {
-            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
-        }
-
-
-
-        /// <summary>
-        /// Creates a list of the sent type. Solution found here: https://stackoverflow.com/questions/2493215/create-list-of-variable-type
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static IList CreateGenericList(Type type)
-        {
-            Type genericListType = typeof(List<>).MakeGenericType(type);
-            return (IList)Activator.CreateInstance(genericListType);
-        }
-
-
 
 
         /// <summary>
@@ -798,63 +724,6 @@ namespace TNHTweaker.Utilities
             a += gun.right * data.PosOffset.x;
             return a + gun.forward * data.PosOffset.z;
         }
-
-        public static bool FVRObjectListContainsID(List<FVRObject> list, string objectID)
-        {
-            foreach (FVRObject item in list)
-            {
-                if (item != null && item.ItemID.Equals(objectID)) return true;
-            }
-            return false;
-        }
-
-        public static bool IsFirearmDataValid(FVRObject firearm)
-        {
-            if(firearm.CompatibleMagazines == null || firearm.CompatibleClips == null || firearm.CompatibleSingleRounds == null || firearm.CompatibleSpeedLoaders == null)
-            {
-                return false;
-            }
-
-            if(firearm.CompatibleMagazines.ContainsNull() || firearm.CompatibleClips.ContainsNull() || firearm.CompatibleSingleRounds.ContainsNull() || firearm.CompatibleSpeedLoaders.ContainsNull())
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public static bool SavedGunComponentsLoaded(SavedGun gun)
-        {
-            foreach(SavedGunComponent comp in gun.Components)
-            {
-                if (IM.OD.ContainsKey(comp.ObjectID))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Used to spawn more than one, different objects at a position
-        /// </summary>
-        /// <param name="gameObjects"></param>
-        /// <param name="position"></param>
-        /// <param name="tolerance"></param>
-        public static IEnumerator InstantiateList(IList<GameObject> gameObjects, Vector3 position, float tolerance = 1.3f)
-        {
-            float heightNeeded = (gameObjects.First().GetMaxBounds().size.y / 2) * tolerance;
-            for (var index = 0; index < gameObjects.Count; index++)
-            {
-                var gameObject = gameObjects[index];
-                float current = heightNeeded + (gameObject.GetMaxBounds().size.y / 2) * tolerance;;
-                UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current), new Quaternion());
-                heightNeeded = current + (gameObject.GetMaxBounds().size.y / 2) * tolerance;
-                yield return null;
-            }
-        }
-
         /// <summary>
         /// Used to spawn more than one, same objects at a position
         /// </summary>
