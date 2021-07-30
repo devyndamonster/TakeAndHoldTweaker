@@ -6,12 +6,13 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
 1. Install the [Deli Mod Loader](https://github.com/Deli-Counter/Deli)
     - Deli requires the x64 version of BepInEx, you can find installation instructions for that [here](https://bepinex.github.io/bepinex_docs/master/articles/user_guide/installation/index.html?tabs=tabid-win)
     - By default the games root folder path is `C:\Program Files (x86)\Steam\steamapps\common\H3VR`
-2. Download the `Devyndamonster-TakeAndHoldTweaker.zip` from the [releases page](https://github.com/devyndamonster/TakeAndHoldTweaker/releases)
-3. Extract that zip file into your `BepInEx/plugins` folder
-4. Run H3VR once, and enter the Take &amp; Hold menu scene
+2. Download and install [Magazine Patcher](https://github.com/devyndamonster/MagazinePatcher)
+3. Download the `Devyndamonster-TakeAndHoldTweaker.zip` from the [releases page](https://github.com/devyndamonster/TakeAndHoldTweaker/releases)
+4. Extract that zip file into your `BepInEx/plugins` folder
+5. Run H3VR once, and enter the Take &amp; Hold menu scene
     - This may take a while, as it will have to generate a compatible magazines cache
     - This will also generate a config file inside your `BepInEx/configs` folder
-5. Place any character files into the `BepInEx/plugins` folder
+6. Place any character files into the `BepInEx/plugins` folder
 
 ## Current Custom Characters
 
