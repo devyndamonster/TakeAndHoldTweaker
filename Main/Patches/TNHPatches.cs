@@ -524,6 +524,8 @@ namespace TNHTweaker.Patches
                 }
             }
 
+            if (TNHTweaker.UnlimitedTokens.Value) __instance.M.AddTokens(999999, false);
+
             return false;
         }
 
@@ -1753,7 +1755,7 @@ namespace TNHTweaker.Patches
                             //Get lists of ammo objects for this firearm with filters and blacklists applied
                             List<FVRObject> compatibleMagazines = FirearmUtils.GetCompatibleMagazines(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, true, blacklistEntry);
                             List<FVRObject> compatibleRounds = FirearmUtils.GetCompatibleRounds(mainObject, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, blacklistEntry);
-                            List<FVRObject> compatibleClips = FirearmUtils.GetCompatibleClips(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, blacklistEntry);
+                            List<FVRObject> compatibleClips = mainObject.CompatibleClips;
 
                             TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Mag Count: " + compatibleMagazines.Count, TNHTweakerLogger.LogType.TNH);
                             TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Clip Count: " + compatibleClips.Count, TNHTweakerLogger.LogType.TNH);
@@ -1812,6 +1814,8 @@ namespace TNHTweaker.Patches
                                     numSpawned = group.NumRoundsSpawned;
                                     ammoSpawn = constructor.SpawnPoint_Ammo;
                                 }
+
+                                TNHTweakerLogger.Log("TNHTWEAKER -- Spawning ammo object normally (" + ammoObject.ItemID + "), Count = " + numSpawned, TNHTweakerLogger.LogType.TNH);
 
                                 gameObjectCallback = ammoObject.GetGameObjectAsync();
                                 yield return gameObjectCallback;

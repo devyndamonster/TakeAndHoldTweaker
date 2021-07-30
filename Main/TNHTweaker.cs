@@ -29,6 +29,7 @@ namespace TNHTweaker
         private static ConfigEntry<bool> logFileReads;
         private static ConfigEntry<bool> allowLog;
         public static ConfigEntry<bool> BuildCharacterFiles;
+        public static ConfigEntry<bool> UnlimitedTokens;
 
         public static string OutputFilePath;
 
@@ -131,6 +132,11 @@ namespace TNHTweaker
                                     "LogFileReads",
                                     false,
                                     "If true, reading from a file will log the reading process");
+
+            UnlimitedTokens = Source.Config.Bind("Debug",
+                                    "EnableUnlimitedTokens",
+                                    false,
+                                    "If true, you will spawn with 999999 tokens for any character in TNH (useful for testing loot pools)");
 
             TNHTweakerLogger.AllowLogging = allowLog.Value;
             TNHTweakerLogger.LogCharacter = printCharacters.Value;

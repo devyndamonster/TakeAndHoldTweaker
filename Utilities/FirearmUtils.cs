@@ -29,23 +29,42 @@ namespace TNHTweaker.Utilities
 
 			//Create a list containing all compatible ammo containers
 			List<FVRObject> compatibleContainers = new List<FVRObject>();
-			if (firearm.CompatibleMagazines is not null) compatibleContainers.AddRange(firearm.CompatibleMagazines);
-			if (firearm.CompatibleClips is not null) compatibleContainers.AddRange(firearm.CompatibleClips);
 			if (firearm.CompatibleSpeedLoaders is not null) compatibleContainers.AddRange(firearm.CompatibleSpeedLoaders);
 
-			//Go through these containers and remove any that don't fit given criteria
-			for (int i = compatibleContainers.Count - 1; i >= 0; i--)
+
+			//Go through each magazine and add compatible ones
+			foreach(FVRObject magazine in firearm.CompatibleMagazines)
 			{
-				if (blacklist is not null && blacklist.IsItemBlacklisted(compatibleContainers[i].ItemID))
+				if (blacklist is not null && (!blacklist.IsMagazineAllowed(magazine.ItemID)))
 				{
-					compatibleContainers.RemoveAt(i);
+					continue;
 				}
 
-				else if (compatibleContainers[i].MagazineCapacity < minCapacity || compatibleContainers[i].MagazineCapacity > maxCapacity)
+				else if (magazine.MagazineCapacity < minCapacity || magazine.MagazineCapacity > maxCapacity)
 				{
-					compatibleContainers.RemoveAt(i);
+					continue;
 				}
+
+				compatibleContainers.Add(magazine);
 			}
+
+
+			//Go through each magazine and add compatible ones
+			foreach (FVRObject clip in firearm.CompatibleClips)
+			{
+				if (blacklist is not null && (!blacklist.IsClipAllowed(clip.ItemID)))
+				{
+					continue;
+				}
+
+				else if (clip.MagazineCapacity < minCapacity || clip.MagazineCapacity > maxCapacity)
+				{
+					continue;
+				}
+
+				compatibleContainers.Add(clip);
+			}
+
 
 			//If the resulting list is empty, and smallestIfEmpty is true, add the smallest capacity magazine to the list
 			if (compatibleContainers.Count == 0 && smallestIfEmpty && firearm.CompatibleMagazines is not null)
@@ -75,7 +94,7 @@ namespace TNHTweaker.Utilities
 			//Go through these containers and remove any that don't fit given criteria
 			for (int i = compatibleMagazines.Count - 1; i >= 0; i--)
 			{
-				if (blacklist is not null && blacklist.MagazineBlacklist.Contains(compatibleMagazines[i].ItemID))
+				if (blacklist is not null && (!blacklist.IsMagazineAllowed(compatibleMagazines[i].ItemID)))
 				{
 					compatibleMagazines.RemoveAt(i);
 				}
@@ -89,7 +108,7 @@ namespace TNHTweaker.Utilities
 			//If the resulting list is empty, and smallestIfEmpty is true, add the smallest capacity magazine to the list
 			if (compatibleMagazines.Count == 0 && smallestIfEmpty && firearm.CompatibleMagazines is not null)
 			{
-				FVRObject magazine = GetSmallestCapacityMagazine(firearm.CompatibleMagazines);
+				FVRObject magazine = GetSmallestCapacityMagazine(firearm.CompatibleMagazines, blacklist);
 				if (magazine is not null) compatibleMagazines.Add(magazine);
 			}
 
@@ -112,7 +131,7 @@ namespace TNHTweaker.Utilities
 			//Go through these containers and remove any that don't fit given criteria
 			for (int i = compatibleClips.Count - 1; i >= 0; i--)
 			{
-				if (blacklist is not null && blacklist.ClipBlacklist.Contains(compatibleClips[i].ItemID))
+				if (blacklist is not null && (!blacklist.IsClipAllowed(compatibleClips[i].ItemID)))
 				{
 					compatibleClips.RemoveAt(i);
 				}
@@ -139,7 +158,7 @@ namespace TNHTweaker.Utilities
 			//Go through these containers and remove any that don't fit given criteria
 			for (int i = compatibleRounds.Count - 1; i >= 0; i--)
 			{
-				if (blacklist is not null && blacklist.RoundBlacklist.Contains(compatibleRounds[i].ItemID))
+				if (blacklist is not null && (!blacklist.IsRoundAllowed(compatibleRounds[i].ItemID)))
 				{
 					compatibleRounds.RemoveAt(i);
 				}
@@ -174,7 +193,7 @@ namespace TNHTweaker.Utilities
 
 			foreach (FVRObject magazine in magazines)
 			{
-				if (blacklist is not null && blacklist.MagazineBlacklist.Contains(magazine.ItemID)) continue;
+				if (blacklist is not null && (!blacklist.IsMagazineAllowed(magazine.ItemID))) continue;
 
 				else if (smallestMagazines.Count == 0) smallestMagazines.Add(magazine);
 
