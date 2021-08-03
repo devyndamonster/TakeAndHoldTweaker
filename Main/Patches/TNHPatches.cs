@@ -717,6 +717,12 @@ namespace TNHTweaker.Patches
                     panel = point.M.SpawnGunRecycler(point.SpawnPoints_Panels[i]);
                 }
 
+                else if (panelType == PanelType.AmmoPurchase)
+                {
+                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel.AddComponent(typeof(AmmoPurchasePanel));
+                }
+
                 else
                 {
                     panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
@@ -735,18 +741,6 @@ namespace TNHTweaker.Patches
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
                     FireRateModifier component = (FireRateModifier)panel.AddComponent(typeof(FireRateModifier));
                     component.Init(panelType);
-                }
-
-                else if (panelType == PanelType.MagPurchase)
-                {
-                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
-                    panel.AddComponent(typeof(MagPurchaser));
-                }
-
-                else if (panelType == PanelType.AmmoPurchase)
-                {
-                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
-                    panel.AddComponent(typeof(AmmoPurchaser));
                 }
                 */
 

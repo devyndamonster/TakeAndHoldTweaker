@@ -76,9 +76,9 @@ namespace TNHTweaker
             Sprite result = TNHTweakerUtils.LoadSprite(file);
             MagazinePanel.background = result;
 
-            file = Source.Resources.GetFile("token_icon.png");
+            file = Source.Resources.GetFile("ammo_purchase_background.png");
             result = TNHTweakerUtils.LoadSprite(file);
-            MagazinePanel.buttonIcon = result;
+            AmmoPurchasePanel.background = result;
 
             /*
             file = Source.Resources.GetFile("full_auto.png");

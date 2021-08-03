@@ -33,7 +33,6 @@ namespace TNHTweaker
         public Dictionary<string, MagazineBlacklistEntry> blacklist;
 
         public static Sprite background;
-        public static Sprite buttonIcon;
 
         private TNH_ObjectConstructorIcon DupeIcon;
         private TNH_ObjectConstructorIcon UpgradeIcon;
@@ -51,12 +50,11 @@ namespace TNHTweaker
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
             if (original == null) TNHTweakerLogger.LogError("Mag Upgrader failed, original Mag Duplicator was null!");
+            original.enabled = false;
+
             blacklist = LoadedTemplateManager.LoadedCharactersDict[original.M.C].GetMagazineBlacklist();
 
             InitPanel();
-
-            original.enabled = false;
-
             UpdateIcons();
         }
 
@@ -260,38 +258,65 @@ namespace TNHTweaker
         
     }
 
-    /*
 
-    public class AmmoPurchaser : MonoBehaviour
+
+
+    public class AmmoPurchasePanel : MonoBehaviour
     {
         public TNH_MagDuplicator original;
+        public Dictionary<string, MagazineBlacklistEntry> blacklist;
+
+        public static Sprite background;
+
+        private TNH_ObjectConstructorIcon PurchaseIcon;
 
         private FVRFireArm detectedFirearm = null;
-
-        private int storedCost = 0;
         private Collider[] colBuffer = new Collider[50];
         private float scanTick = 1f;
 
         public void Awake()
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
-
             if (original == null) TNHTweakerLogger.LogError("Ammo Purchaser failed, original mag duplicator was null!");
-
-            Button button = original.GetComponentInChildren<Button>();
-            button.onClick = new Button.ButtonClickedEvent();
-            button.onClick.AddListener(() => { ButtonPressed(); });
-
             original.enabled = false;
 
-            original.OCIcon.Image.sprite = LoadedTemplateManager.PanelSprites[PanelType.AmmoPurchase];
-            original.OCIcon.Sprite_Cancel = LoadedTemplateManager.PanelSprites[PanelType.AmmoPurchase];
+            InitPanel();
+            UpdateIcons();
         }
 
 
-        public void ButtonPressed()
+        private void InitPanel()
         {
-            if (detectedFirearm == null || storedCost > original.M.GetNumTokens())
+            Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
+
+            Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
+
+            Transform iconTransform_0 = canvasHolder.Find("Icon_0");
+            iconTransform_0.localPosition = new Vector3(0, -200, 0);
+
+            Transform iconTransform_1 = canvasHolder.Find("Icon_1");
+            Destroy(iconTransform_1.gameObject);
+
+            Transform buttonTransform_0 = original.transform.Find("PointableButton_0");
+            buttonTransform_0.position = iconTransform_0.position;
+
+            Transform buttonTransform_1 = original.transform.Find("PointableButton_1");
+            Destroy(buttonTransform_1.gameObject);
+
+            Image backgroundImage = backingTransform.gameObject.GetComponent<Image>();
+            backgroundImage.sprite = background;
+;
+            PurchaseIcon = iconTransform_0.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
+
+            Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
+            button_0.onClick = new Button.ButtonClickedEvent();
+            button_0.onClick.AddListener(() => { PurchaseAmmoButton(); });
+        }
+
+
+        public void PurchaseAmmoButton()
+        {
+            if (detectedFirearm == null || original.M.GetNumTokens() < 1)
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
@@ -300,7 +325,7 @@ namespace TNHTweaker
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(storedCost);
+                original.M.SubtractTokens(1);
                 original.M.Increment(10, false);
 
                 FVRObject.OTagFirearmRoundPower roundPower = AM.GetRoundPower(detectedFirearm.RoundType);
@@ -317,6 +342,7 @@ namespace TNHTweaker
                 AnvilManager.Run(SpawnRounds(compatibleRound, numSpawned));
 
                 detectedFirearm = null;
+                UpdateIcons();
             }
         }
 
@@ -329,8 +355,6 @@ namespace TNHTweaker
                 Instantiate(bulletObject, original.Spawnpoint_Mag.position + (Vector3.up * 0.02f * i), original.Spawnpoint_Mag.rotation);
                 yield return null;
             }
-            
-
         }
 
         public int GetRoundsToSpawn(FVRObject.OTagFirearmRoundPower roundPower)
@@ -356,6 +380,7 @@ namespace TNHTweaker
                 if (Vector3.Distance(transform.position, GM.CurrentPlayerBody.transform.position) < 12)
                 {
                     Scan();
+                    UpdateIcons();
                 }
             }
         }
@@ -375,33 +400,24 @@ namespace TNHTweaker
                     if (firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
                     {
                         detectedFirearm = firearm;
-
-                        SetCost();
-
                         return;
                     }
                 }
             }
-
-            SetCost();
         }
 
-        private void SetCost()
+        private void UpdateIcons()
         {
-            if (detectedFirearm != null)
-            {
-                storedCost = 1;
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Item, original.OCIcon.Sprite_Accept, storedCost);
-            }
-            else
-            {
-                storedCost = 0;
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Cancel, original.OCIcon.Sprite_Cancel, storedCost);
-            }
+            PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+
+            if (detectedFirearm != null) PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+
+            PurchaseIcon.UpdateIconDisplay();
         }
     }
 
 
+    /*
 
     public class FullAutoEnabler : MonoBehaviour
     {
