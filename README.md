@@ -16,7 +16,7 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
 
 ## Current Custom Characters
 
-***NOTE:*** Custom characters have moved! You can find them on [Bonetome!](https://bonetome.com/h3vr/characters/)
+***NOTE:*** Custom characters have moved! You can find them on [Thunderstore!](https://h3vr.thunderstore.io/?q=&ordering=last-updated&included_categories=55)
 
 - **Comrade Kolbasa** \- A character which can only use russian and czech weaponry
 - **Time Travel Timmy** \- Progress through each age of weaponry, from wild west to modern
