@@ -128,6 +128,9 @@ namespace TNHTweaker
                 {
                     FirearmUtils.SpawnDuplicateSpeedloader(detectedSpeedLoader, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
+
+                detectedMag = null;
+                detectedSpeedLoader = null;
             }
         }
 
@@ -162,6 +165,8 @@ namespace TNHTweaker
                 original.M.Increment(10, false);
 
                 Instantiate(purchaseMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+
+                purchaseMag = null;
             }
         }
 
@@ -227,24 +232,23 @@ namespace TNHTweaker
 
         private void UpdateIcons()
         {
-            if (detectedMag != null || detectedSpeedLoader != null) 
-            {
-                DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
-                DupeIcon.UpdateIconDisplay();
-            }
+            DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
 
-            upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper);
-            if (upgradeMag != null)
-            {
-                UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
-                UpgradeIcon.UpdateIconDisplay();
-            }
+            if (detectedMag != null || detectedSpeedLoader != null) DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
 
-            if(purchaseMag != null)
+            if (purchaseMag != null) PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+
+            if (detectedMag != null)
             {
-                PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
-                PurchaseIcon.UpdateIconDisplay();
+                upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper);
+                if (upgradeMag != null) UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
             }
+            
+            DupeIcon.UpdateIconDisplay();
+            UpgradeIcon.UpdateIconDisplay();
+            PurchaseIcon.UpdateIconDisplay();
         }
 
         
