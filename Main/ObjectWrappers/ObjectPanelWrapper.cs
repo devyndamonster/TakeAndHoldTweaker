@@ -30,50 +30,138 @@ namespace TNHTweaker
     {
         public TNH_MagDuplicator original;
 
+        public Dictionary<string, MagazineBlacklistEntry> blacklist;
+
+        public static Sprite background;
+        public static Sprite buttonIcon;
+
+        private TNH_ObjectConstructorIcon DupeIcon;
+        private TNH_ObjectConstructorIcon UpgradeIcon;
+        private TNH_ObjectConstructorIcon PurchaseIcon;
+
         private FVRFireArmMagazine detectedMag = null;
+        private Speedloader detectedSpeedLoader = null;
+        private FVRObject purchaseMag = null;
         private FVRObject upgradeMag = null;
-        private int storedCost = 0;
+
         private Collider[] colBuffer = new Collider[50];
         private float scanTick = 1f;
 
         public void Awake()
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
-
             if (original == null) TNHTweakerLogger.LogError("Mag Upgrader failed, original Mag Duplicator was null!");
+            blacklist = LoadedTemplateManager.LoadedCharactersDict[original.M.C].GetMagazineBlacklist();
 
-            Button button = original.GetComponentInChildren<Button>();
-            button.onClick = new Button.ButtonClickedEvent();
-            button.onClick.AddListener(() => { ButtonPressed(); });
+            InitPanel();
 
             original.enabled = false;
 
-            original.OCIcon.Image.sprite = LoadedTemplateManager.PanelSprites[PanelType.MagUpgrader];
-            original.OCIcon.Sprite_Cancel = LoadedTemplateManager.PanelSprites[PanelType.MagUpgrader];
+            UpdateIcons();
         }
 
 
-        public void ButtonPressed()
+        private void InitPanel()
         {
-            if (upgradeMag == null || storedCost > original.M.GetNumTokens() || upgradeMag.ItemID == detectedMag.ObjectWrapper.ItemID)
+            Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
+
+            Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
+
+            Transform iconTransform_0 = canvasHolder.Find("Icon_0");
+            iconTransform_0.localPosition = new Vector3(-270, -200, 0);
+
+            Transform iconTransform_1 = canvasHolder.Find("Icon_1");
+            iconTransform_1.localPosition = new Vector3(0, -200, 0);
+
+            Transform iconTransform_2 = Instantiate(iconTransform_1.gameObject, canvasHolder).transform;
+            iconTransform_2.localPosition = new Vector3(270, -200, 0);
+
+            Transform buttonTransform_0 = original.transform.Find("PointableButton_0");
+            buttonTransform_0.position = iconTransform_0.position;
+
+            Transform buttonTransform_1 = original.transform.Find("PointableButton_1");
+            buttonTransform_1.position = iconTransform_1.position;
+
+            Transform buttonTransform_2 = Instantiate(buttonTransform_1.gameObject, buttonTransform_1.parent).transform;
+            buttonTransform_2.position = iconTransform_2.position;
+
+            Image backgroundImage = backingTransform.gameObject.GetComponent<Image>();
+
+            backgroundImage.sprite = background;
+
+            DupeIcon = iconTransform_0.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
+            UpgradeIcon = iconTransform_1.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
+            PurchaseIcon = iconTransform_2.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
+
+            Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
+            button_0.onClick = new Button.ButtonClickedEvent();
+            button_0.onClick.AddListener(() => { DupeMagButton(); });
+
+            Button button_1 = buttonTransform_1.gameObject.GetComponent<Button>();
+            button_1.onClick = new Button.ButtonClickedEvent();
+            button_1.onClick.AddListener(() => { UpgradeMagButton(); });
+
+            Button button_2 = buttonTransform_2.gameObject.GetComponent<Button>();
+            button_2.onClick = new Button.ButtonClickedEvent();
+            button_2.onClick.AddListener(() => { PurchaseMagButton(); });
+        }
+
+        private void DupeMagButton()
+        {
+            if((detectedMag == null && detectedSpeedLoader == null) || original.M.GetNumTokens() == 0)
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
-                return;
             }
 
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(storedCost);
+                original.M.SubtractTokens(1);
                 original.M.Increment(10, false);
 
-                Debug.Log(upgradeMag.ItemID);
+                if(detectedMag != null)
+                {
+                    FirearmUtils.SpawnDuplicateMagazine(detectedMag, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+                }
 
-                Instantiate(IM.OD[upgradeMag.ItemID].GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
-                Destroy(detectedMag.gameObject);
+                else
+                {
+                    FirearmUtils.SpawnDuplicateSpeedloader(detectedSpeedLoader, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+                }
+            }
+        }
 
-                detectedMag = null;
-                upgradeMag = null;
+        private void UpgradeMagButton()
+        {
+            if (upgradeMag == null || original.M.GetNumTokens() < 2)
+            {
+                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
+            }
+
+            else
+            {
+                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
+                original.M.SubtractTokens(2);
+                original.M.Increment(10, false);
+                Destroy(detectedMag.GameObject);
+                Instantiate(upgradeMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+            }
+        }
+
+        private void PurchaseMagButton()
+        {
+            if (purchaseMag == null || original.M.GetNumTokens() < 1)
+            {
+                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
+            }
+
+            else
+            {
+                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
+                original.M.SubtractTokens(1);
+                original.M.Increment(10, false);
+
+                Instantiate(purchaseMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
             }
         }
 
@@ -96,53 +184,73 @@ namespace TNHTweaker
             int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
 
             detectedMag = null;
+            detectedSpeedLoader = null;
+            purchaseMag = null;
             upgradeMag = null;
 
             for(int i = 0; i < colliderCount; i++)
             {
                 if(colBuffer[i].attachedRigidbody != null)
                 {
-                    FVRFireArmMagazine mag = colBuffer[i].GetComponent<FVRFireArmMagazine>();
+                    FVRFireArm firearm = colBuffer[i].GetComponent<FVRFireArm>();
+                    if (purchaseMag == null && firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
+                    {
+                        MagazineBlacklistEntry entry = null;
+                        if (blacklist.ContainsKey(firearm.ObjectWrapper.ItemID)) entry = blacklist[firearm.ObjectWrapper.ItemID];
+                        List<FVRObject> spawnableMags = FirearmUtils.GetCompatibleMagazines(firearm.ObjectWrapper, -1, -1, false, entry);
 
-                    if (mag != null && mag.FireArm == null && !mag.IsHeld && mag.QuickbeltSlot == null)
+                        if (spawnableMags.Count > 0)
+                        {
+                            purchaseMag = FirearmUtils.GetSmallestCapacityMagazine(spawnableMags);
+                        }
+                    }
+
+                    FVRFireArmMagazine mag = colBuffer[i].GetComponent<FVRFireArmMagazine>();
+                    if (mag != null && mag.FireArm == null && (!mag.IsHeld) && mag.QuickbeltSlot == null && (!mag.IsIntegrated))
                     {
                         detectedMag = mag;
-
-                        upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper, FirearmUtils.GetLoadedFVRObjectsFromTemplateList(CompatibleMagazineCache.Instance.MagazineData[mag.MagazineType]));
-
-                        SetCost();
-
-                        return;
                     }
+
+                    Speedloader speedloader = colBuffer[i].GetComponent<Speedloader>();
+                    if (speedloader != null && (!speedloader.IsHeld) && speedloader.QuickbeltSlot == null && speedloader.IsPretendingToBeAMagazine)
+                    {
+                        detectedSpeedLoader = speedloader;
+                    }
+
+                    //If at this point we have a valid ammo container and firearm, we can stop looping
+                    if (purchaseMag != null && (detectedMag != null || detectedSpeedLoader != null)) break;
                 }
             }
 
-            //If we make it to this point, the magazines must be null
-            detectedMag = null;
-            upgradeMag = null;
-
-            SetCost();
+            UpdateIcons();
         }
 
-        private void SetCost()
+        private void UpdateIcons()
         {
-            if(upgradeMag != null && detectedMag != null && detectedMag.ObjectWrapper.ItemID != upgradeMag.ItemID)
+            if (detectedMag != null || detectedSpeedLoader != null) 
             {
-                storedCost = (upgradeMag.MagazineCapacity - detectedMag.m_capacity) / 5;
-                storedCost = Mathf.Clamp(storedCost, 1, 6);
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Item, original.OCIcon.Sprite_Accept, storedCost);
+                DupeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                DupeIcon.UpdateIconDisplay();
             }
-            else
+
+            upgradeMag = FirearmUtils.GetNextHighestCapacityMagazine(detectedMag.ObjectWrapper);
+            if (upgradeMag != null)
             {
-                storedCost = 0;
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Cancel, original.OCIcon.Sprite_Cancel, storedCost);
+                UpgradeIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                UpgradeIcon.UpdateIconDisplay();
+            }
+
+            if(purchaseMag != null)
+            {
+                PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                PurchaseIcon.UpdateIconDisplay();
             }
         }
 
         
     }
 
-
+    /*
 
     public class MagPurchaser : MonoBehaviour
     {
@@ -253,6 +361,8 @@ namespace TNHTweaker
             }
         }
     }
+
+    
 
 
 
@@ -893,6 +1003,8 @@ namespace TNHTweaker
             }
         }
     }
+
+    */
 
 
 }

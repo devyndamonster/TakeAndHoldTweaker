@@ -19,7 +19,6 @@ namespace TNHTweaker
         public static Dictionary<SosigEnemyTemplate, SosigTemplate> LoadedSosigsDict = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
         public static Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool> EquipmentPoolDictionary = new Dictionary<EquipmentPoolDef.PoolEntry, EquipmentPool>();
         public static Dictionary<string, SavedGunSerializable> LoadedVaultFiles = new Dictionary<string, SavedGunSerializable>();
-        public static Dictionary<PanelType, Sprite> PanelSprites = new Dictionary<PanelType, Sprite>();
         public static List<CustomCharacter> CustomCharacters = new List<CustomCharacter>();
         public static List<CustomCharacter> DefaultCharacters = new List<CustomCharacter>();
         public static List<SosigTemplate> CustomSosigs = new List<SosigTemplate>();

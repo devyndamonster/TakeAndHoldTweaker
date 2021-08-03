@@ -4,6 +4,7 @@ using MagazinePatcher;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using TNHTweaker.ObjectTemplates;
@@ -700,14 +701,15 @@ namespace TNHTweaker.Patches
 
                 GameObject panel = null;
 
-                if (panelType == PanelType.AmmoReloader)
+                if (panelType == PanelType.AmmoReloader || panelType == PanelType.MagPurchase)
                 {
                     panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
                 }
 
-                else if (panelType == PanelType.MagDuplicator)
+                else if (panelType == PanelType.MagDuplicator || panelType == PanelType.MagUpgrader)
                 {
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
+                    panel.AddComponent(typeof(MagUpgrader));
                 }
 
                 else if (panelType == PanelType.Recycler)
@@ -715,12 +717,13 @@ namespace TNHTweaker.Patches
                     panel = point.M.SpawnGunRecycler(point.SpawnPoints_Panels[i]);
                 }
 
-                else if (panelType == PanelType.MagUpgrader)
+                else
                 {
-                    panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
-                    panel.AddComponent(typeof(MagUpgrader));
+                    panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
                 }
 
+
+                /*
                 else if (panelType == PanelType.AddFullAuto)
                 {
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
@@ -745,6 +748,7 @@ namespace TNHTweaker.Patches
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(AmmoPurchaser));
                 }
+                */
 
                 //If we spawned a panel, add it to the global list
                 if (panel != null)
@@ -758,6 +762,7 @@ namespace TNHTweaker.Patches
                 }
             }
         }
+
 
         public static void SpawnSupplyGroup(TNH_SupplyPoint point, Level level)
         {

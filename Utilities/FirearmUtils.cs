@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace TNHTweaker.Utilities
 {
@@ -277,44 +278,44 @@ namespace TNHTweaker.Utilities
 		/// <param name="possibleMagazines">A list of magazine FVRObjects, which are the candidates for being the next largest magazine</param>
 		/// <param name="blacklistedMagazines">A list of ItemIDs for magazines that will be excluded</param>
 		/// <returns>An FVRObject for the next largest magazine. Can be null if no next largest magazine is found</returns>
-		public static FVRObject GetNextHighestCapacityMagazine(FVRObject currentMagazine, List<FVRObject> possibleMagazines, List<string> blacklistedMagazines = null)
+		public static FVRObject GetNextHighestCapacityMagazine(FVRObject currentMagazine, List<string> blacklistedMagazines = null)
 		{
-			if (possibleMagazines is null || possibleMagazines.Count == 0) return null;
+			if (!IM.CompatMags.ContainsKey(currentMagazine.MagazineType))
+			{
+				TNHTweakerLogger.LogError($"TNHTweaker -- magazine type for ({currentMagazine.ItemID}) is not in compatible magazines dictionary! Will return null");
+				return null;
+			}
 
 			//We make this a list so that when several next largest mags have the same capacity, we can return a random magazine from that selection
 			List<FVRObject> nextLargestMagazines = new List<FVRObject>();
+			currentMagazine = IM.OD[currentMagazine.ItemID];
 
-			foreach (FVRObject magazine in possibleMagazines)
-			{
-				if (blacklistedMagazines is not null && blacklistedMagazines.Contains(magazine.ItemID)) continue;
+            foreach (FVRObject magazine in IM.CompatMags[currentMagazine.MagazineType])
+            {
+				if (blacklistedMagazines != null && blacklistedMagazines.Contains(magazine.ItemID)) continue;
 
-				else if (nextLargestMagazines.Count == 0) nextLargestMagazines.Add(magazine);
+				else if(nextLargestMagazines.Count == 0 && magazine.MagazineCapacity > currentMagazine.MagazineCapacity)
+                {
+					nextLargestMagazines.Add(magazine);
+					continue;
+                }
 
-				//If our next largest mag is the same size as the original, then we take the new larger mag
-				if (magazine.MagazineCapacity > currentMagazine.MagazineCapacity && currentMagazine.MagazineCapacity == nextLargestMagazines[0].MagazineCapacity)
-				{
+				else if(nextLargestMagazines.Count > 0 && magazine.MagazineCapacity > currentMagazine.MagazineCapacity && magazine.MagazineCapacity < nextLargestMagazines[0].MagazineCapacity)
+                {
 					nextLargestMagazines.Clear();
 					nextLargestMagazines.Add(magazine);
-				}
+					continue;
+                }
 
-				//We want the next largest mag size, so the minimum mag size that's also greater than the current mag size
-				else if (magazine.MagazineCapacity > currentMagazine.MagazineCapacity && magazine.MagazineCapacity < nextLargestMagazines[0].MagazineCapacity)
-				{
-					nextLargestMagazines.Clear();
+				else if(nextLargestMagazines.Count > 0 && magazine.MagazineCapacity == nextLargestMagazines[0].MagazineCapacity)
+                {
 					nextLargestMagazines.Add(magazine);
-				}
+                }
+            }
 
-				//If this magazine has the same capacity as the next largest magazines, add it to the list of options
-				else if (magazine.MagazineCapacity == nextLargestMagazines[0].MagazineCapacity)
-				{
-					nextLargestMagazines.Add(magazine);
-				}
-			}
+			if (nextLargestMagazines.Count > 0) return nextLargestMagazines.GetRandom();
 
-			//If the capacity has not increased compared to the original, we should return null
-			if (nextLargestMagazines[0].MagazineCapacity == currentMagazine.MagazineCapacity) return null;
-
-			return nextLargestMagazines.GetRandom();
+			return null;
 		}
 
 
@@ -468,5 +469,46 @@ namespace TNHTweaker.Utilities
 			return loadedItems;
         }
 
+		public static FVRFireArmMagazine SpawnDuplicateMagazine(FVRFireArmMagazine magazine, Vector3 position, Quaternion rotation)
+        {
+            FVRObject objectWrapper = magazine.ObjectWrapper;
+			GameObject gameObject = UnityEngine.Object.Instantiate(objectWrapper.GetGameObject(), position, rotation);
+			FVRFireArmMagazine component = gameObject.GetComponent<FVRFireArmMagazine>();
+			for (int i = 0; i < Mathf.Min(magazine.LoadedRounds.Length, component.LoadedRounds.Length); i++)
+			{
+				if (magazine.LoadedRounds[i] != null && magazine.LoadedRounds[i].LR_Mesh != null)
+				{
+					component.LoadedRounds[i].LR_Class = magazine.LoadedRounds[i].LR_Class;
+					component.LoadedRounds[i].LR_Mesh = magazine.LoadedRounds[i].LR_Mesh;
+					component.LoadedRounds[i].LR_Material = magazine.LoadedRounds[i].LR_Material;
+					component.LoadedRounds[i].LR_ObjectWrapper = magazine.LoadedRounds[i].LR_ObjectWrapper;
+				}
+			}
+			component.m_numRounds = magazine.m_numRounds;
+			component.UpdateBulletDisplay();
+
+			return component;
+		}
+
+
+		public static Speedloader SpawnDuplicateSpeedloader(Speedloader speedloader, Vector3 position, Quaternion rotation)
+		{
+			FVRObject objectWrapper = speedloader.ObjectWrapper;
+			GameObject gameObject = UnityEngine.Object.Instantiate(objectWrapper.GetGameObject(), position, rotation);
+			Speedloader component = gameObject.GetComponent<Speedloader>();
+			for (int i = 0; i < speedloader.Chambers.Count; i++)
+			{
+				if (speedloader.Chambers[i].IsLoaded)
+				{
+					component.Chambers[i].Load(speedloader.Chambers[i].LoadedClass, false);
+				}
+				else
+				{
+					component.Chambers[i].Unload();
+				}
+			}
+
+			return component;
+		}
 	}
 }

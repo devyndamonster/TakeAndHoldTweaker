@@ -72,10 +72,15 @@ namespace TNHTweaker
         /// </summary>
         private void LoadPanelSprites(SetupStage stage)
         {
-            IFileHandle? file = Source.Resources.GetFile("mag_upgrade.png");
+            IFileHandle file = Source.Resources.GetFile("mag_dupe_background.png");
             Sprite result = TNHTweakerUtils.LoadSprite(file);
-            LoadedTemplateManager.PanelSprites.Add(PanelType.MagUpgrader, result);
+            MagUpgrader.background = result;
 
+            file = Source.Resources.GetFile("token_icon.png");
+            result = TNHTweakerUtils.LoadSprite(file);
+            MagUpgrader.buttonIcon = result;
+
+            /*
             file = Source.Resources.GetFile("full_auto.png");
             result = TNHTweakerUtils.LoadSprite(file);
             LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, result);
@@ -95,6 +100,7 @@ namespace TNHTweaker
             file = Source.Resources.GetFile("gas_down.png");
             result = TNHTweakerUtils.LoadSprite(file);
             LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateDown, result);
+            */
         }
 
 
