@@ -80,27 +80,22 @@ namespace TNHTweaker
             result = TNHTweakerUtils.LoadSprite(file);
             AmmoPurchasePanel.background = result;
 
-            /*
-            file = Source.Resources.GetFile("full_auto.png");
+            file = Source.Resources.GetFile("full_auto_background.png");
             result = TNHTweakerUtils.LoadSprite(file);
-            LoadedTemplateManager.PanelSprites.Add(PanelType.AddFullAuto, result);
+            FullAutoPanel.background = result;
 
-            file = Source.Resources.GetFile("ammo_purchase.png");
+            file = Source.Resources.GetFile("fire_rate_background.png");
             result = TNHTweakerUtils.LoadSprite(file);
-            LoadedTemplateManager.PanelSprites.Add(PanelType.AmmoPurchase, result);
+            FireRatePanel.background = result;
 
-            file = Source.Resources.GetFile("mag_purchase.png");
+            file = Source.Resources.GetFile("minus_icon.png");
             result = TNHTweakerUtils.LoadSprite(file);
-            LoadedTemplateManager.PanelSprites.Add(PanelType.MagPurchase, result);
+            FireRatePanel.minusSprite = result;
 
-            file = Source.Resources.GetFile("gas_up.png");
+            file = Source.Resources.GetFile("plus_icon.png");
             result = TNHTweakerUtils.LoadSprite(file);
-            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateUp, result);
+            FireRatePanel.plusSprite = result;
 
-            file = Source.Resources.GetFile("gas_down.png");
-            result = TNHTweakerUtils.LoadSprite(file);
-            LoadedTemplateManager.PanelSprites.Add(PanelType.FireRateDown, result);
-            */
         }
 
 

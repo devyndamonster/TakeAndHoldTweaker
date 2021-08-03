@@ -701,12 +701,12 @@ namespace TNHTweaker.Patches
 
                 GameObject panel = null;
 
-                if (panelType == PanelType.AmmoReloader || panelType == PanelType.MagPurchase)
+                if (panelType == PanelType.AmmoReloader)
                 {
                     panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
                 }
 
-                else if (panelType == PanelType.MagDuplicator || panelType == PanelType.MagUpgrader)
+                else if (panelType == PanelType.MagDuplicator || panelType == PanelType.MagUpgrader || panelType == PanelType.MagPurchase)
                 {
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
                     panel.AddComponent(typeof(MagazinePanel));
@@ -723,26 +723,25 @@ namespace TNHTweaker.Patches
                     panel.AddComponent(typeof(AmmoPurchasePanel));
                 }
 
-                else
-                {
-                    panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
-                }
-
-
-                /*
                 else if (panelType == PanelType.AddFullAuto)
                 {
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
-                    panel.AddComponent(typeof(FullAutoEnabler));
+                    panel.AddComponent(typeof(FullAutoPanel));
                 }
 
                 else if (panelType == PanelType.FireRateUp || panelType == PanelType.FireRateDown)
                 {
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
-                    FireRateModifier component = (FireRateModifier)panel.AddComponent(typeof(FireRateModifier));
-                    component.Init(panelType);
+                    panel.AddComponent(typeof(FireRatePanel));
                 }
-                */
+
+                else
+                {
+                    panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
+                }
+
+                
+                
 
                 //If we spawned a panel, add it to the global list
                 if (panel != null)

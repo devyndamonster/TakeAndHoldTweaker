@@ -1,11 +1,8 @@
 ﻿using FistVR;
-using HarmonyLib;
 using MagazinePatcher;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TNHTweaker.ObjectTemplates;
 using TNHTweaker.Utilities;
 using UnityEngine;
@@ -31,6 +28,9 @@ namespace TNHTweaker
         public TNH_MagDuplicator original;
 
         public Dictionary<string, MagazineBlacklistEntry> blacklist;
+        public int DupeCost = 1;
+        public int UpgradeCost = 2;
+        public int PurchaseCost = 1;
 
         public static Sprite background;
 
@@ -72,7 +72,7 @@ namespace TNHTweaker
             iconTransform_1.localPosition = new Vector3(0, -200, 0);
 
             Transform iconTransform_2 = Instantiate(iconTransform_1.gameObject, canvasHolder).transform;
-            iconTransform_2.localPosition = new Vector3(270, -200, 0);
+            iconTransform_2.localPosition = new Vector3(275, -200, 0);
 
             Transform buttonTransform_0 = original.transform.Find("PointableButton_0");
             buttonTransform_0.position = iconTransform_0.position;
@@ -106,7 +106,7 @@ namespace TNHTweaker
 
         private void DupeMagButton()
         {
-            if((detectedMag == null && detectedSpeedLoader == null) || original.M.GetNumTokens() == 0)
+            if((detectedMag == null && detectedSpeedLoader == null) || original.M.GetNumTokens() < DupeCost)
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
             }
@@ -114,7 +114,7 @@ namespace TNHTweaker
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(1);
+                original.M.SubtractTokens(DupeCost);
                 original.M.Increment(10, false);
 
                 if(detectedMag != null)
@@ -135,7 +135,7 @@ namespace TNHTweaker
 
         private void UpgradeMagButton()
         {
-            if (upgradeMag == null || original.M.GetNumTokens() < 2)
+            if (upgradeMag == null || original.M.GetNumTokens() < UpgradeCost)
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
             }
@@ -143,7 +143,7 @@ namespace TNHTweaker
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(2);
+                original.M.SubtractTokens(UpgradeCost);
                 original.M.Increment(10, false);
 
                 Destroy(detectedMag.GameObject);
@@ -157,7 +157,7 @@ namespace TNHTweaker
 
         private void PurchaseMagButton()
         {
-            if (purchaseMag == null || original.M.GetNumTokens() < 1)
+            if (purchaseMag == null || original.M.GetNumTokens() < PurchaseCost)
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
             }
@@ -165,7 +165,7 @@ namespace TNHTweaker
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(1);
+                original.M.SubtractTokens(PurchaseCost);
                 original.M.Increment(10, false);
 
                 Instantiate(purchaseMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
@@ -265,6 +265,7 @@ namespace TNHTweaker
     {
         public TNH_MagDuplicator original;
         public Dictionary<string, MagazineBlacklistEntry> blacklist;
+        public int PanelCost = 1;
 
         public static Sprite background;
 
@@ -292,7 +293,7 @@ namespace TNHTweaker
             Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
 
             Transform iconTransform_0 = canvasHolder.Find("Icon_0");
-            iconTransform_0.localPosition = new Vector3(0, -200, 0);
+            iconTransform_0.localPosition = new Vector3(0, -290, 0);
 
             Transform iconTransform_1 = canvasHolder.Find("Icon_1");
             Destroy(iconTransform_1.gameObject);
@@ -316,7 +317,7 @@ namespace TNHTweaker
 
         public void PurchaseAmmoButton()
         {
-            if (detectedFirearm == null || original.M.GetNumTokens() < 1)
+            if (detectedFirearm == null || original.M.GetNumTokens() < PanelCost)
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
@@ -325,7 +326,7 @@ namespace TNHTweaker
             else
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(1);
+                original.M.SubtractTokens(PanelCost);
                 original.M.Increment(10, false);
 
                 FVRObject.OTagFirearmRoundPower roundPower = AM.GetRoundPower(detectedFirearm.RoundType);
@@ -417,40 +418,64 @@ namespace TNHTweaker
     }
 
 
-    /*
-
-    public class FullAutoEnabler : MonoBehaviour
+    public class FullAutoPanel : MonoBehaviour
     {
         public TNH_MagDuplicator original;
+        public int PanelCost = 4;
+
+        public static Sprite background;
+
+        private TNH_ObjectConstructorIcon PurchaseIcon;
 
         public Handgun detectedHandgun = null;
         public ClosedBoltWeapon detectedClosedBolt = null;
         public OpenBoltReceiver detectedOpenBolt = null;
 
-        private int storedCost = 0;
         private Collider[] colBuffer = new Collider[50];
         private float scanTick = 1f;
 
         public void Awake()
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
-
             if (original == null) TNHTweakerLogger.LogError("Full Auto Enabler failed, original Mag Duplicator was null!");
-
-            Button button = original.GetComponentInChildren<Button>();
-            button.onClick = new Button.ButtonClickedEvent();
-            button.onClick.AddListener(() => { ButtonPressed(); });
-
             original.enabled = false;
 
-            original.OCIcon.Image.sprite = LoadedTemplateManager.PanelSprites[PanelType.AddFullAuto];
-            original.OCIcon.Sprite_Cancel = LoadedTemplateManager.PanelSprites[PanelType.AddFullAuto];
+            InitPanel();
+            UpdateIcons();
+        }
+
+        private void InitPanel()
+        {
+            Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
+
+            Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
+
+            Transform iconTransform_0 = canvasHolder.Find("Icon_0");
+            iconTransform_0.localPosition = new Vector3(0, -290, 0);
+
+            Transform iconTransform_1 = canvasHolder.Find("Icon_1");
+            Destroy(iconTransform_1.gameObject);
+
+            Transform buttonTransform_0 = original.transform.Find("PointableButton_0");
+            buttonTransform_0.position = iconTransform_0.position;
+
+            Transform buttonTransform_1 = original.transform.Find("PointableButton_1");
+            Destroy(buttonTransform_1.gameObject);
+
+            Image backgroundImage = backingTransform.gameObject.GetComponent<Image>();
+            backgroundImage.sprite = background;
+
+            PurchaseIcon = iconTransform_0.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
+
+            Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
+            button_0.onClick = new Button.ButtonClickedEvent();
+            button_0.onClick.AddListener(() => { AddFullAutoButton(); });
         }
 
 
-        public void ButtonPressed()
+        public void AddFullAutoButton()
         {
-            if ((detectedHandgun == null && detectedClosedBolt == null && detectedOpenBolt == null) || storedCost > original.M.GetNumTokens())
+            if ((detectedHandgun == null && detectedClosedBolt == null && detectedOpenBolt == null) || PanelCost > original.M.GetNumTokens())
             {
                 //Debug.Log("Can't add full auto!");
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
@@ -461,7 +486,7 @@ namespace TNHTweaker
             {
                 //Debug.Log("Adding full auto!");
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(storedCost);
+                original.M.SubtractTokens(PanelCost);
                 original.M.Increment(10, false);
 
                 if(detectedHandgun != null)
@@ -520,11 +545,6 @@ namespace TNHTweaker
                 //Debug.Log("Array count: " + gun.FireSelectorModes.Length + ", List count: " + modes.Count);
             }
 
-            //Debug.Log("Fire Selector options after adding full auto:");
-            foreach (Handgun.FireSelectorMode mode in gun.FireSelectorModes)
-            {
-                //Debug.Log(mode.ModeType);
-            }
             
             if (!gun.HasFireSelector)
             {
@@ -564,17 +584,6 @@ namespace TNHTweaker
             fullAuto.ModeType = ClosedBoltWeapon.FireSelectorModeType.FullAuto;
             fullAuto.SelectorPosition = 0;
 
-            //Debug.Log("Adding full auto to closed bolt");
-
-            if (gun.FireSelector_Modes != null)
-            {
-                //Debug.Log("Fire Selector options before addition:");
-                foreach (ClosedBoltWeapon.FireSelectorMode mode in gun.FireSelector_Modes)
-                {
-                    //Debug.Log(mode.ModeType);
-                }
-            }
-
             if (gun.FireSelector_Modes == null || gun.FireSelector_Modes.Length == 0)
             {
                 //Debug.Log("Gun did not have fire selector, adding full");
@@ -599,17 +608,6 @@ namespace TNHTweaker
             OpenBoltReceiver.FireSelectorMode fullAuto = new OpenBoltReceiver.FireSelectorMode();
             fullAuto.ModeType = OpenBoltReceiver.FireSelectorModeType.FullAuto;
             fullAuto.SelectorPosition = 0;
-
-            //Debug.Log("Adding full auto to open bolt");
-
-            if (gun.FireSelector_Modes != null)
-            {
-                //Debug.Log("Fire Selector options before addition:");
-                foreach (OpenBoltReceiver.FireSelectorMode mode in gun.FireSelector_Modes)
-                {
-                    //Debug.Log(mode.ModeType);
-                }
-            }
 
             if (gun.FireSelector_Modes == null || gun.FireSelector_Modes.Length == 0)
             {
@@ -640,12 +638,17 @@ namespace TNHTweaker
                 if (Vector3.Distance(transform.position, GM.CurrentPlayerBody.transform.position) < 12)
                 {
                     Scan();
+                    UpdateIcons();
                 }
             }
         }
 
         private void Scan()
         {
+            detectedHandgun = null;
+            detectedClosedBolt = null;
+            detectedOpenBolt = null;
+
             int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
 
             for (int i = 0; i < colliderCount; i++)
@@ -659,7 +662,6 @@ namespace TNHTweaker
                         {
                             //Debug.Log("Hand gun detected!");
                             detectedHandgun = handgun;
-                            SetCost();
                             return;
                         }
                     }
@@ -671,7 +673,6 @@ namespace TNHTweaker
                         {
                             //Debug.Log("Closed bolt detected!");
                             detectedClosedBolt = closedBolt;
-                            SetCost();
                             return;
                         }
                     }
@@ -683,163 +684,189 @@ namespace TNHTweaker
                         {
                             //Debug.Log("Open bolt detected!");
                             detectedOpenBolt = openBolt;
-                            SetCost();
                             return;
                         }
                     }
                 }
             }
-
-            //If we get to this point, there must not be a handgun
-            detectedHandgun = null;
-            detectedClosedBolt = null;
-            detectedOpenBolt = null;
-            SetCost();
         }
 
-        private void SetCost()
+        private void UpdateIcons()
         {
-            if(detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null)
-            {
-                storedCost = 4;
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Item, original.OCIcon.Sprite_Accept, storedCost);
-            }
-            else
-            {
-                storedCost = 0;
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Cancel, original.OCIcon.Sprite_Cancel, storedCost);
-            }
+            PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+
+            if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null) PurchaseIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+
+            PurchaseIcon.UpdateIconDisplay();
         }
     }
 
 
-
-
-    public class FireRateModifier : MonoBehaviour
+    public class FireRatePanel : MonoBehaviour
     {
         public TNH_MagDuplicator original;
-        public PanelType panelType;
+
+        public static Sprite background;
+        public static Sprite plusSprite;
+        public static Sprite minusSprite;
+
+        private TNH_ObjectConstructorIcon PlusIcon;
+        private TNH_ObjectConstructorIcon MinusIcon;
 
         public Handgun detectedHandgun = null;
         public ClosedBoltWeapon detectedClosedBolt = null;
         public OpenBoltReceiver detectedOpenBolt = null;
 
-        private int storedCost = 0;
+        private int PanelCost = 1;
         private Collider[] colBuffer = new Collider[50];
         private float scanTick = 1f;
 
-        private float fireRateMultiplier = 2;
+        private float fireRateMultiplier = 1.5f;
 
         public void Awake()
         {
             original = gameObject.GetComponent<TNH_MagDuplicator>();
-
-            if (original == null) {
-                TNHTweakerLogger.LogError("Fire Rate Modifier failed, original Mag Duplicator was null!");
-                return;
-            }
-
-            Button button = original.GetComponentInChildren<Button>();
-            button.onClick = new Button.ButtonClickedEvent();
-            button.onClick.AddListener(() => { ButtonPressed(); });
-
+            if (original == null) TNHTweakerLogger.LogError("Fire Rate Modifier failed, original Mag Duplicator was null!");
             original.enabled = false;
+
+            InitPanel();
+            UpdateIcons();
         }
 
-        public void Init(PanelType type)
+        public void InitPanel()
         {
-            panelType = type;
-            original.OCIcon.Image.sprite = LoadedTemplateManager.PanelSprites[panelType];
-            original.OCIcon.Sprite_Cancel = LoadedTemplateManager.PanelSprites[panelType];
+            Transform backingTransform = original.transform.Find("_CanvasHolder/_UITest_Canvas/Backing");
+
+            Transform canvasHolder = original.transform.Find("_CanvasHolder/_UITest_Canvas");
+
+            Transform iconTransform_0 = canvasHolder.Find("Icon_0");
+            iconTransform_0.localPosition = new Vector3(-165, -290, 0);
+
+            Transform iconTransform_1 = canvasHolder.Find("Icon_1");
+            iconTransform_1.localPosition = new Vector3(165, -290, 0);
+
+            Transform buttonTransform_0 = original.transform.Find("PointableButton_0");
+            buttonTransform_0.position = iconTransform_0.position;
+
+            Transform buttonTransform_1 = original.transform.Find("PointableButton_1");
+            buttonTransform_1.position = iconTransform_1.position;
+
+            Image backgroundImage = backingTransform.gameObject.GetComponent<Image>();
+
+            backgroundImage.sprite = background;
+
+            MinusIcon = iconTransform_0.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
+            PlusIcon = iconTransform_1.gameObject.GetComponent<TNH_ObjectConstructorIcon>();
+
+            MinusIcon.Sprite_Accept = minusSprite;
+            PlusIcon.Sprite_Accept = plusSprite;
+
+            Button button_0 = buttonTransform_0.gameObject.GetComponent<Button>();
+            button_0.onClick = new Button.ButtonClickedEvent();
+            button_0.onClick.AddListener(() => { DecreaseFireRateButton(); });
+
+            Button button_1 = buttonTransform_1.gameObject.GetComponent<Button>();
+            button_1.onClick = new Button.ButtonClickedEvent();
+            button_1.onClick.AddListener(() => { IncreaseFireRateButton(); });
         }
 
 
-        public void ButtonPressed()
+        public void IncreaseFireRateButton()
         {
-            if ((detectedHandgun == null && detectedClosedBolt == null && detectedOpenBolt == null) || storedCost > original.M.GetNumTokens())
+            if ((detectedHandgun == null && detectedClosedBolt == null && detectedOpenBolt == null) || PanelCost > original.M.GetNumTokens())
             {
-                //Debug.Log("Can't add full auto!");
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
                 return;
             }
 
             else
             {
-                //Debug.Log("Adding full auto!");
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(storedCost);
+                original.M.SubtractTokens(PanelCost);
                 original.M.Increment(10, false);
 
-                if (detectedHandgun != null)
-                {
-                    ApplyFireRateHandgun();
-                    detectedHandgun = null;
-                }
+                IncreaseFireRate();
+                detectedHandgun = null;
+                detectedOpenBolt = null;
+                detectedClosedBolt = null;
+            }
+        }
 
-                else if (detectedClosedBolt != null)
-                {
-                    ApplyFireRateClosedBolt();
-                    detectedClosedBolt = null;
-                }
+        public void DecreaseFireRateButton()
+        {
+            if ((detectedHandgun == null && detectedClosedBolt == null && detectedOpenBolt == null) || PanelCost > original.M.GetNumTokens())
+            {
+                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
+                return;
+            }
 
-                else if (detectedOpenBolt != null)
-                {
-                    ApplyFireRateOpenBolt();
-                    detectedOpenBolt = null;
-                }
+            else
+            {
+                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
+                original.M.SubtractTokens(PanelCost);
+                original.M.Increment(10, false);
+
+                DecreaseFireRate();
+                detectedHandgun = null;
+                detectedOpenBolt = null;
+                detectedClosedBolt = null;
             }
         }
 
 
-        public void ApplyFireRateHandgun()
+        public void IncreaseFireRate()
         {
-            //TNHTweakerLogger.Log("Before: (Stiff=" + detectedHandgun.Slide.SpringStiffness + ") (Rearward=" + detectedHandgun.Slide.Speed_Rearward + ")", TNHTweakerLogger.LogType.General);
-
-            if (panelType == PanelType.FireRateUp)
+            if (detectedHandgun != null)
             {
                 detectedHandgun.Slide.SpringStiffness *= fireRateMultiplier;
                 detectedHandgun.Slide.Speed_Rearward *= fireRateMultiplier;
                 detectedHandgun.Slide.Speed_Forward *= fireRateMultiplier;
+                return;
             }
-            else if (panelType == PanelType.FireRateDown)
-            {
-                detectedHandgun.Slide.SpringStiffness *= (1f / fireRateMultiplier);
-                detectedHandgun.Slide.Speed_Rearward *= (1f / fireRateMultiplier);
-                detectedHandgun.Slide.Speed_Forward *= (1f / fireRateMultiplier);
-            }
-            
-            //TNHTweakerLogger.Log("After: (Stiff=" + detectedHandgun.Slide.SpringStiffness + ") (Rearward=" + detectedHandgun.Slide.Speed_Rearward + ")", TNHTweakerLogger.LogType.General);
-        }
 
-        public void ApplyFireRateClosedBolt()
-        {
-            if (panelType == PanelType.FireRateUp)
+            else if (detectedClosedBolt != null)
             {
                 detectedClosedBolt.Bolt.SpringStiffness *= fireRateMultiplier;
                 detectedClosedBolt.Bolt.Speed_Forward *= fireRateMultiplier;
                 detectedClosedBolt.Bolt.Speed_Rearward *= fireRateMultiplier;
+                return;
             }
-            else if (panelType == PanelType.FireRateDown)
-            {
-                detectedClosedBolt.Bolt.SpringStiffness *= (1f / fireRateMultiplier);
-                detectedClosedBolt.Bolt.Speed_Rearward *= (1f / fireRateMultiplier);
-                detectedClosedBolt.Bolt.Speed_Forward *= (1f / fireRateMultiplier);
-            }
-        }
 
-        public void ApplyFireRateOpenBolt()
-        {
-            if (panelType == PanelType.FireRateUp)
+            else
             {
                 detectedOpenBolt.Bolt.BoltSpringStiffness *= fireRateMultiplier;
                 detectedOpenBolt.Bolt.BoltSpeed_Forward *= fireRateMultiplier;
                 detectedOpenBolt.Bolt.BoltSpeed_Rearward *= fireRateMultiplier;
+                return;
             }
-            else if (panelType == PanelType.FireRateDown)
+
+
+        }
+
+        public void DecreaseFireRate()
+        {
+            if(detectedHandgun != null)
+            {
+                detectedHandgun.Slide.SpringStiffness *= (1f / fireRateMultiplier);
+                detectedHandgun.Slide.Speed_Rearward *= (1f / fireRateMultiplier);
+                detectedHandgun.Slide.Speed_Forward *= (1f / fireRateMultiplier);
+                return;
+            }
+
+            else if(detectedClosedBolt != null)
+            {
+                detectedClosedBolt.Bolt.SpringStiffness *= (1f / fireRateMultiplier);
+                detectedClosedBolt.Bolt.Speed_Rearward *= (1f / fireRateMultiplier);
+                detectedClosedBolt.Bolt.Speed_Forward *= (1f / fireRateMultiplier);
+                return;
+            }
+
+            else
             {
                 detectedOpenBolt.Bolt.BoltSpringStiffness *= (1f / fireRateMultiplier);
                 detectedOpenBolt.Bolt.BoltSpeed_Forward *= (1f / fireRateMultiplier);
                 detectedOpenBolt.Bolt.BoltSpeed_Rearward *= (1f / fireRateMultiplier);
+                return;
             }
         }
 
@@ -853,12 +880,17 @@ namespace TNHTweaker
                 if (Vector3.Distance(transform.position, GM.CurrentPlayerBody.transform.position) < 12)
                 {
                     Scan();
+                    UpdateIcons();
                 }
             }
         }
 
         private void Scan()
         {
+            detectedHandgun = null;
+            detectedClosedBolt = null;
+            detectedOpenBolt = null;
+
             int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
 
             for (int i = 0; i < colliderCount; i++)
@@ -870,7 +902,6 @@ namespace TNHTweaker
                     {
                         //Debug.Log("Hand gun detected!");
                         detectedHandgun = handgun;
-                        SetCost();
                         return;
                     }
 
@@ -879,7 +910,6 @@ namespace TNHTweaker
                     {
                         //Debug.Log("Closed bolt detected!");
                         detectedClosedBolt = closedBolt;
-                        SetCost();
                         return;
                     }
 
@@ -888,35 +918,27 @@ namespace TNHTweaker
                     {
                         //Debug.Log("Open bolt detected!");
                         detectedOpenBolt = openBolt;
-                        SetCost();
                         return;
                     }
                 }
             }
-
-            //If we get to this point, there must not be a handgun
-            detectedHandgun = null;
-            detectedClosedBolt = null;
-            detectedOpenBolt = null;
-            SetCost();
         }
 
-        private void SetCost()
+        private void UpdateIcons()
         {
+            PlusIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+            MinusIcon.State = TNH_ObjectConstructorIcon.IconState.Cancel;
+
             if (detectedHandgun != null || detectedClosedBolt != null || detectedOpenBolt != null)
             {
-                storedCost = 1;
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Item, original.OCIcon.Sprite_Accept, storedCost);
+                PlusIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
+                MinusIcon.State = TNH_ObjectConstructorIcon.IconState.Accept;
             }
-            else
-            {
-                storedCost = 0;
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Cancel, original.OCIcon.Sprite_Cancel, storedCost);
-            }
+
+            PlusIcon.UpdateIconDisplay();
+            MinusIcon.UpdateIconDisplay();
         }
     }
-
-    */
 
 
 }
