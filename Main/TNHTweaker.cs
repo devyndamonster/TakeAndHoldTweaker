@@ -74,11 +74,11 @@ namespace TNHTweaker
         {
             IFileHandle file = Source.Resources.GetFile("mag_dupe_background.png");
             Sprite result = TNHTweakerUtils.LoadSprite(file);
-            MagUpgrader.background = result;
+            MagazinePanel.background = result;
 
             file = Source.Resources.GetFile("token_icon.png");
             result = TNHTweakerUtils.LoadSprite(file);
-            MagUpgrader.buttonIcon = result;
+            MagazinePanel.buttonIcon = result;
 
             /*
             file = Source.Resources.GetFile("full_auto.png");

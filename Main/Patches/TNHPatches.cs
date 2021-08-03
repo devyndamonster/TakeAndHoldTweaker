@@ -709,7 +709,7 @@ namespace TNHTweaker.Patches
                 else if (panelType == PanelType.MagDuplicator || panelType == PanelType.MagUpgrader)
                 {
                     panel = point.M.SpawnMagDuplicator(point.SpawnPoints_Panels[i]);
-                    panel.AddComponent(typeof(MagUpgrader));
+                    panel.AddComponent(typeof(MagazinePanel));
                 }
 
                 else if (panelType == PanelType.Recycler)

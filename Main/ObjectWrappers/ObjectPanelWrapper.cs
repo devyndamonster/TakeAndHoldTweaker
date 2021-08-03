@@ -26,7 +26,7 @@ namespace TNHTweaker
         MagPurchase,
     }
 
-    public class MagUpgrader : MonoBehaviour
+    public class MagazinePanel : MonoBehaviour
     {
         public TNH_MagDuplicator original;
 
@@ -131,6 +131,7 @@ namespace TNHTweaker
 
                 detectedMag = null;
                 detectedSpeedLoader = null;
+                UpdateIcons();
             }
         }
 
@@ -146,8 +147,13 @@ namespace TNHTweaker
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(2);
                 original.M.Increment(10, false);
+
                 Destroy(detectedMag.GameObject);
                 Instantiate(upgradeMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
+
+                upgradeMag = null;
+                detectedMag = null;
+                UpdateIcons();
             }
         }
 
@@ -167,6 +173,7 @@ namespace TNHTweaker
                 Instantiate(purchaseMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
 
                 purchaseMag = null;
+                UpdateIcons();
             }
         }
 
@@ -180,6 +187,7 @@ namespace TNHTweaker
                 if(Vector3.Distance(transform.position, GM.CurrentPlayerBody.transform.position) < 12)
                 {
                     Scan();
+                    UpdateIcons();
                 }
             }
         }
@@ -226,8 +234,6 @@ namespace TNHTweaker
                     if (purchaseMag != null && (detectedMag != null || detectedSpeedLoader != null)) break;
                 }
             }
-
-            UpdateIcons();
         }
 
         private void UpdateIcons()
@@ -255,120 +261,6 @@ namespace TNHTweaker
     }
 
     /*
-
-    public class MagPurchaser : MonoBehaviour
-    {
-        public TNH_MagDuplicator original;
-
-        private FVRObject ammoObject = null;
-
-        private int storedCost = 0;
-        private Collider[] colBuffer = new Collider[50];
-        private float scanTick = 1f;
-
-        public void Awake()
-        {
-            original = gameObject.GetComponent<TNH_MagDuplicator>();
-
-            if (original == null) TNHTweakerLogger.LogError("Mag Purchaser failed, original mag duplicator was null!");
-
-            Button button = original.GetComponentInChildren<Button>();
-            button.onClick = new Button.ButtonClickedEvent();
-            button.onClick.AddListener(() => { ButtonPressed(); });
-
-            original.enabled = false;
-
-            original.OCIcon.Image.sprite = LoadedTemplateManager.PanelSprites[PanelType.MagPurchase];
-            original.OCIcon.Sprite_Cancel = LoadedTemplateManager.PanelSprites[PanelType.MagPurchase];
-        }
-
-
-        public void ButtonPressed()
-        {
-            if (ammoObject == null || storedCost > original.M.GetNumTokens())
-            {
-                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Fail, transform.position);
-                return;
-            }
-
-            else
-            {
-                SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
-                original.M.SubtractTokens(storedCost);
-                original.M.Increment(10, false);
-
-                Instantiate(ammoObject.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
-                
-                ammoObject = null;
-            }
-        }
-
-        private void Update()
-        {
-            scanTick -= Time.deltaTime;
-            if (scanTick <= 0)
-            {
-                scanTick = 1;
-                if (Vector3.Distance(transform.position, GM.CurrentPlayerBody.transform.position) < 12)
-                {
-                    Scan();
-                }
-            }
-        }
-
-        private void Scan()
-        {
-            int colliderCount = Physics.OverlapBoxNonAlloc(original.ScanningVolume.position, original.ScanningVolume.localScale * 0.5f, colBuffer, original.ScanningVolume.rotation, original.ScanningLM, QueryTriggerInteraction.Collide);
-
-            ammoObject = null;
-
-            for (int i = 0; i < colliderCount; i++)
-            {
-                if (colBuffer[i].attachedRigidbody != null)
-                {
-                    FVRFireArm firearm = colBuffer[i].GetComponent<FVRFireArm>();
-
-                    if (firearm != null && !firearm.IsHeld && firearm.QuickbeltSlot == null)
-                    {
-                        //NOTE: We access IM.OD[] because the ObjectWrapper is not properly updated from caching for soME FUCKING REASON AHHHHHH
-                        CustomCharacter character = LoadedTemplateManager.LoadedCharactersDict[original.M.C];
-                        List<FVRObject> compatibleAmmoContainers = FirearmUtils.GetCompatibleAmmoContainers(firearm.ObjectWrapper);
-
-                        MagazineBlacklistEntry blacklistEntry = null;
-                        if (character.GetMagazineBlacklist().ContainsKey(firearm.ObjectWrapper.ItemID)) blacklistEntry = character.GetMagazineBlacklist()[firearm.ObjectWrapper.ItemID];
-
-                        ammoObject = FirearmUtils.GetSmallestCapacityMagazine(compatibleAmmoContainers, blacklistEntry);
-
-                        if (ammoObject != null)
-                        {
-                            SetCost();
-                            return;
-                        }
-                    }
-                }
-            }
-
-            SetCost();
-        }
-
-        private void SetCost()
-        {
-            if (ammoObject != null)
-            {
-                storedCost = (ammoObject.MagazineCapacity / 5) + 1;
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Item, original.OCIcon.Sprite_Accept, storedCost);
-            }
-            else
-            {
-                storedCost = 0;
-                original.OCIcon.SetOption(TNH_ObjectConstructorIcon.IconState.Cancel, original.OCIcon.Sprite_Cancel, storedCost);
-            }
-        }
-    }
-
-    
-
-
 
     public class AmmoPurchaser : MonoBehaviour
     {
