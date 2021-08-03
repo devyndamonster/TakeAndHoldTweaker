@@ -280,6 +280,8 @@ namespace TNHTweaker.Utilities
 		/// <returns>An FVRObject for the next largest magazine. Can be null if no next largest magazine is found</returns>
 		public static FVRObject GetNextHighestCapacityMagazine(FVRObject currentMagazine, List<string> blacklistedMagazines = null)
 		{
+			currentMagazine = IM.OD[currentMagazine.ItemID];
+
 			if (!IM.CompatMags.ContainsKey(currentMagazine.MagazineType))
 			{
 				TNHTweakerLogger.LogError($"TNHTweaker -- magazine type for ({currentMagazine.ItemID}) is not in compatible magazines dictionary! Will return null");
@@ -288,8 +290,7 @@ namespace TNHTweaker.Utilities
 
 			//We make this a list so that when several next largest mags have the same capacity, we can return a random magazine from that selection
 			List<FVRObject> nextLargestMagazines = new List<FVRObject>();
-			currentMagazine = IM.OD[currentMagazine.ItemID];
-
+			
             foreach (FVRObject magazine in IM.CompatMags[currentMagazine.MagazineType])
             {
 				if (blacklistedMagazines != null && blacklistedMagazines.Contains(magazine.ItemID)) continue;
