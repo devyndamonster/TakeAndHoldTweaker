@@ -668,6 +668,7 @@ namespace TNHTweaker.Patches
 
             PanelType panelType;
             List<PanelType> panelTypes = new List<PanelType>(level.PossiblePanelTypes);
+            panelTypes.Shuffle();
 
             int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
 
@@ -1725,10 +1726,6 @@ namespace TNHTweaker.Patches
                             TNHTweakerLogger.Log("TNHTWEAKER -- Normal item spawned", TNHTweakerLogger.LogType.TNH);
                         }
 
-                        TNHTweakerLogger.Log("Before required", TNHTweakerLogger.LogType.TNH);
-                        TNHTweakerLogger.Log("Main object: " + mainObject, TNHTweakerLogger.LogType.TNH);
-                        TNHTweakerLogger.Log("Required items: " + mainObject.RequiredSecondaryPieces, TNHTweakerLogger.LogType.TNH);
-
                         //Spawn any required objects
                         if (mainObject.RequiredSecondaryPieces != null)
                         {
@@ -1736,47 +1733,34 @@ namespace TNHTweaker.Patches
                             {
                                 if(mainObject.RequiredSecondaryPieces[j] == null)
                                 {
-                                    TNHTweakerLogger.Log("Null required object!", TNHTweakerLogger.LogType.TNH);
+                                    TNHTweakerLogger.Log("TNHTWEAKER -- Null required object! Skipping", TNHTweakerLogger.LogType.TNH);
                                     continue;
                                 }
 
-                                TNHTweakerLogger.Log("Spawning required: " + mainObject.RequiredSecondaryPieces[j].ItemID, TNHTweakerLogger.LogType.TNH);
+                                TNHTweakerLogger.Log("TNHTWEAKER -- Spawning Required item", TNHTweakerLogger.LogType.TNH);
                                 gameObjectCallback = mainObject.RequiredSecondaryPieces[j].GetGameObjectAsync();
                                 yield return gameObjectCallback;
                                 GameObject requiredItem = UnityEngine.Object.Instantiate(gameObjectCallback.Result, requiredSpawn.position + -requiredSpawn.right * 0.2f * requiredSpawnCount + Vector3.up * 0.2f * j, requiredSpawn.rotation);
                                 requiredSpawnCount += 1;
-                                TNHTweakerLogger.Log("TNHTWEAKER -- Required item spawned", TNHTweakerLogger.LogType.TNH);
                             }
                         }
                         
 
-                        TNHTweakerLogger.Log("Got past required", TNHTweakerLogger.LogType.TNH);
-
-
                         //Handle spawning for ammo objects if the main object has any
                         if (FirearmUtils.FVRObjectHasAmmoObject(mainObject))
                         {
-                            TNHTweakerLogger.Log("Inside ammo spawn, main object: " + mainObject.ItemID, TNHTweakerLogger.LogType.TNH);
-
                             Dictionary<string, MagazineBlacklistEntry> blacklist = character.GetMagazineBlacklist();
                             MagazineBlacklistEntry blacklistEntry = null;
                             if (blacklist.ContainsKey(mainObject.ItemID)) blacklistEntry = blacklist[mainObject.ItemID];
 
-                            TNHTweakerLogger.Log("Past blacklist", TNHTweakerLogger.LogType.TNH);
-
                             //Get lists of ammo objects for this firearm with filters and blacklists applied
                             List<FVRObject> compatibleMagazines = FirearmUtils.GetCompatibleMagazines(mainObject, group.MinAmmoCapacity, group.MaxAmmoCapacity, true, blacklistEntry);
-                            TNHTweakerLogger.Log("Mags got", TNHTweakerLogger.LogType.TNH);
-
                             List<FVRObject> compatibleRounds = FirearmUtils.GetCompatibleRounds(mainObject, character.ValidAmmoEras, character.ValidAmmoSets, character.GlobalAmmoBlacklist, blacklistEntry);
-                            TNHTweakerLogger.Log("Rounds got", TNHTweakerLogger.LogType.TNH);
-
                             List<FVRObject> compatibleClips = mainObject.CompatibleClips;
-                            TNHTweakerLogger.Log("Clips got", TNHTweakerLogger.LogType.TNH);
 
                             TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Mags: " + string.Join(",", compatibleMagazines.Select(o => o.ItemID).ToArray()), TNHTweakerLogger.LogType.TNH);
-                            TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Clip Count: " + compatibleClips.Count, TNHTweakerLogger.LogType.TNH);
-                            TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Round Count: " + compatibleRounds.Count, TNHTweakerLogger.LogType.TNH);
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Clips: " + string.Join(",", compatibleClips.Select(o => o.ItemID).ToArray()), TNHTweakerLogger.LogType.TNH);
+                            TNHTweakerLogger.Log("TNHTWEAKER -- Compatible Rounds: " + string.Join(",", compatibleRounds.Select(o => o.ItemID).ToArray()), TNHTweakerLogger.LogType.TNH);
 
                             //If we are supposed to spawn magazines and clips, perform special logic for that
                             if (group.SpawnMagAndClip && compatibleMagazines.Count > 0 && compatibleClips.Count > 0 && group.NumMagsSpawned > 0 && group.NumClipsSpawned > 0)
