@@ -1566,13 +1566,13 @@ namespace TNHTweaker.Patches
             else if (__instance.State == TNH_ObjectConstructor.ConstructorState.Confirm)
             {
 
-                if (i == 0)
+                if (i == 1)
                 {
                     __instance.SetState(TNH_ObjectConstructor.ConstructorState.EntryList, 0);
                     ___m_selectedEntry = -1;
                     SM.PlayCoreSound(FVRPooledAudioType.UIChirp, __instance.AudEvent_Back, __instance.transform.position);
                 }
-                else if (i == 2)
+                else if (i == 3)
                 {
                     int cost = ___m_poolEntries[___m_selectedEntry].GetCost(__instance.M.EquipmentMode) + ___m_poolAddedCost[___m_selectedEntry];
                     if (__instance.M.GetNumTokens() >= cost)
