@@ -1490,8 +1490,8 @@ namespace TNHTweaker.Patches
             //If we didn't find a single pool, we cry about it
             if(validPools.Count == 0)
             {
-                TNHTweakerLogger.LogError("TNHTWEAKER -- No valid pool could spawn at constructor for type (" + t + ")");
-                __result = poolDef.Entries[0];
+                TNHTweakerLogger.LogWarning("TNHTWEAKER -- No valid pool could spawn at constructor for type (" + t + ")");
+                __result = null;
                 return false;
             }
 
