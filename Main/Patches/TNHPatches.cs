@@ -1827,6 +1827,8 @@ namespace TNHTweaker.Patches
                                     ammoSpawn = constructor.SpawnPoint_Ammo;
                                 }
 
+                                TNHTweakerLogger.Log("TNHTWEAKER -- Spawning ammo object normally (" + ammoObject.ItemID + "), Count = " + numSpawned, TNHTweakerLogger.LogType.TNH);
+
                                 gameObjectCallback = ammoObject.GetGameObjectAsync();
                                 yield return gameObjectCallback;
 
