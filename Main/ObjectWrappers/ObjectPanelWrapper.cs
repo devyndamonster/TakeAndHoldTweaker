@@ -28,15 +28,19 @@ namespace TNHTweaker
         public TNH_MagDuplicator original;
 
         public Dictionary<string, MagazineBlacklistEntry> blacklist;
-        public int DupeCost = 1;
-        public int UpgradeCost = 2;
-        public int PurchaseCost = 1;
+        public int DupeCost = 2;
+        public int UpgradeCost = 3;
+        public int PurchaseCost = 2;
 
         public static Sprite background;
 
         private TNH_ObjectConstructorIcon DupeIcon;
         private TNH_ObjectConstructorIcon UpgradeIcon;
         private TNH_ObjectConstructorIcon PurchaseIcon;
+
+        private Text priceText_0;
+        private Text priceText_1;
+        private Text priceText_2;
 
         private FVRFireArmMagazine detectedMag = null;
         private Speedloader detectedSpeedLoader = null;
@@ -102,6 +106,48 @@ namespace TNHTweaker
             Button button_2 = buttonTransform_2.gameObject.GetComponent<Button>();
             button_2.onClick = new Button.ButtonClickedEvent();
             button_2.onClick.AddListener(() => { PurchaseMagButton(); });
+
+            priceText_0 = AddPriceText(iconTransform_0, new Vector3(-235, 155, 0));
+            priceText_1 = AddPriceText(iconTransform_1, new Vector3(40, 155, 0));
+            priceText_2 = AddPriceText(iconTransform_2, new Vector3(355, 150, 0));
+            priceText_2.alignment = TextAnchor.MiddleLeft;
+
+            priceText_0.text = "x" + DupeCost;
+            priceText_1.text = "x" + UpgradeCost;
+            priceText_2.text = "x" + PurchaseCost;
+        }
+
+
+        private Text AddPriceText(Transform iconTransform, Vector3 localPosition)
+        {
+            GameObject canvas = new GameObject("PriceCanvas");
+            canvas.transform.SetParent(iconTransform.parent);
+            canvas.transform.rotation = iconTransform.rotation;
+            canvas.transform.localPosition = localPosition;
+
+            Canvas canvasComp = canvas.AddComponent<Canvas>();
+            RectTransform rect = canvasComp.GetComponent<RectTransform>();
+            canvasComp.renderMode = RenderMode.WorldSpace;
+            rect.sizeDelta = new Vector2(1, 1);
+
+            GameObject text = new GameObject("Text");
+            text.transform.SetParent(canvas.transform);
+            text.transform.rotation = canvas.transform.rotation;
+            text.transform.localPosition = Vector3.zero;
+
+            text.AddComponent<CanvasRenderer>();
+            Text textComp = text.AddComponent<Text>();
+            Font ArialFont = (Font)Resources.GetBuiltinResource(typeof(Font), "Arial.ttf");
+
+            textComp.text = "x?";
+            textComp.alignment = TextAnchor.MiddleCenter;
+            textComp.fontSize = 30;
+            textComp.fontStyle = FontStyle.Bold;
+            text.transform.localScale = new Vector3(0.0015f, 0.0015f, 0.0015f);
+            textComp.font = ArialFont;
+            textComp.horizontalOverflow = HorizontalWrapMode.Overflow;
+
+            return textComp;
         }
 
         private void DupeMagButton()
