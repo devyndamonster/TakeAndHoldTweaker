@@ -26,7 +26,7 @@ namespace TNHTweaker
             List<GameObject> toSpawn = new List<GameObject>();
             EquipmentGroup selectedGroup = group.GetSpawnedEquipmentGroups().GetRandom();
             string selectedItem;
-            for (int itemIndex = 0; itemIndex < group.ItemsToSpawn; itemIndex++)
+            for (int itemIndex = 0; itemIndex < selectedGroup.ItemsToSpawn; itemIndex++)
             {
                 if (selectedGroup.IsCompatibleMagazine)
                 {

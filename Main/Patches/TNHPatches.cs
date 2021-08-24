@@ -477,9 +477,17 @@ namespace TNHTweaker.Patches
                 if (selectedGroup != null)
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
-                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
-                    GameObject item = UnityEngine.Object.Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoints_SmallItem[0].position, __instance.SpawnPoints_SmallItem[0].rotation);
-                    __instance.M.AddObjectToTrackedList(item);
+                    
+                    List<GameObject> toSpawn = new List<GameObject>();
+                    for (int i = 0; i < selectedGroup.ItemsToSpawn; i++)
+                    {
+                        FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                        var item = selectedItem.GetGameObject();
+                        toSpawn.Add(item);
+                        __instance.M.AddObjectToTrackedList(item);
+                    }
+                    
+                    AnvilManager.Run(TNHTweakerUtils.InstantiateList(toSpawn, __instance.SpawnPoints_SmallItem[0].position));
                 }
             }
 
@@ -491,9 +499,17 @@ namespace TNHTweaker.Patches
                 if (selectedGroup != null)
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
-                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
-                    GameObject item = UnityEngine.Object.Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoints_SmallItem[1].position, __instance.SpawnPoints_SmallItem[1].rotation);
-                    __instance.M.AddObjectToTrackedList(item);
+                    
+                    List<GameObject> toSpawn = new List<GameObject>();
+                    for (int i = 0; i < selectedGroup.ItemsToSpawn; i++)
+                    {
+                        FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                        var item = selectedItem.GetGameObject();
+                        toSpawn.Add(item);
+                        __instance.M.AddObjectToTrackedList(item);
+                    }
+                    
+                    AnvilManager.Run(TNHTweakerUtils.InstantiateList(toSpawn, __instance.SpawnPoints_SmallItem[1].position));
                 }
             }
 
@@ -505,9 +521,17 @@ namespace TNHTweaker.Patches
                 if (selectedGroup != null)
                 {
                     selectedGroup = selectedGroup.GetSpawnedEquipmentGroups().GetRandom();
-                    FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
-                    GameObject item = UnityEngine.Object.Instantiate(selectedItem.GetGameObject(), __instance.SpawnPoints_SmallItem[2].position, __instance.SpawnPoints_SmallItem[2].rotation);
-                    __instance.M.AddObjectToTrackedList(item);
+                    
+                    List<GameObject> toSpawn = new List<GameObject>();
+                    for (int i = 0; i < selectedGroup.ItemsToSpawn; i++)
+                    {
+                        FVRObject selectedItem = IM.OD[selectedGroup.GetObjects().GetRandom()];
+                        var item = selectedItem.GetGameObject();
+                        toSpawn.Add(item);
+                        __instance.M.AddObjectToTrackedList(item);
+                    }
+                    
+                    AnvilManager.Run(TNHTweakerUtils.InstantiateList(toSpawn, __instance.SpawnPoints_SmallItem[2].position));
                 }
             }
 
@@ -1654,6 +1678,24 @@ namespace TNHTweaker.Patches
                 int requiredSpawnCount = 0;
                 int ammoSpawnCount = 0;
                 int objectSpawnCount = 0;
+
+                // This gathers all spawn points, so that multiple things can be spawned at the same time, on different spawnpoints.
+                //TODO: I dont like this, but it should work.
+                Dictionary<Transform, List<GameObject>> itemsToSpawn = new Dictionary<Transform, List<GameObject>>();
+                itemsToSpawn.Add(constructor.SpawnPoint_Mag, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Ammo, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Grenade, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Melee, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Shield, new List<GameObject>());
+                itemsToSpawn.Add(constructor.SpawnPoint_Object, new List<GameObject>());
+                
+                //This should only have one, and throw when trying to spawn more.
+                itemsToSpawn.Add(constructor.SpawnPoint_Case, new List<GameObject>());
+                
+                foreach (var gunSpawnPoint in constructor.SpawnPoints_GunsSize)
+                {
+                    itemsToSpawn.Add(gunSpawnPoint, new List<GameObject>());
+                }
 
                 TNHTweakerLogger.Log("TNHTWEAKER -- Pool has " + selectedGroups.Count + " groups to spawn from", TNHTweakerLogger.LogType.TNH);
                 for (int groupIndex = 0; groupIndex < selectedGroups.Count; groupIndex++)
