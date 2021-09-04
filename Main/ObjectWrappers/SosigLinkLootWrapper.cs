@@ -13,53 +13,54 @@ namespace TNHTweaker
     public class SosigLinkLootWrapper : MonoBehaviour
     {
         public EquipmentGroup group;
+        public bool dontDrop = false;
+        public bool shouldDropOnCleanup;
 
         void OnDestroy()
         {
+            if (dontDrop)
+                return;
+            
             TNHTweakerLogger.Log("TNHTweaker -- Lootable link was destroyed!", TNHTweakerLogger.LogType.TNH);
 
-            List<EquipmentGroup> selectedGroups = group.GetSpawnedEquipmentGroups();
+            List<GameObject> toSpawn = new List<GameObject>();
+            EquipmentGroup selectedGroup = group.GetSpawnedEquipmentGroups().GetRandom();
             string selectedItem;
-            int spawnedItems = 0;
-
-            foreach(EquipmentGroup selectedGroup in selectedGroups)
+            for (int itemIndex = 0; itemIndex < selectedGroup.ItemsToSpawn; itemIndex++)
             {
-                for (int itemIndex = 0; itemIndex < selectedGroup.ItemsToSpawn; itemIndex++)
+                if (selectedGroup.IsCompatibleMagazine)
                 {
-                    if (selectedGroup.IsCompatibleMagazine)
+                    FVRObject mag = FirearmUtils.GetAmmoContainerForEquipped(selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
+                    if (mag != null)
                     {
-                        FVRObject mag = FirearmUtils.GetAmmoContainerForEquipped(selectedGroup.MinAmmoCapacity, selectedGroup.MaxAmmoCapacity);
-                        if (mag != null)
-                        {
-                            selectedItem = mag.ItemID;
-                        }
-                        else
-                        {
-                            TNHTweakerLogger.Log(
-                                "TNHTweaker -- Spawning nothing, since group was compatible magazines, and could not find a compatible magazine for player",
-                                TNHTweakerLogger.LogType.TNH);
-                            return;
-                        }
-                    }
-
-                    else
-                    {
-                        selectedItem = selectedGroup.GetObjects().GetRandom();
-                    }
-
-                    if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(selectedItem))
-                    {
-                        AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(LoadedTemplateManager.LoadedVaultFiles[selectedItem],
-                            transform.position + (Vector3.up * 0.1f * spawnedItems) , transform.rotation));
+                        selectedItem = mag.ItemID;
                     }
                     else
                     {
-                        Instantiate(IM.OD[selectedItem].GetGameObject(), transform.position + (Vector3.up * 0.1f * spawnedItems), transform.rotation);
+                        TNHTweakerLogger.Log(
+                            "TNHTweaker -- Spawning nothing, since group was compatible magazines, and could not find a compatible magazine for player",
+                            TNHTweakerLogger.LogType.TNH);
+                        return;
                     }
+                }
 
-                    spawnedItems += 1;
+                else
+                {
+                    selectedItem = selectedGroup.GetObjects().GetRandom();
+                }
+
+                if (LoadedTemplateManager.LoadedVaultFiles.ContainsKey(selectedItem))
+                {
+                    AnvilManager.Run(TNHTweakerUtils.SpawnFirearm(LoadedTemplateManager.LoadedVaultFiles[selectedItem],
+                        transform.position, transform.rotation));
+                }
+                else
+                {
+                    toSpawn.Add(IM.OD[selectedItem].GetGameObject());
                 }
             }
+
+            AnvilManager.Run(TNHTweakerUtils.InstantiateList(toSpawn, transform.position));
         }
     }
 }
