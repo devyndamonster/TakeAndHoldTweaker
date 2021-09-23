@@ -604,18 +604,22 @@ namespace TNHTweaker.Utilities
             List<int> validIndexes = new List<int>();
             Dictionary<GameObject, SavedGunComponent> dicGO = new Dictionary<GameObject, SavedGunComponent>();
             Dictionary<int, GameObject> dicByIndex = new Dictionary<int, GameObject>();
-            List<AnvilCallback<GameObject>> callbackList = new List<AnvilCallback<GameObject>>();
-
+            List<GameObject> gameObjects = new List<GameObject>();
             SavedGun gun = savedGun.GetSavedGun();
 
             for (int i = 0; i < gun.Components.Count; i++)
             {
-                callbackList.Add(IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync());
+                AnvilCallback<GameObject> gameObjectCallback = IM.OD[gun.Components[i].ObjectID].GetGameObjectAsync();
+
+                TNHTweakerLogger.Log($"Loading vault component: {gun.Components[i].ObjectID}", TNHTweakerLogger.LogType.General);
+
+                yield return gameObjectCallback;
+                gameObjects.Add(gameObjectCallback.Result);
             }
-            yield return callbackList;
+
             for (int j = 0; j < gun.Components.Count; j++)
             {
-                GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(callbackList[j].Result);
+                GameObject gameObject = UnityEngine.Object.Instantiate(gameObjects[j]);
 
                 dicGO.Add(gameObject, gun.Components[j]);
                 dicByIndex.Add(gun.Components[j].Index, gameObject);

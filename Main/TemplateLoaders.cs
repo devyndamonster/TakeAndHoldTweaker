@@ -106,7 +106,6 @@ namespace TNHTweaker
                     }
                 }
 
-
                 TNHTweakerLogger.Log("TNHTweaker -- Character loaded successfuly : " + character.DisplayName, TNHTweakerLogger.LogType.File);
 
                 LoadedTemplateManager.AddCharacterTemplate(character, thumbnail);
@@ -134,6 +133,7 @@ namespace TNHTweaker
             {
                 SavedGunSerializable savedGun = stage.ImmediateReaders.Get<JToken>()(file).ToObject<SavedGunSerializable>();
 
+                TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
                 TNHTweakerLogger.Log("TNHTweaker -- Vault file loaded successfuly : " + savedGun.FileName, TNHTweakerLogger.LogType.File);
 
                 LoadedTemplateManager.AddVaultFile(savedGun);

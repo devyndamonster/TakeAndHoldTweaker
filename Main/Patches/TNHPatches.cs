@@ -20,6 +20,7 @@ namespace TNHTweaker.Patches
         private static bool preventOutfitFunctionality = false;
 
         private static List<int> spawnedBossIndexes = new List<int>();
+        private static List<int> supplyPointIFFList = new List<int>();
         private static List<GameObject> SpawnedConstructors = new List<GameObject>();
         private static List<GameObject> SpawnedPanels = new List<GameObject>();
         private static List<EquipmentPoolDef.PoolEntry> SpawnedPools = new List<EquipmentPoolDef.PoolEntry>();
@@ -247,6 +248,16 @@ namespace TNHTweaker.Patches
         }
 
 
+        [HarmonyPatch(typeof(TNH_Manager), "GenerateInitialTakeSentryPatrols")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool GenerateInitialTakeSentryPatrolPatch()
+        {
+
+
+            return false;
+        }
+
+
 
         [HarmonyPatch(typeof(TNH_Manager), "GenerateSentryPatrol")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
@@ -288,7 +299,9 @@ namespace TNHTweaker.Patches
 
             Patrol patrol = currLevel.Patrols[patrolIndex];
             TNH_Manager.SosigPatrolSquad squad = GeneratePatrol(__instance, patrol, SpawnPoints, ForwardVectors, PatrolPoints, patrolIndex);
-            ___m_patrolSquads.Add(squad);
+
+            //We don't add this patrol because it's tracked outside of this method
+            //___m_patrolSquads.Add(squad);
 
             if (__instance.EquipmentMode == TNHSetting_EquipmentMode.Spawnlocking)
             {
