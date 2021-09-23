@@ -26,7 +26,19 @@ namespace TNHTweaker.Utilities
             }
             return false;
         }
-
+        
+        /// <summary>
+        /// Calculates needed space for an object
+        /// </summary>
+        /// <param name="g"></param>
+        /// <returns></returns>
+        public static Bounds GetMaxBounds(this GameObject g) {
+            var b = new Bounds(g.transform.position, Vector3.zero);
+            foreach (Renderer r in g.GetComponentsInChildren<Renderer>()) {
+                b.Encapsulate(r.bounds);
+            }
+            return b;
+        }
     }
 
 }
