@@ -58,6 +58,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>Libs\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
     <Reference Include="BepInEx, Version=5.4.8.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Libs\BepInEx.dll</HintPath>
@@ -120,9 +123,13 @@
     <Compile Include="Main\AsyncLoadMonitor.cs" />
     <Compile Include="Main\ObjectWrappers\SosigLinkLootWrapper.cs" />
     <Compile Include="Main\Patches\DebugPatches.cs" />
+    <Compile Include="Main\Patches\HighScorePatches.cs" />
+    <Compile Include="Main\Patches\PatrolPatches.cs" />
     <Compile Include="Main\Patches\TNHPatches.cs" />
     <Compile Include="Main\TNHMenuInitializer.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
+    <Compile Include="ObjectTemplates\HoldStats.cs" />
+    <Compile Include="ObjectTemplates\ScoreEntry.cs" />
     <Compile Include="ObjectTemplates\VectorSerializable.cs" />
     <Compile Include="Utilities\FirearmUtils.cs" />
     <Compile Include="Utilities\Extensions.cs" />

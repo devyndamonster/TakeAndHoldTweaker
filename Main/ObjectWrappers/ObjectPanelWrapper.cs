@@ -165,11 +165,13 @@ namespace TNHTweaker
 
                 if(detectedMag != null)
                 {
+                    TNHTweaker.HoldActions[original.M.m_level].Add($"Duplicated {detectedMag.ObjectWrapper.DisplayName}");
                     FirearmUtils.SpawnDuplicateMagazine(detectedMag, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
 
                 else
                 {
+                    TNHTweaker.HoldActions[original.M.m_level].Add($"Duplicated {detectedSpeedLoader.ObjectWrapper.DisplayName}");
                     FirearmUtils.SpawnDuplicateSpeedloader(detectedSpeedLoader, original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
                 }
 
@@ -192,6 +194,8 @@ namespace TNHTweaker
                 original.M.SubtractTokens(UpgradeCost);
                 original.M.Increment(10, false);
 
+                TNHTweaker.HoldActions[original.M.m_level].Add($"Upgraded {detectedMag.ObjectWrapper.DisplayName} To {upgradeMag.DisplayName}");
+
                 Destroy(detectedMag.GameObject);
                 Instantiate(upgradeMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
 
@@ -213,6 +217,8 @@ namespace TNHTweaker
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(PurchaseCost);
                 original.M.Increment(10, false);
+
+                TNHTweaker.HoldActions[original.M.m_level].Add($"Purchased {purchaseMag.DisplayName}");
 
                 Instantiate(purchaseMag.GetGameObject(), original.Spawnpoint_Mag.position, original.Spawnpoint_Mag.rotation);
 
@@ -532,18 +538,21 @@ namespace TNHTweaker
 
                 if(detectedHandgun != null)
                 {
+                    TNHTweaker.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedHandgun.ObjectWrapper.DisplayName}");
                     AddFullAutoToHandgun(detectedHandgun);
                     detectedHandgun = null;
                 }
 
                 else if (detectedClosedBolt != null)
                 {
+                    TNHTweaker.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedClosedBolt.ObjectWrapper.DisplayName}");
                     AddFullAutoToClosedBolt(detectedClosedBolt);
                     detectedClosedBolt = null;
                 }
 
                 else if(detectedOpenBolt != null)
                 {
+                    TNHTweaker.HoldActions[original.M.m_level].Add($"Added Full-Auto To {detectedOpenBolt.ObjectWrapper.DisplayName}");
                     AddFullAutoToOpenBolt(detectedOpenBolt);
                     detectedOpenBolt = null;
                 }
@@ -859,6 +868,7 @@ namespace TNHTweaker
         {
             if (detectedHandgun != null)
             {
+                TNHTweaker.HoldActions[original.M.m_level].Add($"Increased Fire-Rate For {detectedHandgun.ObjectWrapper.DisplayName}");
                 detectedHandgun.Slide.SpringStiffness *= fireRateMultiplier;
                 detectedHandgun.Slide.Speed_Rearward *= fireRateMultiplier;
                 detectedHandgun.Slide.Speed_Forward *= fireRateMultiplier;
@@ -867,6 +877,7 @@ namespace TNHTweaker
 
             else if (detectedClosedBolt != null)
             {
+                TNHTweaker.HoldActions[original.M.m_level].Add($"Increased Fire-Rate For {detectedClosedBolt.ObjectWrapper.DisplayName}");
                 detectedClosedBolt.Bolt.SpringStiffness *= fireRateMultiplier;
                 detectedClosedBolt.Bolt.Speed_Forward *= fireRateMultiplier;
                 detectedClosedBolt.Bolt.Speed_Rearward *= fireRateMultiplier;
@@ -875,6 +886,7 @@ namespace TNHTweaker
 
             else
             {
+                TNHTweaker.HoldActions[original.M.m_level].Add($"Increased Fire-Rate For {detectedOpenBolt.ObjectWrapper.DisplayName}");
                 detectedOpenBolt.Bolt.BoltSpringStiffness *= fireRateMultiplier;
                 detectedOpenBolt.Bolt.BoltSpeed_Forward *= fireRateMultiplier;
                 detectedOpenBolt.Bolt.BoltSpeed_Rearward *= fireRateMultiplier;
@@ -888,6 +900,7 @@ namespace TNHTweaker
         {
             if(detectedHandgun != null)
             {
+                TNHTweaker.HoldActions[original.M.m_level].Add($"Decreased Fire-Rate For {detectedHandgun.ObjectWrapper.DisplayName}");
                 detectedHandgun.Slide.SpringStiffness *= (1f / fireRateMultiplier);
                 detectedHandgun.Slide.Speed_Rearward *= (1f / fireRateMultiplier);
                 detectedHandgun.Slide.Speed_Forward *= (1f / fireRateMultiplier);
@@ -896,6 +909,7 @@ namespace TNHTweaker
 
             else if(detectedClosedBolt != null)
             {
+                TNHTweaker.HoldActions[original.M.m_level].Add($"Decreased Fire-Rate For {detectedClosedBolt.ObjectWrapper.DisplayName}");
                 detectedClosedBolt.Bolt.SpringStiffness *= (1f / fireRateMultiplier);
                 detectedClosedBolt.Bolt.Speed_Rearward *= (1f / fireRateMultiplier);
                 detectedClosedBolt.Bolt.Speed_Forward *= (1f / fireRateMultiplier);
@@ -904,6 +918,7 @@ namespace TNHTweaker
 
             else
             {
+                TNHTweaker.HoldActions[original.M.m_level].Add($"Decreased Fire-Rate For {detectedOpenBolt.ObjectWrapper.DisplayName}");
                 detectedOpenBolt.Bolt.BoltSpringStiffness *= (1f / fireRateMultiplier);
                 detectedOpenBolt.Bolt.BoltSpeed_Forward *= (1f / fireRateMultiplier);
                 detectedOpenBolt.Bolt.BoltSpeed_Rearward *= (1f / fireRateMultiplier);

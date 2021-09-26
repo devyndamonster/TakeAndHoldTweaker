@@ -33,6 +33,18 @@ namespace TNHTweaker
 
         public static string OutputFilePath;
 
+        //Variables used by various patches
+        public static bool PreventOutfitFunctionality = false;
+        public static List<int> SpawnedBossIndexes = new List<int>();
+        public static List<int> SupplyPointIFFList = new List<int>();
+
+        public static List<GameObject> SpawnedConstructors = new List<GameObject>();
+        public static List<GameObject> SpawnedPanels = new List<GameObject>();
+        public static List<EquipmentPoolDef.PoolEntry> SpawnedPools = new List<EquipmentPoolDef.PoolEntry>();
+
+        public static List<List<string>> HoldActions = new List<List<string>>();
+        public static List<HoldStats> HoldStats = new List<HoldStats>();
+
 
         /// <summary>
         /// First method that gets called
@@ -44,7 +56,10 @@ namespace TNHTweaker
 
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
+            Harmony.CreateAndPatchAll(typeof(PatrolPatches));
             //Harmony.CreateAndPatchAll(typeof(DebugPatches));
+
+            //TNHPatches.PreventScoring();
 
             Stages.Setup += OnSetup;
         }
