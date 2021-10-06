@@ -5,11 +5,53 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TNHTweaker.Utilities;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace TNHTweaker
 {
     public class DebugPatches
     {
+
+		[HarmonyPatch(typeof(TNH_Manager), "Start")]
+		[HarmonyPrefix]
+		public static bool AddPointDebugText(TNH_Manager __instance)
+        {
+			foreach(TNH_HoldPoint hold in __instance.HoldPoints)
+            {
+
+				TNHTweakerLogger.Log("Adding text!", TNHTweakerLogger.LogType.TNH);
+
+				GameObject canvas = new GameObject("Canvas");
+				canvas.transform.rotation = Quaternion.LookRotation(Vector3.right);
+				canvas.transform.position = hold.SpawnPoint_SystemNode.position + Vector3.up * 0.2f;
+
+				Canvas canvasComp = canvas.AddComponent<Canvas>();
+				RectTransform rect = canvasComp.GetComponent<RectTransform>();
+				canvasComp.renderMode = RenderMode.WorldSpace;
+				rect.sizeDelta = new Vector2(1, 1);
+
+				GameObject text = new GameObject("Text");
+				text.transform.SetParent(canvas.transform);
+				text.transform.rotation = canvas.transform.rotation;
+				text.transform.localPosition = Vector3.zero;
+
+				text.AddComponent<CanvasRenderer>();
+				Text textComp = text.AddComponent<Text>();
+				Font ArialFont = (Font)Resources.GetBuiltinResource(typeof(Font), "Arial.ttf");
+
+				textComp.text = "Hold " + __instance.HoldPoints.IndexOf(hold);
+				textComp.alignment = TextAnchor.MiddleCenter;
+				textComp.fontSize = 32;
+				text.transform.localScale = new Vector3(0.0015f, 0.0015f, 0.0015f);
+				textComp.font = ArialFont;
+				textComp.horizontalOverflow = HorizontalWrapMode.Overflow;
+            }
+
+			return true;
+        }
+
+
 		/*
 		[HarmonyPatch(typeof(ObjectTable))] // Specify target method with HarmonyPatch attribute
 		[HarmonyPatch("Initialize")]

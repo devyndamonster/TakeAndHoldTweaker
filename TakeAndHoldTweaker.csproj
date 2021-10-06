@@ -129,6 +129,7 @@
     <Compile Include="Main\TNHMenuInitializer.cs" />
     <Compile Include="ObjectTemplates\CustomCharacter.cs" />
     <Compile Include="ObjectTemplates\HoldStats.cs" />
+    <Compile Include="ObjectTemplates\MapData.cs" />
     <Compile Include="ObjectTemplates\ScoreEntry.cs" />
     <Compile Include="ObjectTemplates\VectorSerializable.cs" />
     <Compile Include="Utilities\FirearmUtils.cs" />

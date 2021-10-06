@@ -45,6 +45,8 @@ namespace TNHTweaker
         public static List<List<string>> HoldActions = new List<List<string>>();
         public static List<HoldStats> HoldStats = new List<HoldStats>();
 
+        public static int GunsRecycled;
+        public static int ShotsFired;
 
         /// <summary>
         /// First method that gets called
@@ -57,7 +59,8 @@ namespace TNHTweaker
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
             Harmony.CreateAndPatchAll(typeof(PatrolPatches));
-            //Harmony.CreateAndPatchAll(typeof(DebugPatches));
+            Harmony.CreateAndPatchAll(typeof(HighScorePatches));
+            Harmony.CreateAndPatchAll(typeof(DebugPatches));
 
             //TNHPatches.PreventScoring();
 

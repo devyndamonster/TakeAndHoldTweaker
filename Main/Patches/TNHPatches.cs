@@ -1228,7 +1228,10 @@ namespace TNHTweaker.Patches
                             mainSpawnCount += 1;
                         }
 
+                        TNHTweakerLogger.Log("Level: " + constructor.M.m_level, TNHTweakerLogger.LogType.TNH);
+                        TNHTweakerLogger.Log("Hold Actions Length: " + TNHTweaker.HoldActions.Count, TNHTweakerLogger.LogType.TNH);
                         TNHTweaker.HoldActions[constructor.M.m_level].Add($"Purchased {mainObject.DisplayName}");
+                        
 
                         //If this is a vault file, we have to spawn it through a routine. Otherwise we just instantiate it
                         if (vaultFile != null)
