@@ -30,6 +30,8 @@ namespace TNHTweaker
         private static ConfigEntry<bool> allowLog;
         public static ConfigEntry<bool> BuildCharacterFiles;
         public static ConfigEntry<bool> UnlimitedTokens;
+        public static ConfigEntry<bool> EnableDebugText;
+        public static ConfigEntry<bool> EnableScoring;
 
         public static string OutputFilePath;
 
@@ -56,13 +58,13 @@ namespace TNHTweaker
             TNHTweakerLogger.Init();
             TNHTweakerLogger.Log("Hello World (from TNH Tweaker)", TNHTweakerLogger.LogType.General);
 
+            LoadConfigFile();
+
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
             Harmony.CreateAndPatchAll(typeof(PatrolPatches));
             Harmony.CreateAndPatchAll(typeof(HighScorePatches));
-            Harmony.CreateAndPatchAll(typeof(DebugPatches));
-
-            //TNHPatches.PreventScoring();
+            if (EnableDebugText.Value) Harmony.CreateAndPatchAll(typeof(DebugPatches));
 
             Stages.Setup += OnSetup;
         }
@@ -74,7 +76,6 @@ namespace TNHTweaker
         /// <param name="stage"></param>
         private void OnSetup(SetupStage stage)
         {
-            LoadConfigFile();
             SetupOutputDirectory();
             LoadPanelSprites(stage);
 
@@ -113,7 +114,6 @@ namespace TNHTweaker
             file = Source.Resources.GetFile("plus_icon.png");
             result = TNHTweakerUtils.LoadSprite(file);
             FireRatePanel.plusSprite = result;
-
         }
 
 
@@ -131,6 +131,10 @@ namespace TNHTweaker
                                     false,
                                     "If true, files useful for character creation will be generated in TNHTweaker folder");
 
+            EnableScoring = Source.Config.Bind("General",
+                                    "EnableScoring",
+                                    true,
+                                    "If true, TNH scores will be uploaded to the TNH Dashboard (https://devyndamonster.github.io/TNHDashboard/index.html)");
 
             allowLog = Source.Config.Bind("Debug",
                                     "EnableLogging",
@@ -156,6 +160,13 @@ namespace TNHTweaker
                                     "EnableUnlimitedTokens",
                                     false,
                                     "If true, you will spawn with 999999 tokens for any character in TNH (useful for testing loot pools)");
+
+            EnableDebugText = Source.Config.Bind("Debug",
+                                    "EnableDebugText",
+                                    false,
+                                    "If true, some text will appear in TNH maps showing additional info");
+
+            
 
             TNHTweakerLogger.AllowLogging = allowLog.Value;
             TNHTweakerLogger.LogCharacter = printCharacters.Value;

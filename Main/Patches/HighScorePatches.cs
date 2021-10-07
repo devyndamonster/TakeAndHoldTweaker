@@ -12,6 +12,7 @@ using TNHTweaker.ObjectTemplates;
 using TNHTweaker.Utilities;
 using UnityEngine.Networking;
 using Steamworks;
+using UnityEngine;
 
 namespace TNHTweaker.Patches
 {
@@ -36,7 +37,7 @@ namespace TNHTweaker.Patches
                 TNHTweaker.GunsRecycled = 0;
                 TNHTweaker.ShotsFired = 0;
 
-                TNHTweakerLogger.Log("Delayed init", TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.Log("Delayed init", TNHTweakerLogger.LogType.TNH);
             }
             
             return true;
@@ -49,7 +50,7 @@ namespace TNHTweaker.Patches
         {
             TNHTweaker.HoldActions[0].Add($"Spawned At Supply {__instance.m_curPointSequence.StartSupplyPointIndex}");
 
-            TNHTweakerLogger.Log("Spawned Player", TNHTweakerLogger.LogType.General);
+            TNHTweakerLogger.Log("Spawned Player", TNHTweakerLogger.LogType.TNH);
 
             return true;
         }
@@ -59,7 +60,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool TrackHoldCompletion(TNH_Manager __instance)
         {
-            TNHTweakerLogger.Log("Hold Completion", TNHTweakerLogger.LogType.General);
+            TNHTweakerLogger.Log("Hold Completion", TNHTweakerLogger.LogType.TNH);
 
             TNHTweaker.HoldStats.Add(new HoldStats()
             {
@@ -86,7 +87,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool TrackNextLevel(TNH_Manager __instance)
         {
-            TNHTweakerLogger.Log("Set Level", TNHTweakerLogger.LogType.General);
+            TNHTweakerLogger.Log("Set Level", TNHTweakerLogger.LogType.TNH);
             TNHTweaker.HoldActions.Add(new List<string>());
 
             return true;
@@ -97,7 +98,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool TrackDeath(TNH_Manager __instance)
         {
-            TNHTweakerLogger.Log("Died", TNHTweakerLogger.LogType.General);
+            TNHTweakerLogger.Log("Died", TNHTweakerLogger.LogType.TNH);
             TNHTweaker.HoldActions.Last().Add("Died");
 
             TNHTweaker.HoldStats.Add(new HoldStats()
@@ -125,7 +126,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool TrackVictory(TNH_Manager __instance)
         {
-            TNHTweakerLogger.Log("Victory", TNHTweakerLogger.LogType.General);
+            TNHTweakerLogger.Log("Victory", TNHTweakerLogger.LogType.TNH);
             TNHTweaker.HoldActions.Last().Add("Victory");
 
             return true;
@@ -162,7 +163,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool TrackHoldStart(TNH_HoldPoint __instance)
         {
-            TNHTweakerLogger.Log("Hold Start", TNHTweakerLogger.LogType.General);
+            TNHTweakerLogger.Log("Hold Start", TNHTweakerLogger.LogType.TNH);
             TNHTweaker.HoldActions[__instance.M.m_level].Add($"Entered Hold {__instance.M.HoldPoints.IndexOf(__instance)}");
 
             return true;
@@ -173,7 +174,7 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool TrackRecyclePatch(TNH_GunRecycler __instance)
         {
-            TNHTweakerLogger.Log("Recycle button", TNHTweakerLogger.LogType.General);
+            TNHTweakerLogger.Log("Recycle button", TNHTweakerLogger.LogType.TNH);
             if (__instance.m_detectedFirearms.Count > 0 && __instance.m_detectedFirearms[0] != null)
             {
                 TNHTweaker.HoldActions[__instance.M.m_level].Add($"Recycled {__instance.m_detectedFirearms[0].ObjectWrapper.DisplayName}");
@@ -200,7 +201,7 @@ namespace TNHTweaker.Patches
                 if (!__instance.m_hasBeenVisited && __instance.m_contact != null)
                 {
                     __instance.m_contact.SetVisited(true);
-                    TNHTweakerLogger.Log("Visiting supply", TNHTweakerLogger.LogType.General);
+                    TNHTweakerLogger.Log("Visiting supply", TNHTweakerLogger.LogType.TNH);
                     TNHTweaker.HoldActions[__instance.M.m_level].Add($"Entered Supply {__instance.M.SupplyPoints.IndexOf(__instance)}");
                 }
                 __instance.m_hasBeenVisited = true;
@@ -216,17 +217,52 @@ namespace TNHTweaker.Patches
         [HarmonyPrefix]
         public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
         {
+            TNHTweakerLogger.Log("Preventing vanilla score submition", TNHTweakerLogger.LogType.TNH);
 
             GM.Omni.OmniFlags.AddScore(__instance.m_curSequenceID, score);
 
             __instance.m_hasCurrentScore = true;
             __instance.m_currentScore = score;
 
-            AnvilManager.Instance.StartCoroutine(SendScore(score));
-
+            if (TNHTweaker.EnableScoring.Value)
+            {
+                AnvilManager.Instance.StartCoroutine(SendScore(score));
+            }
+            
+            //Draw local scores
             __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);
 
             GM.Omni.SaveToFile();
+
+            return false;
+        }
+
+
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "UpdateHighScoreCallbacks")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool RequestScores(TNH_ScoreDisplay __instance)
+        {
+            //The first thing we do is get the top scores
+            if (__instance.m_doRequestScoresTop)
+            {
+                __instance.m_doRequestScoresTop = false;
+                TNHTweakerLogger.Log("Requesting Top Scores", TNHTweakerLogger.LogType.TNH);
+
+                AnvilManager.Instance.StartCoroutine(GetHighScores(6, __instance));
+            }
+
+            //After the top scores are retrieved, request the players score
+            //TODO this should be made into one API call, I'm just following the vanilla style for now
+            if (__instance.m_doRequestScoresPlayer)
+            {
+                __instance.m_doRequestScoresPlayer = false;
+                TNHTweakerLogger.Log("Requesting Player Scores", TNHTweakerLogger.LogType.TNH);
+
+                __instance.m_scoresPlayer = new List<RUST.Steamworks.HighScoreManager.HighScore>();
+                __instance.m_hasScoresPlayer = true;
+
+                __instance.SetGlobalHighScoreDisplay(__instance.m_scoresTop);
+            }
 
             return false;
         }
@@ -260,33 +296,79 @@ namespace TNHTweaker.Patches
         }
         
 
-        public static UnityWebRequest GetScoresAPIWebRequest(int score)
+        public static IEnumerator GetHighScores(int count, TNH_ScoreDisplay instance)
         {
+            TNHTweakerLogger.Log("Getting high scores from TNH Dashboard", TNHTweakerLogger.LogType.TNH);
+
             string url = "https://tnh-dashboard.azure-api.net/v1/api/scores";
 
-            UnityWebRequest www = new UnityWebRequest(url, "Put");
+            if(GM.TNH_Manager != null)
+            {
+                url += "?character=" + GM.TNH_Manager.C.DisplayName;
+                url += "&map=" + GM.TNH_Manager.LevelName;
+                url += "&health=" + health[(int)GM.TNHOptions.HealthModeSetting];
+                url += "&equipment=" + equipment[(int)GM.TNHOptions.EquipmentModeSetting];
+                url += "&length=" + length[(int)GM.TNHOptions.ProgressionTypeSetting];
+                url += "&startingIndex=" + 0 + "&count=" + count;
+            }
+            else
+            {
+                TNH_UIManager manager = GameObject.FindObjectOfType<TNH_UIManager>();
+                if(manager == null)
+                {
+                    TNHTweakerLogger.LogError("Neither the TNH Manager or the UI Manager were found! Scores will not display");
+                    yield break;
+                }
 
-            ScoreEntry entry = GetScoreEntry(GM.TNH_Manager, score);
+                url += "?character=" + manager.CharDatabase.GetDef((TNH_Char)GM.TNHOptions.LastPlayedChar).DisplayName;
+                url += "&map=" + manager.CurLevelID;
+                url += "&health=" + health[(int)GM.TNHOptions.HealthModeSetting];
+                url += "&equipment=" + equipment[(int)GM.TNHOptions.EquipmentModeSetting];
+                url += "&length=" + length[(int)GM.TNHOptions.ProgressionTypeSetting];
+                url += "&startingIndex=" + 0 + "&count=" + count;
+            }
 
-            string data = JsonConvert.SerializeObject(entry);
+            TNHTweakerLogger.Log("Request URL: " + url, TNHTweakerLogger.LogType.TNH);
 
-            TNHTweakerLogger.Log("Sending score entry: \n" + data, TNHTweakerLogger.LogType.TNH);
+            using (UnityWebRequest wwwGetScores = UnityWebRequest.Get(url))
+            {
+                yield return wwwGetScores.Send();
 
-            www.SetRequestHeader(Globals.Accept, "*/*");
-            www.SetRequestHeader(Globals.Content_Type, Globals.ApplicationJson);
-            www.downloadHandler = new DownloadHandlerBuffer();
+                if (wwwGetScores.isError)
+                {
+                    TNHTweakerLogger.LogError("Something bad happened getting scores \n" + wwwGetScores.error);
+                }
+                else
+                {
+                    TNHTweakerLogger.Log("Got Scores!", TNHTweakerLogger.LogType.TNH);
 
-            byte[] payload = Encoding.UTF8.GetBytes(data);
-            UploadHandler handler = new UploadHandlerRaw(payload);
-            handler.contentType = "application/json";
-            www.uploadHandler = handler;
-            
-            return www;
+                    string scores = wwwGetScores.downloadHandler.text;
+                    TNHTweakerLogger.Log(scores, TNHTweakerLogger.LogType.TNH);
+
+                    List<ScoreEntry> highScores = JsonConvert.DeserializeObject<List<ScoreEntry>>(scores);
+                    instance.m_scoresTop = new List<RUST.Steamworks.HighScoreManager.HighScore>();
+
+                    for (int i = 0; i < highScores.Count; i++)
+                    {
+                        instance.m_scoresTop.Add(new RUST.Steamworks.HighScoreManager.HighScore()
+                        {
+                            name = highScores[i].Name,
+                            rank = i + 1,
+                            score = highScores[i].Score
+                        });
+                    }
+                }
+            }
+
+            instance.m_hasScoresTop = true;
+            instance.m_doRequestScoresPlayer = true;
         }
+
         
 
         public static IEnumerator SendScore(int score)
-        { 
+        {
+            TNHTweakerLogger.Log("Sending modded score to the TNH Dashboard", TNHTweakerLogger.LogType.TNH);
 
             //First, send the map data for this map
             using (UnityWebRequest wwwSendMap = new UnityWebRequest("https://tnh-dashboard.azure-api.net/v1/api/maps", "Put"))
