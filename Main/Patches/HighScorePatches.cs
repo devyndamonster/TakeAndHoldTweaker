@@ -23,6 +23,8 @@ namespace TNHTweaker.Patches
         private static string[] health = { "Standard", "One-Hit" };
         private static string[] length = { "5-Hold", "Endless", "3-Hold" };
 
+        private static bool waitForScore = false;
+
 
         [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
         [HarmonyPrefix]
@@ -210,58 +212,45 @@ namespace TNHTweaker.Patches
 
             return false;
         }
-
-
-
-        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")] // Specify target method with HarmonyPatch attribute
-        [HarmonyPrefix]
-        public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
-        {
-            TNHTweakerLogger.Log("Preventing vanilla score submition", TNHTweakerLogger.LogType.TNH);
-
-            GM.Omni.OmniFlags.AddScore(__instance.m_curSequenceID, score);
-
-            __instance.m_hasCurrentScore = true;
-            __instance.m_currentScore = score;
-
-            if (TNHTweaker.EnableScoring.Value)
-            {
-                AnvilManager.Instance.StartCoroutine(SendScore(score));
-            }
-            
-            //Draw local scores
-            __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);
-
-            GM.Omni.SaveToFile();
-
-            return false;
-        }
-
+        
 
         [HarmonyPatch(typeof(TNH_ScoreDisplay), "UpdateHighScoreCallbacks")] // Specify target method with HarmonyPatch attribute
         [HarmonyPrefix]
         public static bool RequestScores(TNH_ScoreDisplay __instance)
         {
+            if (waitForScore) return false;
+
             //The first thing we do is get the top scores
             if (__instance.m_doRequestScoresTop)
             {
-                __instance.m_doRequestScoresTop = false;
                 TNHTweakerLogger.Log("Requesting Top Scores", TNHTweakerLogger.LogType.TNH);
+                __instance.m_doRequestScoresTop = false;
+                __instance.m_scoresTop = new List<RUST.Steamworks.HighScoreManager.HighScore>();
 
                 AnvilManager.Instance.StartCoroutine(GetHighScores(6, __instance));
             }
 
             //After the top scores are retrieved, request the players score
-            //TODO this should be made into one API call, I'm just following the vanilla style for now
             if (__instance.m_doRequestScoresPlayer)
             {
-                __instance.m_doRequestScoresPlayer = false;
                 TNHTweakerLogger.Log("Requesting Player Scores", TNHTweakerLogger.LogType.TNH);
-
+                __instance.m_doRequestScoresPlayer = false;
                 __instance.m_scoresPlayer = new List<RUST.Steamworks.HighScoreManager.HighScore>();
-                __instance.m_hasScoresPlayer = true;
 
-                __instance.SetGlobalHighScoreDisplay(__instance.m_scoresTop);
+                //If the players score is also in the selection of top scores, we just display the top
+                if (__instance.m_scoresTop.Any(o => o.name == SteamFriends.GetPersonaName()))
+                {
+                    __instance.m_scoresPlayer = new List<RUST.Steamworks.HighScoreManager.HighScore>();
+                    __instance.m_hasScoresPlayer = true;
+
+                    __instance.SetGlobalHighScoreDisplay(__instance.m_scoresTop);
+                }
+
+                //If the players scores are not at the top, we must also find their scores
+                else
+                {
+                    AnvilManager.Instance.StartCoroutine(GetPlayerScores(1, 1, __instance));
+                }
             }
 
             return false;
@@ -338,6 +327,10 @@ namespace TNHTweaker.Patches
                 {
                     TNHTweakerLogger.LogError("Something bad happened getting scores \n" + wwwGetScores.error);
                 }
+                else if(wwwGetScores.responseCode == 404)
+                {
+                    TNHTweakerLogger.LogError("Scores Not Found!");
+                }
                 else
                 {
                     TNHTweakerLogger.Log("Got Scores!", TNHTweakerLogger.LogType.TNH);
@@ -346,14 +339,13 @@ namespace TNHTweaker.Patches
                     TNHTweakerLogger.Log(scores, TNHTweakerLogger.LogType.TNH);
 
                     List<ScoreEntry> highScores = JsonConvert.DeserializeObject<List<ScoreEntry>>(scores);
-                    instance.m_scoresTop = new List<RUST.Steamworks.HighScoreManager.HighScore>();
 
                     for (int i = 0; i < highScores.Count; i++)
                     {
                         instance.m_scoresTop.Add(new RUST.Steamworks.HighScoreManager.HighScore()
                         {
                             name = highScores[i].Name,
-                            rank = i + 1,
+                            rank = highScores[i].Rank,
                             score = highScores[i].Score
                         });
                     }
@@ -364,11 +356,93 @@ namespace TNHTweaker.Patches
             instance.m_doRequestScoresPlayer = true;
         }
 
-        
+
+
+        public static IEnumerator GetPlayerScores(int num_before, int num_after, TNH_ScoreDisplay instance)
+        {
+            TNHTweakerLogger.Log("Getting player scores from TNH Dashboard", TNHTweakerLogger.LogType.TNH);
+
+            string url = "https://tnh-dashboard.azure-api.net/v1/api/scores/search";
+
+            if (GM.TNH_Manager != null)
+            {
+                url += "?character=" + GM.TNH_Manager.C.DisplayName;
+                url += "&map=" + GM.TNH_Manager.LevelName;
+                url += "&health=" + health[(int)GM.TNHOptions.HealthModeSetting];
+                url += "&equipment=" + equipment[(int)GM.TNHOptions.EquipmentModeSetting];
+                url += "&length=" + length[(int)GM.TNHOptions.ProgressionTypeSetting];
+                url += "&name=" + SteamFriends.GetPersonaName();
+                url += "&num_before=1";
+                url += "&num_after=1";
+            }
+            else
+            {
+                TNH_UIManager manager = GameObject.FindObjectOfType<TNH_UIManager>();
+                if (manager == null)
+                {
+                    TNHTweakerLogger.LogError("Neither the TNH Manager or the UI Manager were found! Scores will not display");
+                    yield break;
+                }
+
+                url += "?character=" + manager.CharDatabase.GetDef((TNH_Char)GM.TNHOptions.LastPlayedChar).DisplayName;
+                url += "&map=" + manager.CurLevelID;
+                url += "&health=" + health[(int)GM.TNHOptions.HealthModeSetting];
+                url += "&equipment=" + equipment[(int)GM.TNHOptions.EquipmentModeSetting];
+                url += "&length=" + length[(int)GM.TNHOptions.ProgressionTypeSetting];
+                url += "&name=" + SteamFriends.GetPersonaName();
+                url += "&num_before=1";
+                url += "&num_after=1";
+            }
+
+            TNHTweakerLogger.Log("Request URL: " + url, TNHTweakerLogger.LogType.TNH);
+
+            using (UnityWebRequest wwwGetScores = UnityWebRequest.Get(url))
+            {
+                yield return wwwGetScores.Send();
+
+                if (wwwGetScores.isError)
+                {
+                    TNHTweakerLogger.LogError("Something bad happened getting scores \n" + wwwGetScores.error);
+                }
+                else if (wwwGetScores.responseCode == 404)
+                {
+                    TNHTweakerLogger.LogError("Scores Not Found!");
+                }
+                else
+                {
+                    TNHTweakerLogger.Log("Got Scores!", TNHTweakerLogger.LogType.TNH);
+
+                    string scores = wwwGetScores.downloadHandler.text;
+                    TNHTweakerLogger.Log(scores, TNHTweakerLogger.LogType.TNH);
+
+                    List<ScoreEntry> playerScores = JsonConvert.DeserializeObject<List<ScoreEntry>>(scores);
+
+                    for (int i = 0; i < playerScores.Count; i++)
+                    {
+                        instance.m_scoresPlayer.Add(new RUST.Steamworks.HighScoreManager.HighScore()
+                        {
+                            name = playerScores[i].Name,
+                            rank = playerScores[i].Rank,
+                            score = playerScores[i].Score
+                        });
+                    }
+                }
+            }
+
+            List<RUST.Steamworks.HighScoreManager.HighScore> combinedScores = new List<RUST.Steamworks.HighScoreManager.HighScore>();
+            combinedScores.AddRange(instance.m_scoresTop.Take(3));
+            combinedScores.AddRange(instance.m_scoresPlayer.Take(3));
+
+            instance.m_hasScoresPlayer = true;
+            instance.SetGlobalHighScoreDisplay(combinedScores);
+        }
+
+
 
         public static IEnumerator SendScore(int score)
         {
             TNHTweakerLogger.Log("Sending modded score to the TNH Dashboard", TNHTweakerLogger.LogType.TNH);
+            waitForScore = true;
 
             //First, send the map data for this map
             using (UnityWebRequest wwwSendMap = new UnityWebRequest("https://tnh-dashboard.azure-api.net/v1/api/maps", "Put"))
@@ -425,6 +499,7 @@ namespace TNHTweaker.Patches
                 }
             }
 
+            waitForScore = false;
         }
     }
 }

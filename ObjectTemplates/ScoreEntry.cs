@@ -17,5 +17,6 @@ namespace TNHTweaker.ObjectTemplates
         public string GameLength;
         public string HoldActions;
         public string HoldStats;
+        public int Rank;
     }
 }

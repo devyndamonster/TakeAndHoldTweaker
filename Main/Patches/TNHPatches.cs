@@ -349,13 +349,25 @@ namespace TNHTweaker.Patches
             TNHTweakerLogger.Log("TNHTWEAKER -- Panel types for this hold:", TNHTweakerLogger.LogType.TNH);
             level.PossiblePanelTypes.ForEach(o => TNHTweakerLogger.Log(o.ToString(), TNHTweakerLogger.LogType.TNH));
 
+
+            //Ensure ammo reloaders spawn first if this is limited ammo
+            if (level.PossiblePanelTypes.Contains(PanelType.AmmoReloader) && __instance.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
+            {
+                level.PossiblePanelTypes.Remove(PanelType.AmmoReloader);
+                level.PossiblePanelTypes.Insert(0, PanelType.AmmoReloader);
+            }
+
+
             //Now spawn and setup all of the supply points
             //TODO this is one of the main code blocks for this method that requires it to be a full copy of the original method. This would be better fit as a transpiler patch
             TNHTweakerLogger.Log("TNHTWEAKER -- Spawning " + numSupplyPoints + " supply points", TNHTweakerLogger.LogType.TNH);
+            int panelIndex = 0;
             for (int i = 0; i < numSupplyPoints; i++)
             {
+                TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point : " + i, TNHTweakerLogger.LogType.TNH);
+
                 TNH_SupplyPoint supplyPoint = __instance.SupplyPoints[supplyPointsIndexes[i]];
-                ConfigureSupplyPoint(supplyPoint, level, i);
+                ConfigureSupplyPoint(supplyPoint, level, ref panelIndex);
                 TAH_ReticleContact contact = __instance.TAHReticle.RegisterTrackedObject(supplyPoint.SpawnPoint_PlayerSpawn, TAH_ReticleContact.ContactType.Supply);
                 supplyPoint.SetContact(contact);
                 __instance.m_activeSupplyPointIndicies.Add(supplyPointsIndexes[i]);
@@ -393,9 +405,8 @@ namespace TNHTweaker.Patches
             return false;
         }
 
-        public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, int supplyIndex)
+        public static void ConfigureSupplyPoint(TNH_SupplyPoint supplyPoint, Level level, ref int panelIndex)
         {
-            TNHTweakerLogger.Log("TNHTWEAKER -- Configuring supply point : " + supplyIndex, TNHTweakerLogger.LogType.TNH);
 
             supplyPoint.T = level.SupplyChallenge.GetTakeChallenge();
             supplyPoint.m_isconfigured = true;
@@ -408,7 +419,7 @@ namespace TNHTweaker.Patches
 
             SpawnSupplyConstructor(supplyPoint, numConstructors);
 
-            SpawnSecondarySupplyPanel(supplyPoint, level, numConstructors, supplyIndex);
+            SpawnSecondarySupplyPanel(supplyPoint, level, numConstructors, ref panelIndex);
 
             SpawnSupplyBoxes(supplyPoint, level);
 
@@ -429,38 +440,23 @@ namespace TNHTweaker.Patches
             }
         }
 
-        public static void SpawnSecondarySupplyPanel(TNH_SupplyPoint point, Level level, int startingPanelIndex, int supplyIndex)
+        public static void SpawnSecondarySupplyPanel(TNH_SupplyPoint point, Level level, int startingPanelIndex, ref int panelIndex)
         {
             TNHTweakerLogger.Log("TNHTWEAKER -- Spawning secondary panels", TNHTweakerLogger.LogType.TNH);
 
-            PanelType panelType;
-            List<PanelType> panelTypes = new List<PanelType>(level.PossiblePanelTypes);
-            panelTypes.Shuffle();
-
             int numPanels = UnityEngine.Random.Range(level.MinPanels, level.MaxPanels + 1);
 
-            for (int i = startingPanelIndex; i < startingPanelIndex + numPanels && i < point.SpawnPoints_Panels.Count && panelTypes.Count > 0; i++)
+            for (int i = startingPanelIndex; i < startingPanelIndex + numPanels && i < point.SpawnPoints_Panels.Count && level.PossiblePanelTypes.Count > 0; i++)
             {
                 TNHTweakerLogger.Log("TNHTWEAKER -- Panel index : " + i, TNHTweakerLogger.LogType.TNH);
 
-                //If this is the first panel, we should ensure that it is an ammo resupply
-                if (panelTypes.Contains(PanelType.AmmoReloader) && point.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo && i == startingPanelIndex && supplyIndex == 0)
-                {
-                    TNHTweakerLogger.Log("TNHTWEAKER -- First supply and first panel on limited ammo, forcing ammo reloader to spawn", TNHTweakerLogger.LogType.TNH);
-                    panelType = PanelType.AmmoReloader;
-                    panelTypes.Remove(PanelType.AmmoReloader);
-                }
+                //Go through the panels, and loop if we have gone too far 
+                if (panelIndex >= level.PossiblePanelTypes.Count) panelIndex = 0;
+                PanelType panelType = level.PossiblePanelTypes[panelIndex];
+                panelIndex += 1;
 
-                //Otherwise we just select a random panel from valid panels
-                else
-                {
-                    if (supplyIndex >= panelTypes.Count) supplyIndex = 0;
-                    panelType = panelTypes[supplyIndex];
-                    supplyIndex += 1;
-
-                    TNHTweakerLogger.Log("TNHTWEAKER -- Panel type selected : " + panelType, TNHTweakerLogger.LogType.TNH);
-                }
-
+                TNHTweakerLogger.Log("TNHTWEAKER -- Panel type selected : " + panelType, TNHTweakerLogger.LogType.TNH);
+                
                 GameObject panel = null;
 
                 if (panelType == PanelType.AmmoReloader)
@@ -501,9 +497,6 @@ namespace TNHTweaker.Patches
                 {
                     panel = point.M.SpawnAmmoReloader(point.SpawnPoints_Panels[i]);
                 }
-
-                
-                
 
                 //If we spawned a panel, add it to the global list
                 if (panel != null)

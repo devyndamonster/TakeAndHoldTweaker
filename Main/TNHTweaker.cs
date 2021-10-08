@@ -63,7 +63,9 @@ namespace TNHTweaker
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
             Harmony.CreateAndPatchAll(typeof(TNHPatches));
             Harmony.CreateAndPatchAll(typeof(PatrolPatches));
-            Harmony.CreateAndPatchAll(typeof(HighScorePatches));
+
+            if (EnableScoring.Value) Harmony.CreateAndPatchAll(typeof(HighScorePatches));
+
             if (EnableDebugText.Value) Harmony.CreateAndPatchAll(typeof(DebugPatches));
 
             Stages.Setup += OnSetup;
@@ -190,16 +192,28 @@ namespace TNHTweaker
 
 
 
-        /// <summary>
-        /// Every time an asset bundle is loaded asyncronously, the callback is added to a global list which can be monitored to see when loading is complete
-        /// </summary>
-        /// <param name="__result"></param>
-        [HarmonyPatch(typeof(AnvilManager), "GetBundleAsync")]
-        [HarmonyPostfix]
-        public static void AddMonitoredAnvilCallback(AnvilCallback<AssetBundle> __result)
+        [HarmonyPatch(typeof(TNH_ScoreDisplay), "SubmitScoreAndGoToBoard")] // Specify target method with HarmonyPatch attribute
+        [HarmonyPrefix]
+        public static bool PreventScoring(TNH_ScoreDisplay __instance, int score)
         {
-            AsyncLoadMonitor.CallbackList.Add(__result);
-            TNHTweakerLogger.Log("TNHTweaker -- Added AssetBundle anvil callback to monitored callbacks!", TNHTweakerLogger.LogType.File);
+            TNHTweakerLogger.Log("Preventing vanilla score submition", TNHTweakerLogger.LogType.TNH);
+
+            GM.Omni.OmniFlags.AddScore(__instance.m_curSequenceID, score);
+
+            __instance.m_hasCurrentScore = true;
+            __instance.m_currentScore = score;
+
+            if (EnableScoring.Value)
+            {
+                AnvilManager.Instance.StartCoroutine(HighScorePatches.SendScore(score));
+            }
+
+            //Draw local scores
+            __instance.RedrawHighScoreDisplay(__instance.m_curSequenceID);
+
+            GM.Omni.SaveToFile();
+
+            return false;
         }
 
     }
