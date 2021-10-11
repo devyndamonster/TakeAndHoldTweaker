@@ -730,6 +730,8 @@ namespace TNHTweaker.Utilities
             a += gun.right * data.PosOffset.x;
             return a + gun.forward * data.PosOffset.z;
         }
+
+
         /// <summary>
         /// Used to spawn more than one, same objects at a position
         /// </summary>
@@ -737,7 +739,7 @@ namespace TNHTweaker.Utilities
         /// <param name="position"></param>
         /// <param name="count"></param>
         /// <param name="tolerance"></param>
-        public static IEnumerator InstantiateMutltiple(GameObject gameObject, Vector3 position, int count,
+        public static IEnumerator InstantiateMultiple(GameObject gameObject, Vector3 position, int count,
             float tolerance = 1.3f)
         {
             float heightNeeded = (gameObject.GetMaxBounds().size.y / 2) * tolerance;
@@ -750,26 +752,51 @@ namespace TNHTweaker.Utilities
             }
         }
         
+
         /// <summary>
-        /// Used to spawn more than one, different objects at a position
+        /// Spawns items from the equipment group
         /// </summary>
-        /// <param name="gameObjects"></param>
+        /// <param name="selectedGroup"></param>
         /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="callback"></param>
         /// <param name="tolerance"></param>
-        public static IEnumerator InstantiateList(IList<GameObject> gameObjects, Vector3 position, float tolerance = 1.3f)
+        /// <returns></returns>
+        public static IEnumerator InstantiateFromEquipmentGroup(EquipmentGroup selectedGroup, Vector3 position, Quaternion rotation, Action<GameObject> callback = null, float tolerance = 1.3f)
         {
-            float heightNeeded = (gameObjects.First().GetMaxBounds().size.y / 2) * tolerance;
-            for (var index = 0; index < gameObjects.Count; index++)
+            float currentHeight = 0;
+
+            foreach (EquipmentGroup group in selectedGroup.GetSpawnedEquipmentGroups())
             {
-                var gameObject = gameObjects[index];
-                float current = heightNeeded + (gameObject.GetMaxBounds().size.y / 2) * tolerance;;
-                UnityEngine.Object.Instantiate(gameObject, position + (Vector3.up * current), new Quaternion());
-                heightNeeded = current + (gameObject.GetMaxBounds().size.y / 2) * tolerance;
-                yield return null;
+                for (int i = 0; i < group.ItemsToSpawn; i++)
+                {
+                    FVRObject selectedFVR;
+                    if (IM.OD.TryGetValue(group.GetObjects().GetRandom(), out selectedFVR))
+                    {
+                        //First, async get the game object to spawn
+                        AnvilCallback<GameObject> objectCallback = selectedFVR.GetGameObjectAsync();
+                        yield return objectCallback;
+                        GameObject gameObject = objectCallback.Result;
+
+                        //Next calculate the height needed for this item
+                        float heightNeeded = gameObject.GetMaxBounds().size.y / 2 * tolerance;
+                        currentHeight += heightNeeded;
+
+                        //Finally spawn the item and call the callback if it's not null
+                        GameObject spawnedObject = UnityEngine.GameObject.Instantiate(gameObject, position + (Vector3.up * currentHeight), rotation);
+                        if(callback != null) callback.Invoke(spawnedObject);
+                        yield return null;
+                    }
+                }
             }
         }
 
+
+
     }
+
+
+
 
     public static class Globals
     {
@@ -780,7 +807,6 @@ namespace TNHTweaker.Utilities
         public static readonly string ErrorOccurred = "Error occurred";
         public static readonly string PrincipalID = "x-ms-client-principal-id";
         public static readonly string PrincipalName = "x-ms-client-principal-name";
-        public static readonly string LibraryVersion = "0.1";
     }
 
 }

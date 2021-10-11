@@ -329,7 +329,7 @@ namespace TNHTweaker.Patches
                 }
                 else if(wwwGetScores.responseCode == 404)
                 {
-                    TNHTweakerLogger.LogError("Scores Not Found!");
+                    TNHTweakerLogger.LogWarning("High scores not found for table!");
                 }
                 else
                 {
@@ -363,6 +363,7 @@ namespace TNHTweaker.Patches
             TNHTweakerLogger.Log("Getting player scores from TNH Dashboard", TNHTweakerLogger.LogType.TNH);
 
             string url = "https://tnh-dashboard.azure-api.net/v1/api/scores/search";
+            List<RUST.Steamworks.HighScoreManager.HighScore> combinedScores = new List<RUST.Steamworks.HighScoreManager.HighScore>();
 
             if (GM.TNH_Manager != null)
             {
@@ -406,7 +407,9 @@ namespace TNHTweaker.Patches
                 }
                 else if (wwwGetScores.responseCode == 404)
                 {
-                    TNHTweakerLogger.LogError("Scores Not Found!");
+                    TNHTweakerLogger.LogWarning("High scores not found for player in table!");
+
+                    combinedScores.AddRange(instance.m_scoresTop.Take(6));
                 }
                 else
                 {
@@ -426,12 +429,17 @@ namespace TNHTweaker.Patches
                             score = playerScores[i].Score
                         });
                     }
+
+                    if (instance.m_scoresTop != null)
+                    {
+                        combinedScores.AddRange(instance.m_scoresTop.Take(3));
+                    }
+                    if (instance.m_scoresPlayer != null)
+                    {
+                        combinedScores.AddRange(instance.m_scoresPlayer.Take(3));
+                    }
                 }
             }
-
-            List<RUST.Steamworks.HighScoreManager.HighScore> combinedScores = new List<RUST.Steamworks.HighScoreManager.HighScore>();
-            combinedScores.AddRange(instance.m_scoresTop.Take(3));
-            combinedScores.AddRange(instance.m_scoresPlayer.Take(3));
 
             instance.m_hasScoresPlayer = true;
             instance.SetGlobalHighScoreDisplay(combinedScores);
