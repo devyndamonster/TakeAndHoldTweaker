@@ -20,7 +20,7 @@ namespace TNHTweaker.Patches
     {
 
         private static string[] equipment = { "Spawnlock", "Limited" };
-        private static string[] health = { "Standard", "One-Hit" };
+        private static string[] health = { "Standard", "One-Hit", "Custom"};
         private static string[] length = { "5-Hold", "Endless", "3-Hold" };
 
         private static bool waitForScore = false;
