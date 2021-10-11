@@ -1,6 +1,8 @@
 # TakeAndHoldTweaker
 An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters, as well as global tweaks to spice things up.
 
+If you'd like, you can support me on [KoFi!](https://ko-fi.com/devyn_myers)
+
 ## Installation
 0. **Make sure you uninstalled older versions of TNHTweaker before continuing**
 1. Install the [Deli Mod Loader](https://github.com/Deli-Counter/Deli)
