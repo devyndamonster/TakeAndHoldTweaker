@@ -99,7 +99,7 @@ namespace TNHTweaker
                 {
                     foreach (EquipmentPool pool in character.EquipmentPools)
                     {
-                        if (iconFile.Path.EndsWith(pool.IconName))
+                        if (iconFile.Path.Split('/').Last() == pool.IconName)
                         {
                             pool.GetPoolEntry().TableDef.Icon = TNHTweakerUtils.LoadSprite(iconFile);
                         }
