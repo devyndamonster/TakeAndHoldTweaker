@@ -37,7 +37,7 @@ namespace TNHTweaker.Utilities
                     foreach (FVRObject obj in IM.OD.Values)
                     {
                         sw.WriteLine(
-                            obj.ItemID + "," + 
+                            obj.ItemID.Replace(",", ".") + "," + 
                             obj.Category + "," +
                             obj.TagEra + "," +
                             obj.TagSet + "," +
