@@ -37,8 +37,8 @@ namespace TNHTweaker.ObjectTemplates
         public bool HasSecondaryItem;
         public bool HasTertiaryItem;
         public bool HasShield;
-        public List<FVRObject.OTagEra> ValidAmmoEras;
-        public List<FVRObject.OTagSet> ValidAmmoSets;
+        public List<TagEra> ValidAmmoEras;
+        public List<TagSet> ValidAmmoSets;
         public List<string> GlobalAmmoBlacklist;
         public List<MagazineBlacklistEntry> MagazineBlacklist;
         
@@ -65,8 +65,8 @@ namespace TNHTweaker.ObjectTemplates
 
 
         public CustomCharacter() {
-            ValidAmmoEras = new List<FVRObject.OTagEra>();
-            ValidAmmoSets = new List<FVRObject.OTagSet>();
+            ValidAmmoEras = new List<TagEra>();
+            ValidAmmoSets = new List<TagSet>();
             GlobalAmmoBlacklist = new List<string>();
             MagazineBlacklist = new List<MagazineBlacklistEntry>();
             RequireSightTable = new EquipmentGroup();
@@ -98,8 +98,8 @@ namespace TNHTweaker.ObjectTemplates
             HasSecondaryItem = character.Has_Item_Secondary;
             HasTertiaryItem = character.Has_Item_Tertiary;
             HasShield = character.Has_Item_Shield;
-            ValidAmmoEras = character.ValidAmmoEras;
-            ValidAmmoSets = character.ValidAmmoSets;
+            ValidAmmoEras = character.ValidAmmoEras.Select(o => (TagEra)o).ToList();
+            ValidAmmoSets = character.ValidAmmoSets.Select(o => (TagSet)o).ToList();
             GlobalAmmoBlacklist = new List<string>();
             MagazineBlacklist = new List<MagazineBlacklistEntry>();
             PrimaryWeapon = new LoadoutEntry(character.Weapon_Primary);
@@ -142,8 +142,8 @@ namespace TNHTweaker.ObjectTemplates
                 character.Has_Item_Secondary = HasSecondaryItem;
                 character.Has_Item_Tertiary = HasTertiaryItem;
                 character.Has_Item_Shield = HasShield;
-                character.ValidAmmoEras = ValidAmmoEras;
-                character.ValidAmmoSets = ValidAmmoSets;
+                character.ValidAmmoEras = ValidAmmoEras.Select(o => (FVRObject.OTagEra)o).ToList();
+                character.ValidAmmoSets = ValidAmmoSets.Select(o => (FVRObject.OTagSet)o).ToList();
                 character.Picture = thumbnail;
                 character.Weapon_Primary = PrimaryWeapon.GetLoadoutEntry();
                 character.Weapon_Secondary = SecondaryWeapon.GetLoadoutEntry();
@@ -508,7 +508,7 @@ namespace TNHTweaker.ObjectTemplates
 
     public class EquipmentGroup
     {
-        public FVRObject.ObjectCategory Category;
+        public ObjectCategory Category;
         public float Rarity;
         public string RequiredQuest;
         public int ItemsToSpawn;
@@ -523,22 +523,22 @@ namespace TNHTweaker.ObjectTemplates
         public bool AutoPopulateGroup;
         public bool ForceSpawnAllSubPools;
         public List<string> IDOverride;
-        public List<FVRObject.OTagEra> Eras;
-        public List<FVRObject.OTagSet> Sets;
-        public List<FVRObject.OTagFirearmSize> Sizes;
-        public List<FVRObject.OTagFirearmAction> Actions;
-        public List<FVRObject.OTagFirearmFiringMode> Modes;
-        public List<FVRObject.OTagFirearmFiringMode> ExcludedModes;
-        public List<FVRObject.OTagFirearmFeedOption> FeedOptions;
-        public List<FVRObject.OTagFirearmMount> MountsAvailable;
-        public List<FVRObject.OTagFirearmRoundPower> RoundPowers;
-        public List<FVRObject.OTagAttachmentFeature> Features;
-        public List<FVRObject.OTagMeleeStyle> MeleeStyles;
-        public List<FVRObject.OTagMeleeHandedness> MeleeHandedness;
-        public List<FVRObject.OTagFirearmMount> MountTypes;
-        public List<FVRObject.OTagPowerupType> PowerupTypes;
-        public List<FVRObject.OTagThrownType> ThrownTypes;
-        public List<FVRObject.OTagThrownDamageType> ThrownDamageTypes;
+        public List<TagEra> Eras;
+        public List<TagSet> Sets;
+        public List<TagFirearmSize> Sizes;
+        public List<TagFirearmAction> Actions;
+        public List<TagFirearmFiringMode> Modes;
+        public List<TagFirearmFiringMode> ExcludedModes;
+        public List<TagFirearmFeedOption> FeedOptions;
+        public List<TagFirearmMount> MountsAvailable;
+        public List<TagFirearmRoundPower> RoundPowers;
+        public List<TagAttachmentFeature> Features;
+        public List<TagMeleeStyle> MeleeStyles;
+        public List<TagMeleeHandedness> MeleeHandedness;
+        public List<TagFirearmMount> MountTypes;
+        public List<TagPowerupType> PowerupTypes;
+        public List<TagThrownType> ThrownTypes;
+        public List<TagThrownDamageType> ThrownDamageTypes;
         public List<EquipmentGroup> SubGroups;
 
         [JsonIgnore]
@@ -548,29 +548,29 @@ namespace TNHTweaker.ObjectTemplates
         private List<string> objects = new List<string>();
 
         public EquipmentGroup() {
-            Category = FVRObject.ObjectCategory.Firearm;
+            Category = ObjectCategory.Firearm;
             IDOverride = new List<string>();
-            Eras = new List<FVRObject.OTagEra>();
-            Sets = new List<FVRObject.OTagSet>();
-            Sizes = new List<FVRObject.OTagFirearmSize>();
-            Actions = new List<FVRObject.OTagFirearmAction>();
-            Modes = new List<FVRObject.OTagFirearmFiringMode>();
-            ExcludedModes = new List<FVRObject.OTagFirearmFiringMode>();
-            FeedOptions = new List<FVRObject.OTagFirearmFeedOption>();
-            MountsAvailable = new List<FVRObject.OTagFirearmMount>();
-            RoundPowers = new List<FVRObject.OTagFirearmRoundPower>();
-            Features = new List<FVRObject.OTagAttachmentFeature>();
-            MeleeStyles = new List<FVRObject.OTagMeleeStyle>();
-            MeleeHandedness = new List<FVRObject.OTagMeleeHandedness>();
-            MountTypes = new List<FVRObject.OTagFirearmMount>();
-            ThrownTypes = new List<FVRObject.OTagThrownType>();
-            ThrownDamageTypes = new List<FVRObject.OTagThrownDamageType>();
+            Eras = new List<TagEra>();
+            Sets = new List<TagSet>();
+            Sizes = new List<TagFirearmSize>();
+            Actions = new List<TagFirearmAction>();
+            Modes = new List<TagFirearmFiringMode>();
+            ExcludedModes = new List<TagFirearmFiringMode>();
+            FeedOptions = new List<TagFirearmFeedOption>();
+            MountsAvailable = new List<TagFirearmMount>();
+            RoundPowers = new List<TagFirearmRoundPower>();
+            Features = new List<TagAttachmentFeature>();
+            MeleeStyles = new List<TagMeleeStyle>();
+            MeleeHandedness = new List<TagMeleeHandedness>();
+            MountTypes = new List<TagFirearmMount>();
+            ThrownTypes = new List<TagThrownType>();
+            ThrownDamageTypes = new List<TagThrownDamageType>();
             SubGroups = new List<EquipmentGroup>();
         }
 
         public EquipmentGroup(ObjectTableDef objectTableDef)
         {
-            Category = objectTableDef.Category;
+            Category = (ObjectCategory)objectTableDef.Category;
             ItemsToSpawn = 1;
             MinAmmoCapacity = objectTableDef.MinAmmoCapacity;
             MaxAmmoCapacity = objectTableDef.MaxAmmoCapacity;
@@ -582,22 +582,22 @@ namespace TNHTweaker.ObjectTemplates
             AutoPopulateGroup = !objectTableDef.UseIDListOverride;
             IDOverride = new List<string>(objectTableDef.IDOverride);
             objectTableDef.IDOverride.Clear();
-            Eras = objectTableDef.Eras;
-            Sets = objectTableDef.Sets;
-            Sizes = objectTableDef.Sizes;
-            Actions = objectTableDef.Actions;
-            Modes = objectTableDef.Modes;
-            ExcludedModes = objectTableDef.ExcludeModes;
-            FeedOptions = objectTableDef.Feedoptions;
-            MountsAvailable = objectTableDef.MountsAvailable;
-            RoundPowers = objectTableDef.RoundPowers;
-            Features = objectTableDef.Features;
-            MeleeHandedness = objectTableDef.MeleeHandedness;
-            MeleeStyles = objectTableDef.MeleeStyles;
-            MountTypes = objectTableDef.MountTypes;
-            PowerupTypes = objectTableDef.PowerupTypes;
-            ThrownTypes = objectTableDef.ThrownTypes;
-            ThrownDamageTypes = objectTableDef.ThrownDamageTypes;
+            Eras = objectTableDef.Eras.Select(o => (TagEra)o).ToList();
+            Sets = objectTableDef.Sets.Select(o => (TagSet)o).ToList();
+            Sizes = objectTableDef.Sizes.Select(o => (TagFirearmSize)o).ToList();
+            Actions = objectTableDef.Actions.Select(o => (TagFirearmAction)o).ToList();
+            Modes = objectTableDef.Modes.Select(o => (TagFirearmFiringMode)o).ToList();
+            ExcludedModes = objectTableDef.ExcludeModes.Select(o => (TagFirearmFiringMode)o).ToList();
+            FeedOptions = objectTableDef.Feedoptions.Select(o => (TagFirearmFeedOption)o).ToList();
+            MountsAvailable = objectTableDef.MountsAvailable.Select(o => (TagFirearmMount)o).ToList();
+            RoundPowers = objectTableDef.RoundPowers.Select(o => (TagFirearmRoundPower)o).ToList();
+            Features = objectTableDef.Features.Select(o => (TagAttachmentFeature)o).ToList();
+            MeleeHandedness = objectTableDef.MeleeHandedness.Select(o => (TagMeleeHandedness)o).ToList();
+            MeleeStyles = objectTableDef.MeleeStyles.Select(o => (TagMeleeStyle)o).ToList();
+            MountTypes = objectTableDef.MountTypes.Select(o => (TagFirearmMount)o).ToList();
+            PowerupTypes = objectTableDef.PowerupTypes.Select(o => (TagPowerupType)o).ToList();
+            ThrownTypes = objectTableDef.ThrownTypes.Select(o => (TagThrownType)o).ToList();
+            ThrownDamageTypes = objectTableDef.ThrownDamageTypes.Select(o => (TagThrownDamageType)o).ToList();
 
             this.objectTableDef = objectTableDef;
         }
@@ -607,7 +607,7 @@ namespace TNHTweaker.ObjectTemplates
             if(objectTableDef == null)
             {
                 objectTableDef = (ObjectTableDef)ScriptableObject.CreateInstance(typeof(ObjectTableDef));
-                objectTableDef.Category = Category;
+                objectTableDef.Category = (FVRObject.ObjectCategory)Category;
                 objectTableDef.MinAmmoCapacity = MinAmmoCapacity;
                 objectTableDef.MaxAmmoCapacity = MaxAmmoCapacity;
                 objectTableDef.RequiredExactCapacity = -1;
@@ -616,22 +616,22 @@ namespace TNHTweaker.ObjectTemplates
                 objectTableDef.SpawnsInLargeCase = false;
                 objectTableDef.UseIDListOverride = !AutoPopulateGroup;
                 objectTableDef.IDOverride = new List<string>();
-                objectTableDef.Eras = Eras;
-                objectTableDef.Sets = Sets;
-                objectTableDef.Sizes = Sizes;
-                objectTableDef.Actions = Actions;
-                objectTableDef.Modes = Modes;
-                objectTableDef.ExcludeModes = ExcludedModes;
-                objectTableDef.Feedoptions = FeedOptions;
-                objectTableDef.MountsAvailable = MountsAvailable;
-                objectTableDef.RoundPowers = RoundPowers;
-                objectTableDef.Features = Features;
-                objectTableDef.MeleeHandedness = MeleeHandedness;
-                objectTableDef.MeleeStyles = MeleeStyles;
-                objectTableDef.MountTypes = MountTypes;
-                objectTableDef.PowerupTypes = PowerupTypes;
-                objectTableDef.ThrownTypes = ThrownTypes;
-                objectTableDef.ThrownDamageTypes = ThrownDamageTypes;
+                objectTableDef.Eras = Eras.Select(o => (FVRObject.OTagEra)o).ToList();
+                objectTableDef.Sets = Sets.Select(o => (FVRObject.OTagSet)o).ToList();
+                objectTableDef.Sizes = Sizes.Select(o => (FVRObject.OTagFirearmSize)o).ToList();
+                objectTableDef.Actions = Actions.Select(o => (FVRObject.OTagFirearmAction)o).ToList();
+                objectTableDef.Modes = Modes.Select(o => (FVRObject.OTagFirearmFiringMode)o).ToList();
+                objectTableDef.ExcludeModes = ExcludedModes.Select(o => (FVRObject.OTagFirearmFiringMode)o).ToList();
+                objectTableDef.Feedoptions = FeedOptions.Select(o => (FVRObject.OTagFirearmFeedOption)o).ToList();
+                objectTableDef.MountsAvailable = MountsAvailable.Select(o => (FVRObject.OTagFirearmMount)o).ToList();
+                objectTableDef.RoundPowers = RoundPowers.Select(o => (FVRObject.OTagFirearmRoundPower)o).ToList();
+                objectTableDef.Features = Features.Select(o => (FVRObject.OTagAttachmentFeature)o).ToList();
+                objectTableDef.MeleeHandedness = MeleeHandedness.Select(o => (FVRObject.OTagMeleeHandedness)o).ToList();
+                objectTableDef.MeleeStyles = MeleeStyles.Select(o => (FVRObject.OTagMeleeStyle)o).ToList();
+                objectTableDef.MountTypes = MountTypes.Select(o => (FVRObject.OTagFirearmMount)o).ToList();
+                objectTableDef.PowerupTypes = PowerupTypes.Select(o => (FVRObject.OTagPowerupType)o).ToList();
+                objectTableDef.ThrownTypes = ThrownTypes.Select(o => (FVRObject.OTagThrownType)o).ToList();
+                objectTableDef.ThrownDamageTypes = ThrownDamageTypes.Select(o => (FVRObject.OTagThrownDamageType)o).ToList();
             }
             return objectTableDef;
         }

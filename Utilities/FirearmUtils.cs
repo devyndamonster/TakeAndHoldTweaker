@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TNHTweaker.ObjectTemplates;
 using UnityEngine;
 
 namespace TNHTweaker.Utilities
@@ -144,6 +145,12 @@ namespace TNHTweaker.Utilities
 			}
 
 			return compatibleClips;
+		}
+
+
+		public static List<FVRObject> GetCompatibleRounds(FVRObject firearm, List<TagEra> eras, List<TagSet> sets, List<string> globalBulletBlacklist = null, MagazineBlacklistEntry blacklist = null)
+		{
+			return GetCompatibleRounds(firearm, eras.Select(o => (FVRObject.OTagEra)o).ToList(), sets.Select(o => (FVRObject.OTagSet)o).ToList(), globalBulletBlacklist, blacklist);
 		}
 
 
