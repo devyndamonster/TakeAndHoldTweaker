@@ -125,6 +125,8 @@ namespace TNHTweaker.ObjectTemplates
         {
             if(character == null)
             {
+                if (ValidAmmoSets == null) ValidAmmoSets = new List<TagSet>();
+                if (ValidAmmoEras == null) ValidAmmoEras = new List<TagEra>();
 
                 character = (TNH_CharacterDef)ScriptableObject.CreateInstance(typeof(TNH_CharacterDef));
                 character.DisplayName = DisplayName;
@@ -606,6 +608,22 @@ namespace TNHTweaker.ObjectTemplates
         {
             if(objectTableDef == null)
             {
+                if (Eras == null) Eras = new List<TagEra>();
+                if (Sets == null) Sets = new List<TagSet>();
+                if (Sizes == null) Sizes = new List<TagFirearmSize>();
+                if (Actions == null) Actions = new List<TagFirearmAction>();
+                if (Modes == null) Modes = new List<TagFirearmFiringMode>();
+                if (ExcludedModes == null) ExcludedModes = new List<TagFirearmFiringMode>();
+                if (FeedOptions == null) FeedOptions = new List<TagFirearmFeedOption>();
+                if (MountsAvailable == null) MountsAvailable = new List<TagFirearmMount>();
+                if (RoundPowers == null) RoundPowers = new List<TagFirearmRoundPower>();
+                if (Features == null) Features = new List<TagAttachmentFeature>();
+                if (MeleeHandedness == null) MeleeHandedness = new List<TagMeleeHandedness>();
+                if (MeleeStyles == null) MeleeStyles = new List<TagMeleeStyle>();
+                if (PowerupTypes == null) PowerupTypes = new List<TagPowerupType>();
+                if (ThrownTypes == null) ThrownTypes = new List<TagThrownType>();
+                if (ThrownDamageTypes == null) ThrownDamageTypes = new List<TagThrownDamageType>();
+
                 objectTableDef = (ObjectTableDef)ScriptableObject.CreateInstance(typeof(ObjectTableDef));
                 objectTableDef.Category = (FVRObject.ObjectCategory)Category;
                 objectTableDef.MinAmmoCapacity = MinAmmoCapacity;
