@@ -311,7 +311,7 @@ namespace TNHTweaker.Patches
             }
 
             sosigComponent.Configure(config.GetConfigTemplate());
-            sosigComponent.E.IFFCode = IFF;
+            sosigComponent.SetIFF(IFF);
 
             //Setup the sosigs inventory
             sosigComponent.Inventory.Init();
