@@ -115,9 +115,22 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Main\Objects\CharacterData\CustomCharacter.cs" />
+    <Compile Include="Main\ObjectConverters\CharacterConverter.cs" />
+    <Compile Include="Main\ObjectConverters\LoadoutEntryConverter.cs" />
+    <Compile Include="Main\ObjectConverters\ObjectTableConverter.cs" />
+    <Compile Include="Main\ObjectConverters\EquipmentPoolConverter.cs" />
+    <Compile Include="Main\Objects\CharacterData\Character.cs" />
+    <Compile Include="Main\Objects\CharacterData\HoldPhase.cs" />
+    <Compile Include="Main\Objects\CharacterData\Level.cs" />
+    <Compile Include="Main\Objects\LootPools\LoadoutEntry.cs" />
+    <Compile Include="Main\Objects\CharacterData\Patrol.cs" />
+    <Compile Include="Main\Objects\CharacterData\Progression.cs" />
+    <Compile Include="Main\Objects\CharacterData\TakeChallenge.cs" />
     <Compile Include="Main\Objects\HighScoreData\MapData.cs" />
     <Compile Include="Main\Objects\HighScoreData\ScoreEntry.cs" />
+    <Compile Include="Main\Objects\LootPools\EquipmentGroup.cs" />
+    <Compile Include="Main\Objects\LootPools\EquipmentPool.cs" />
+    <Compile Include="Main\Objects\LootPools\ObjectTable.cs" />
     <Compile Include="Main\Utilities\FirearmUtils.cs" />
     <Compile Include="Main\Utilities\Extensions.cs" />
     <Compile Include="Main\Utilities\Logger.cs" />
