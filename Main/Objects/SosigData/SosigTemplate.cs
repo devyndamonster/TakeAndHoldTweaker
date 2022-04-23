@@ -7,9 +7,9 @@ using System.Text;
 using TNHTweaker.Utilities;
 using UnityEngine;
 
-namespace TNHTweaker.ObjectTemplates
+namespace TNHTweaker.Objects.SosigData
 {
-    public class SosigTemplate
+    public class SosigTemplate : ScriptableObject
     {
         public string DisplayName;
         public SosigEnemyCategory SosigEnemyCategory;

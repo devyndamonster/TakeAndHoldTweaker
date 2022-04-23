@@ -10,35 +10,24 @@ using TNHTweaker.ObjectTemplates;
 using TNHTweaker.Utilities;
 using UnityEngine;
 using BepInEx;
+using TNHTweaker.Objects.CharacterData;
+using TNHTweaker.Objects.SosigData;
 
 namespace TNHTweaker
 {
     public class TNHTweaker : BaseUnityPlugin
     {
-        
-        public static ConfigEntry<bool> UnlimitedTokens;
+        public static Dictionary<TNH_CharacterDef, Character> CharacterDict = new Dictionary<TNH_CharacterDef, Character>();
+        public static Dictionary<SosigEnemyTemplate, SosigTemplate> SosigDict = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
 
         private void Awake()
         {
             TNHTweakerLogger.Init();
             TNHTweakerLogger.Log("Hello World (from TNH Tweaker)", TNHTweakerLogger.LogType.General);
 
-            LoadConfigFile();
+            TNHTweakerConfig.LoadConfigFile(this);
 
             Harmony.CreateAndPatchAll(typeof(TNHTweaker));
-        }
-
-        private void LoadConfigFile()
-        {
-            TNHTweakerLogger.Log("TNHTweaker -- Getting config file", TNHTweakerLogger.LogType.File);
-
-            UnlimitedTokens = Config.Bind(
-                "Debug",
-                "EnableUnlimitedTokens",
-                false,
-                "If true, you will spawn with 999999 tokens for any character in TNH (useful for testing loot pools)"
-                );
-
         }
 
     }
