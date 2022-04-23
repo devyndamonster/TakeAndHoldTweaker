@@ -116,6 +116,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main\CharacterLoader.cs" />
+    <Compile Include="Main\ObjectConverters\OutfitConfigConverter.cs" />
+    <Compile Include="Main\ObjectConverters\SosigTemplateConverter.cs" />
+    <Compile Include="Main\Objects\SosigData\OutfitConfig.cs" />
     <Compile Include="Main\TNHTweakerConfig.cs" />
     <Compile Include="Main\ObjectConverters\CharacterConverter.cs" />
     <Compile Include="Main\ObjectConverters\LoadoutEntryConverter.cs" />

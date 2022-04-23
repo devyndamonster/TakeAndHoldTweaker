@@ -28,7 +28,7 @@ namespace TNHTweaker
 
             foreach (SosigTemplate sosig in sosigs)
             {
-                SosigEnemyTemplate baseSosig = CharacterConverter.ConvertCharacterToVanilla(sosig);
+                SosigEnemyTemplate baseSosig = SosigTemplateConverter.ConvertSosigTemplateToVanilla(sosig);
                 TNHTweaker.SosigDict[baseSosig] = sosig;
                 LoadSosigIntoVanillaDictionaries(baseSosig);
             }
