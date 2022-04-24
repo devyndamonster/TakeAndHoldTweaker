@@ -119,6 +119,8 @@
     <Compile Include="Main\ObjectConverters\OutfitConfigConverter.cs" />
     <Compile Include="Main\ObjectConverters\SosigTemplateConverter.cs" />
     <Compile Include="Main\Objects\SosigData\OutfitConfig.cs" />
+    <Compile Include="Main\ObjectWrappers\TNHMenuUIWrapper.cs" />
+    <Compile Include="Main\Patches\TNHMenuPatches.cs" />
     <Compile Include="Main\TNHTweakerConfig.cs" />
     <Compile Include="Main\ObjectConverters\CharacterConverter.cs" />
     <Compile Include="Main\ObjectConverters\LoadoutEntryConverter.cs" />
@@ -146,10 +148,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Main\ObjectWrappers\" />
-    <Folder Include="Main\Patches\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- This target copies dll to the folder, for quicker debbugging -->
   <Target Name="CopyDll" AfterTargets="AfterBuild" Condition="'$(TnhTweakerModDir)' != '' ">

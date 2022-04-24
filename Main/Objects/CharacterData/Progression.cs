@@ -8,8 +8,6 @@ namespace TNHTweaker.Objects.CharacterData
 {
     public class Progression : ScriptableObject
     {
-
         public List<Level> Levels = new List<Level>();
-
     }
 }

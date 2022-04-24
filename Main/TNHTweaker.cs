@@ -17,8 +17,11 @@ namespace TNHTweaker
 {
     public class TNHTweaker : BaseUnityPlugin
     {
-        public static Dictionary<TNH_CharacterDef, Character> CharacterDict = new Dictionary<TNH_CharacterDef, Character>();
-        public static Dictionary<SosigEnemyTemplate, SosigTemplate> SosigDict = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
+        public static Dictionary<TNH_CharacterDef, Character> CustomCharacterDict = new Dictionary<TNH_CharacterDef, Character>();
+        public static Dictionary<SosigEnemyTemplate, SosigTemplate> CustomSosigDict = new Dictionary<SosigEnemyTemplate, SosigTemplate>();
+
+        public static Dictionary<Character, TNH_CharacterDef> BaseCharacterDict = new Dictionary<Character, TNH_CharacterDef>();
+        public static Dictionary<SosigTemplate, SosigEnemyTemplate> BaseSosigDict = new Dictionary<SosigTemplate, SosigEnemyTemplate>();
 
         private void Awake()
         {

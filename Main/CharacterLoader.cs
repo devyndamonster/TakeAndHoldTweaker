@@ -7,17 +7,53 @@ using System.Text;
 using TNHTweaker.ObjectConverters;
 using TNHTweaker.Objects.CharacterData;
 using TNHTweaker.Objects.SosigData;
+using TNHTweaker.Utilities;
 using UnityEngine;
 
 namespace TNHTweaker
 {
     public class CharacterLoader
     {
+        public delegate void CharacterLoaded(Character character);
+        public delegate void SosigLoaded(SosigTemplate sosig);
 
-        public static void LoadCharacterBundle(string bundlePath)
+        public static event CharacterLoaded OnCharacterLoaded;
+        public static event SosigLoaded OnSosigLoaded;
+
+        private static List<string> customCharacterBundlePaths = new List<string>();
+
+
+        public static void RegisterCharacterBundleToLoad(string bundlePath)
+        {
+            if (customCharacterBundlePaths.Count() == 0)
+            {
+                AnvilManager.Instance.StartCoroutine(WaitToLoadCharacters());
+            }
+
+            customCharacterBundlePaths.Add(bundlePath);
+        }
+
+        private static IEnumerator WaitToLoadCharacters()
+        {
+            while(MagazinePatcher.PatcherStatus.PatcherProgress < 1) yield return null;
+
+            foreach(string characterBundlePath in customCharacterBundlePaths)
+            {
+                try
+                {
+                    LoadCharacterBundle(characterBundlePath);
+                }
+                catch(Exception e)
+                {
+                    TNHTweakerLogger.LogError(e.ToString());
+                }
+            }
+        }
+
+        private static void LoadCharacterBundle(string bundlePath)
         {
             AssetBundle characterBundle = AssetBundle.LoadFromFile(bundlePath);
-            
+
             LoadSosigsFromBundle(characterBundle);
             LoadCharacterFromBundle(characterBundle);
         }
@@ -29,7 +65,8 @@ namespace TNHTweaker
             foreach (SosigTemplate sosig in sosigs)
             {
                 SosigEnemyTemplate baseSosig = SosigTemplateConverter.ConvertSosigTemplateToVanilla(sosig);
-                TNHTweaker.SosigDict[baseSosig] = sosig;
+                TNHTweaker.CustomSosigDict[baseSosig] = sosig;
+                TNHTweaker.BaseSosigDict[sosig] = baseSosig;
                 LoadSosigIntoVanillaDictionaries(baseSosig);
             }
         }
@@ -41,7 +78,8 @@ namespace TNHTweaker
             foreach (Character character in characters)
             {
                 TNH_CharacterDef baseCharacter = CharacterConverter.ConvertCharacterToVanilla(character);
-                TNHTweaker.CharacterDict[baseCharacter] = character;
+                TNHTweaker.CustomCharacterDict[baseCharacter] = character;
+                TNHTweaker.BaseCharacterDict[character] = baseCharacter;
             }
         }
 
