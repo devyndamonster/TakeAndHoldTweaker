@@ -30,6 +30,14 @@ namespace TNHTweaker.ObjectConverters
 			outfitConfig.Chance_Pantswear_Lower = from.Chance_Pantswear_Lower;
 			outfitConfig.Backpacks = from.Backpacks.Select(o => o.ItemID).ToList();
 			outfitConfig.Chance_Backpacks = from.Chance_Backpacks;
+			outfitConfig.TorsoDecoration = from.TorosDecoration.Select(o => o.ItemID).ToList();
+			outfitConfig.Chance_TorosDecoration = from.Chance_TorosDecoration;
+			outfitConfig.Belts = from.Belt.Select(o => o.ItemID).ToList();
+			outfitConfig.Chance_Belts = from.Chance_Belt;
+
+			outfitConfig.HeadUsesTorsoIndex = from.HeadUsesTorsoIndex;
+			outfitConfig.PantsUsesTorsoIndex = from.PantsUsesTorsoIndex;
+			outfitConfig.PantsLowerUsesPantsIndex = from.PantsLowerUsesPantsIndex;
 
 			return outfitConfig;
 		}
@@ -53,6 +61,14 @@ namespace TNHTweaker.ObjectConverters
 			outfitConfig.Chance_Pantswear_Lower = from.Chance_Pantswear_Lower;
 			outfitConfig.Backpacks = from.Backpacks.Select(o => IM.OD[o]).ToList();
 			outfitConfig.Chance_Backpacks = from.Chance_Backpacks;
+			outfitConfig.TorosDecoration = from.TorsoDecoration.Select(o => IM.OD[o]).ToList();
+			outfitConfig.Chance_TorosDecoration = from.Chance_TorosDecoration;
+			outfitConfig.Belt = from.Belts.Select(o => IM.OD[o]).ToList();
+			outfitConfig.Chance_Belt = from.Chance_Belts;
+
+			outfitConfig.HeadUsesTorsoIndex = from.HeadUsesTorsoIndex;
+			outfitConfig.PantsUsesTorsoIndex = from.PantsUsesTorsoIndex;
+			outfitConfig.PantsLowerUsesPantsIndex = from.PantsLowerUsesPantsIndex;
 
 			return outfitConfig;
 		}

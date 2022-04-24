@@ -1,5 +1,6 @@
 ﻿using FistVR;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,7 +31,67 @@ namespace TNHTweaker.ObjectWrappers
                 AddCharacterToUI(character);
             }
 
-            //TODO Now handle updating the progress text
+            StartCoroutine(WaitUntilLoaded());
+        }
+
+
+        private IEnumerator WaitUntilLoaded()
+        {
+            SceneLoader sceneHotDog = UnityEngine.Object.FindObjectOfType<SceneLoader>();
+            sceneHotDog.gameObject.SetActive(false);
+
+            yield return UpdateOtherloaderProgressText();
+            yield return UpdateMagpatcherProgressText();
+
+            sceneHotDog.gameObject.SetActive(true);
+        }
+
+
+        private IEnumerator UpdateOtherloaderProgressText()
+        {
+            float progress = OtherLoader.LoaderStatus.GetLoaderProgress();
+            while (progress < 1)
+            {
+                progress = OtherLoader.LoaderStatus.GetLoaderProgress();
+                detailListText.text = GetLoadingItems();
+                statusText.text = "LOADING ITEMS : " + (int)(progress * 100) + "%";
+                yield return null;
+            }
+        }
+
+
+        private IEnumerator UpdateMagpatcherProgressText()
+        {
+            float progress = MagazinePatcher.PatcherStatus.PatcherProgress;
+            while (!MagazinePatcher.PatcherStatus.CachingFailed && progress < 1)
+            {
+                progress = MagazinePatcher.PatcherStatus.PatcherProgress;
+                detailListText.text = MagazinePatcher.PatcherStatus.CacheLog;
+                statusText.text = "CACHING ITEMS : " + (int)(progress * 100) + "%";
+                yield return null;
+            }
+
+            if (MagazinePatcher.PatcherStatus.CachingFailed)
+            {
+                statusText.text = "CACHING FAILED! SEE ABOVE";
+                throw new Exception("Magazine Caching Failed!");
+            }
+        }
+
+
+        public static string GetLoadingItems()
+        {
+            List<string> loading = OtherLoader.LoaderStatus.LoadingItems;
+
+            for (int i = 0; i < loading.Count; i++)
+            {
+                string colorHex = ColorUtility.ToHtmlStringRGBA(new Color(0.5f, 0.5f, 0.5f, Mathf.Clamp(((float)loading.Count - i) / loading.Count, 0, 1)));
+                loading[i] = "<color=#" + colorHex + ">Loading Assets (" + loading[i].Split(':')[1].Trim() + ")</color>";
+            }
+
+            loading.Reverse();
+
+            return string.Join("\n", loading.ToArray());
         }
 
 

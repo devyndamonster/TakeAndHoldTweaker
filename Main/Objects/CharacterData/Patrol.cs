@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace TNHTweaker.Objects.CharacterData
 {
-    public class Patrol
+    public class Patrol : ScriptableObject
     {
 		public List<SosigEnemyID> EnemyTypes = new List<SosigEnemyID>();
 

@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace TNHTweaker.Objects.CharacterData
 {
-    public class HoldPhase
+    public class HoldPhase : ScriptableObject
     {
 		public TNH_EncryptionType Encryptions;
 

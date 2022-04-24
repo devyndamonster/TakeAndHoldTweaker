@@ -1,5 +1,6 @@
 ﻿using FistVR;
 using MagazinePatcher;
+using Sodalite.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

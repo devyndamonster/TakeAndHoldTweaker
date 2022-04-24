@@ -10,14 +10,6 @@ namespace TNHTweaker.Utilities
     public static class Extensions
     {
 
-        public static T GetRandom<T>(this List<T> list)
-        {
-            if (list.Count < 1)
-                throw new Exception("TNHTWEAKER -- GetRandom failed, list is empty!");
-            
-            return list[UnityEngine.Random.Range(0, list.Count)];
-        }
-
         public static bool ContainsNull<T>(this List<T> list)
         {
             for(int i = 0; i < list.Count; i++)

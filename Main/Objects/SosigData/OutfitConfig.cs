@@ -8,26 +8,27 @@ namespace TNHTweaker.Objects.SosigData
 {
 	public class OutfitConfig : ScriptableObject
 	{
-		public List<string> Headwear;
+		public List<string> Headwear = new List<string>();
 		public float Chance_Headwear;
-		public bool ForceWearAllHead;
-		public List<string> Eyewear;
+		public List<string> Eyewear = new List<string>();
 		public float Chance_Eyewear;
-		public bool ForceWearAllEye;
-		public List<string> Facewear;
+		public List<string> Facewear = new List<string>();
 		public float Chance_Facewear;
-		public bool ForceWearAllFace;
-		public List<string> Torsowear;
+		public List<string> Torsowear = new List<string>();
 		public float Chance_Torsowear;
-		public bool ForceWearAllTorso;
-		public List<string> Pantswear;
+		public List<string> Pantswear = new List<string>();
 		public float Chance_Pantswear;
-		public bool ForceWearAllPants;
-		public List<string> Pantswear_Lower;
+		public List<string> Pantswear_Lower = new List<string>();
 		public float Chance_Pantswear_Lower;
-		public bool ForceWearAllPantsLower;
-		public List<string> Backpacks;
+		public List<string> Backpacks = new List<string>();
 		public float Chance_Backpacks;
-		public bool ForceWearAllBackpacks;
+		public List<string> TorsoDecoration = new List<string>();
+		public float Chance_TorosDecoration;
+		public List<string> Belts = new List<string>();
+		public float Chance_Belts;
+
+		public bool HeadUsesTorsoIndex;
+		public bool PantsUsesTorsoIndex;
+		public bool PantsLowerUsesPantsIndex;
 	}
 }

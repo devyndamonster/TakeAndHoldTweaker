@@ -12,6 +12,7 @@ using UnityEngine;
 using BepInEx;
 using TNHTweaker.Objects.CharacterData;
 using TNHTweaker.Objects.SosigData;
+using TNHTweaker.Patches;
 
 namespace TNHTweaker
 {
@@ -30,7 +31,7 @@ namespace TNHTweaker
 
             TNHTweakerConfig.LoadConfigFile(this);
 
-            Harmony.CreateAndPatchAll(typeof(TNHTweaker));
+            Harmony.CreateAndPatchAll(typeof(TNHMenuPatches));
         }
 
     }
