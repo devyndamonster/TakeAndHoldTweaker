@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using TNHTweaker.Objects.CharacterData;
 using TNHTweaker.Objects.LootPools;
+using TNHTweaker.Utilities;
 using UnityEngine;
 
 namespace TNHTweaker.ObjectConverters
@@ -38,13 +39,13 @@ namespace TNHTweaker.ObjectConverters
 			character.Has_Item_Secondary = from.Has_Item_Secondary;
 			character.Has_Item_Tertiary = from.Has_Item_Tertiary;
 			character.Has_Item_Shield = from.Has_Item_Shield;
-			character.Weapon_Primary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Weapon_Primary);
-			character.Weapon_Secondary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Weapon_Secondary);
-			character.Weapon_Tertiary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Weapon_Tertiary);
-			character.Item_Primary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Item_Primary);
-			character.Item_Secondary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Item_Secondary);
-			character.Item_Tertiary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Item_Tertiary);
-			character.Item_Shield = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Item_Shield);
+			if (from.Weapon_Primary != null) character.Weapon_Primary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Weapon_Primary);
+			if (from.Weapon_Secondary != null) character.Weapon_Secondary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Weapon_Secondary);
+			if (from.Weapon_Tertiary != null) character.Weapon_Tertiary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Weapon_Tertiary);
+			if (from.Item_Primary != null) character.Item_Primary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Item_Primary);
+			if (from.Item_Secondary != null) character.Item_Secondary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Item_Secondary);
+			if (from.Item_Tertiary != null) character.Item_Tertiary = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Item_Tertiary);
+			if (from.Item_Shield != null) character.Item_Shield = LoadoutEntryConverter.ConvertLoadoutEntryFromVanilla(from.Item_Shield);
 
 			return character;
         }
@@ -53,6 +54,7 @@ namespace TNHTweaker.ObjectConverters
 		public static TNH_CharacterDef ConvertCharacterToVanilla(Character from)
 		{
 			TNH_CharacterDef character = ScriptableObject.CreateInstance<TNH_CharacterDef>();
+			LogConversionStart(character);
 
 			character.DisplayName = from.DisplayName;
 			character.CharacterID = from.CharacterID;
@@ -77,16 +79,29 @@ namespace TNHTweaker.ObjectConverters
 			character.Has_Item_Secondary = from.Has_Item_Secondary;
 			character.Has_Item_Tertiary = from.Has_Item_Tertiary;
 			character.Has_Item_Shield = from.Has_Item_Shield;
-			character.Weapon_Primary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Weapon_Primary);
-			character.Weapon_Secondary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Weapon_Secondary);
-			character.Weapon_Tertiary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Weapon_Tertiary);
-			character.Item_Primary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Primary);
-			character.Item_Secondary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Secondary);
-			character.Item_Tertiary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Tertiary);
-			character.Item_Shield = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Shield);
+			if (from.Weapon_Primary != null) character.Weapon_Primary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Weapon_Primary);
+			if (from.Weapon_Secondary != null) character.Weapon_Secondary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Weapon_Secondary);
+			if (from.Weapon_Tertiary != null) character.Weapon_Tertiary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Weapon_Tertiary);
+			if (from.Item_Primary != null) character.Item_Primary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Primary);
+			if (from.Item_Secondary != null) character.Item_Secondary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Secondary);
+			if (from.Item_Tertiary != null) character.Item_Tertiary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Tertiary);
+			if (from.Item_Shield != null) character.Item_Shield = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Shield);
 			
-
+			LogConversionEnd(character);
 			return character;
+		}
+
+		private static void LogConversionStart(TNH_CharacterDef character)
+		{
+			TNHTweakerLogger.Log("- Starting conversion of character to vanilla -", TNHTweakerLogger.LogType.Loading);
+		}
+
+		private static void LogConversionEnd(TNH_CharacterDef character)
+		{
+			TNHTweakerLogger.Log("Equipment pool count : " + character.EquipmentPool.Entries.Count(), TNHTweakerLogger.LogType.Loading);
+			if (character.Has_Weapon_Primary) TNHTweakerLogger.Log("Has primary loadout, is it null? : " + (character.Weapon_Primary == null), TNHTweakerLogger.LogType.Loading);
+			if (character.Has_Weapon_Secondary) TNHTweakerLogger.Log("Has secondary loadout, is it null? : " + (character.Weapon_Secondary == null), TNHTweakerLogger.LogType.Loading);
+			TNHTweakerLogger.Log("- Successfully converted character to vanilla -", TNHTweakerLogger.LogType.Loading);
 		}
 	}
 }

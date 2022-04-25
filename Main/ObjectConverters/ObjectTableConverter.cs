@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using TNHTweaker.Objects.CharacterData;
 using TNHTweaker.Objects.LootPools;
+using TNHTweaker.Utilities;
 using UnityEngine;
 
 namespace TNHTweaker.ObjectConverters
@@ -49,6 +50,7 @@ namespace TNHTweaker.ObjectConverters
 		public static ObjectTableDef ConvertObjectTableToVanilla(Objects.LootPools.ObjectTable from, Sprite icon = null, bool spawnsInSmallCase = false, bool spawnsInLargeCase = false)
 		{
 			ObjectTableDef objectTable = ScriptableObject.CreateInstance<ObjectTableDef>();
+			LogConversionStart(objectTable);
 
 			objectTable.Icon = icon;
 			objectTable.SpawnsInSmallCase = spawnsInSmallCase;
@@ -75,7 +77,20 @@ namespace TNHTweaker.ObjectConverters
 			objectTable.IDOverride = from.WhitelistedObjectIDs;
 			objectTable.UseIDListOverride = from.WhitelistedObjectIDs.Count > 0;
 
+			LogConversionEnd(objectTable);
 			return objectTable;
+		}
+
+		private static void LogConversionStart(ObjectTableDef objectTable)
+		{
+			TNHTweakerLogger.Log("- Starting conversion of object table to vanilla -", TNHTweakerLogger.LogType.Loading);
+		}
+
+		private static void LogConversionEnd(ObjectTableDef objectTable)
+		{
+			TNHTweakerLogger.Log("SpawnsInSmallCase : " + objectTable.SpawnsInSmallCase, TNHTweakerLogger.LogType.Loading);
+			TNHTweakerLogger.Log("SpawnsInLargeCase : " + objectTable.SpawnsInLargeCase, TNHTweakerLogger.LogType.Loading);
+			TNHTweakerLogger.Log("- Successfully converted object table to vanilla -", TNHTweakerLogger.LogType.Loading);
 		}
 	}
 }

@@ -37,11 +37,12 @@ namespace TNHTweaker.ObjectWrappers
 
         private IEnumerator WaitUntilLoaded()
         {
-            SceneLoader sceneHotDog = UnityEngine.Object.FindObjectOfType<SceneLoader>();
+            SceneLoader sceneHotDog = FindObjectOfType<SceneLoader>();
             sceneHotDog.gameObject.SetActive(false);
 
             yield return UpdateOtherloaderProgressText();
             yield return UpdateMagpatcherProgressText();
+            SetProgressTextComplete();
 
             sceneHotDog.gameObject.SetActive(true);
         }
@@ -76,6 +77,12 @@ namespace TNHTweaker.ObjectWrappers
                 statusText.text = "CACHING FAILED! SEE ABOVE";
                 throw new Exception("Magazine Caching Failed!");
             }
+        }
+
+        private void SetProgressTextComplete()
+        {
+            detailListText.text = "";
+            statusText.text = "LOADING COMPLETE";
         }
 
 

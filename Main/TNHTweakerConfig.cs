@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TNHTweaker.Utilities;
 
 namespace TNHTweaker
 {
@@ -19,6 +20,10 @@ namespace TNHTweaker
                 false,
                 "If true, you will spawn with 999999 tokens for any character in TNH (useful for testing loot pools)"
                 );
+
+
+            TNHTweakerLogger.AllowLogging = true;
+            TNHTweakerLogger.LogLoading = true;
 
         }
 

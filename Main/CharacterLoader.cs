@@ -28,7 +28,7 @@ namespace TNHTweaker
         {
             if (customCharacterBundlePaths.Count() == 0)
             {
-                AnvilManager.Instance.StartCoroutine(WaitToLoadCharacters());
+                TNHTweaker.Instance.StartCoroutine(WaitToLoadCharacters());
             }
 
             string bundlePath = Path.Combine(modPath, bundleName);
@@ -54,6 +54,7 @@ namespace TNHTweaker
 
         private static void LoadCharacterBundle(string bundlePath)
         {
+            TNHTweakerLogger.Log("Loading character from bundle at path: " + bundlePath, TNHTweakerLogger.LogType.Loading);
             AssetBundle characterBundle = AssetBundle.LoadFromFile(bundlePath);
 
             LoadSosigsFromBundle(characterBundle);

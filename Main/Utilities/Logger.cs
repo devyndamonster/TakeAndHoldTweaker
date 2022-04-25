@@ -13,7 +13,7 @@ namespace TNHTweaker.Utilities
 
         public static bool AllowLogging = false;
         public static bool LogCharacter = false;
-        public static bool LogFile = false;
+        public static bool LogLoading = false;
         public static bool LogTNH = false;
 
 
@@ -21,7 +21,7 @@ namespace TNHTweaker.Utilities
         {
             General,
             Character,
-            File,
+            Loading,
             TNH
         }
 
@@ -42,7 +42,7 @@ namespace TNHTweaker.Utilities
                 {
                     BepLog.LogInfo(log);
                 }
-                else if (type == LogType.File && LogFile)
+                else if (type == LogType.Loading && LogLoading)
                 {
                     BepLog.LogInfo(log);
                 }
