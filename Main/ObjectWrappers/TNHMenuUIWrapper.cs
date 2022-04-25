@@ -3,7 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TNHTweaker.Objects.CharacterData;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,18 +11,26 @@ namespace TNHTweaker.ObjectWrappers
 {
     public class TNHMenuUIWrapper : MonoBehaviour
     {
-        private TNH_UIManager baseUI;
+        public static TNHMenuUIWrapper Instance;
 
+        public int CurrentCharacterPage = 0;
+
+        private TNH_UIManager baseUI;
         private Text statusText;
         private Text detailListText;
+        private Text characterPageText;
 
         public void InitTNHUI(TNH_UIManager baseUI)
         {
+            Instance = this;
             this.baseUI = baseUI;
 
-            statusText = CreateStatusText(baseUI);
-            detailListText = CreateDetailListText(baseUI);
-            ExpandCharacterUI(baseUI);
+            statusText = CreateStatusText();
+            detailListText = CreateDetailListText();
+            characterPageText = CreatePageNumberText();
+            CreatePrevCharacterPageButton();
+            CreateNextCharacterPageButton();
+            ExpandCharacterUI();
             SetupLoadingEvents();
 
             foreach(Character character in TNHTweaker.CustomCharacterDict.Values)
@@ -105,7 +112,7 @@ namespace TNHTweaker.ObjectWrappers
         private void AddLoadedCharacter(Character character)
         {
             AddCharacterToUI(character);
-            RefreshCharactersInCategory(baseUI.m_selectedCategory);
+            RefreshCharactersInCategory();
         }
         
         private void AddCharacterToUI(Character character)
@@ -119,8 +126,8 @@ namespace TNHTweaker.ObjectWrappers
             }
 
             //Add to UI lists
-            int groupIndex = (int)character.Group;
-            if (groupIndex < baseUI.Categories.Count())
+            int groupIndex = baseUI.Categories.FindIndex(o => o.CategoryName == character.Group);
+            if (groupIndex > -1)
             {
                 if (!baseUI.Categories[groupIndex].Characters.Contains(character.CharacterID))
                 {
@@ -132,9 +139,10 @@ namespace TNHTweaker.ObjectWrappers
                 TNH_UIManager.CharacterCategory category = new TNH_UIManager.CharacterCategory();
                 category.Characters = new List<TNH_Char>();
                 category.Characters.Add(character.CharacterID);
-                category.CategoryName = "Custom Category";
-
+                category.CategoryName = character.Group;
+                
                 baseUI.Categories.Add(category);
+                groupIndex = baseUI.Categories.FindIndex(o => o.CategoryName == character.Group);
                 AddCategoryOption(category.CategoryName, groupIndex);
             }
         }
@@ -145,27 +153,39 @@ namespace TNHTweaker.ObjectWrappers
             baseUI.LBL_CategoryName[categoryIndex].text = (categoryIndex + 1).ToString() + ". " + categoryName;
         }
 
-        private void RefreshCharactersInCategory(int categoryIndex)
+
+        public void DisplayNewCategory()
         {
-            for (int i = 0; i < baseUI.LBL_CharacterName.Count; i++)
+            CurrentCharacterPage = 0;
+            characterPageText.text = CurrentCharacterPage.ToString();
+            RefreshCharactersInCategory();
+        }
+
+        public void RefreshCharactersInCategory()
+        {
+            int categoryIndex = baseUI.m_selectedCategory;
+            int pageSize = baseUI.LBL_CharacterName.Count;
+
+            for (int labelIndex = 0; labelIndex < pageSize; labelIndex++)
             {
-                if (i < baseUI.Categories[categoryIndex].Characters.Count)
+                int characterIndex = labelIndex + (pageSize * CurrentCharacterPage);
+                if (characterIndex < baseUI.Categories[categoryIndex].Characters.Count)
                 {
-                    baseUI.LBL_CharacterName[i].gameObject.SetActive(true);
-                    TNH_CharacterDef def = baseUI.CharDatabase.GetDef(baseUI.Categories[categoryIndex].Characters[i]);
-                    baseUI.LBL_CharacterName[i].text = (i + 1).ToString() + ". " + def.DisplayName;
+                    baseUI.LBL_CharacterName[labelIndex].gameObject.SetActive(true);
+                    TNH_CharacterDef def = baseUI.CharDatabase.GetDef(baseUI.Categories[categoryIndex].Characters[characterIndex]);
+                    baseUI.LBL_CharacterName[labelIndex].text = (labelIndex + 1).ToString() + ". " + def.DisplayName;
                 }
                 else
                 {
-                    baseUI.LBL_CharacterName[i].gameObject.SetActive(false);
+                    baseUI.LBL_CharacterName[labelIndex].gameObject.SetActive(false);
                 }
             }
         }
 
 
-        private Text CreateStatusText(TNH_UIManager manager)
+        private Text CreateStatusText()
         {
-            Text magazineCacheText = Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
+            Text magazineCacheText = Instantiate(baseUI.SelectedCharacter_Title.gameObject, baseUI.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
             magazineCacheText.transform.localPosition = new Vector3(0, 550, 0);
             magazineCacheText.transform.localScale = new Vector3(2, 2, 2);
             magazineCacheText.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -175,9 +195,9 @@ namespace TNHTweaker.ObjectWrappers
         }
 
 
-        private Text CreateDetailListText(TNH_UIManager manager)
+        private Text CreateDetailListText()
         {
-            Text itemsText = Instantiate(manager.SelectedCharacter_Title.gameObject, manager.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
+            Text itemsText = Instantiate(baseUI.SelectedCharacter_Title.gameObject, baseUI.SelectedCharacter_Title.transform.parent).GetComponent<Text>();
             itemsText.transform.localPosition = new Vector3(-30, 630, 0);
             itemsText.transform.localScale = new Vector3(1, 1, 1);
             itemsText.text = "";
@@ -191,13 +211,13 @@ namespace TNHTweaker.ObjectWrappers
         }
 
 
-        private void ExpandCharacterUI(TNH_UIManager manager)
+        private void ExpandCharacterUI()
         {
-            GameObject templateCharacterLabel = manager.LBL_CharacterName[1].gameObject;
+            GameObject templateCharacterLabel = baseUI.LBL_CharacterName[1].gameObject;
             OptionsPanel_ButtonSet buttonSet = templateCharacterLabel.transform.parent.GetComponent<OptionsPanel_ButtonSet>();
             List<FVRPointableButton> buttonList = buttonSet.ButtonsInSet.ToList();
 
-            int maxButtons = 12;
+            int maxButtons = 10;
             
             for (int buttonIndex = buttonSet.ButtonsInSet.Length; buttonIndex < maxButtons; buttonIndex++)
             {
@@ -205,31 +225,103 @@ namespace TNHTweaker.ObjectWrappers
                 Button newButton = newCharacterLabel.gameObject.GetComponent<Button>();
 
                 newButton.onClick = new Button.ButtonClickedEvent();
-                newButton.onClick.AddListener(() => { manager.SetSelectedCharacter(buttonIndex); });
+                newButton.onClick.AddListener(() => { baseUI.SetSelectedCharacter(buttonIndex); });
                 newButton.onClick.AddListener(() => { buttonSet.SetSelectedButton(buttonIndex); });
 
-                manager.LBL_CharacterName.Add(newCharacterLabel);
+                baseUI.LBL_CharacterName.Add(newCharacterLabel);
                 buttonList.Add(newCharacterLabel.gameObject.GetComponent<FVRPointableButton>());
             }
 
             buttonSet.ButtonsInSet = buttonList.ToArray();
 
-            TightenTNHCharacterButtons(manager);
+            TightenTNHCharacterButtons();
         }
 
-        private void TightenTNHCharacterButtons(TNH_UIManager manager)
+
+        private void TightenTNHCharacterButtons()
         {
-            float prevY = manager.LBL_CharacterName[0].transform.localPosition.y;
-            for (int i = 1; i < manager.LBL_CharacterName.Count; i++)
+            float prevY = baseUI.LBL_CharacterName[0].transform.localPosition.y;
+            for (int i = 1; i < baseUI.LBL_CharacterName.Count; i++)
             {
                 prevY = prevY - 35f;
-                manager.LBL_CharacterName[i].transform.localPosition = new Vector3(250, prevY, 0);
+                baseUI.LBL_CharacterName[i].transform.localPosition = new Vector3(250, prevY, 0);
+            }
+        }
+
+        private void CreatePrevCharacterPageButton()
+        {
+            GameObject templateCharacterLabel = baseUI.LBL_CharacterName[1].gameObject;
+            Text pageButton = Instantiate(templateCharacterLabel, templateCharacterLabel.transform.parent).GetComponent<Text>();
+            pageButton.alignment = TextAnchor.MiddleCenter;
+            pageButton.transform.localPosition = new Vector3(50, -425, 0);
+            pageButton.text = "Prev";
+            Button buttonComp = pageButton.gameObject.GetComponent<Button>();
+            pageButton.GetComponent<BoxCollider>().size = new Vector3(100, 45, 13);
+
+            buttonComp.onClick = new Button.ButtonClickedEvent();
+            buttonComp.onClick.AddListener(() => { PrevCharacterPage(); });
+        }
+
+        private void CreateNextCharacterPageButton()
+        {
+            GameObject templateCharacterLabel = baseUI.LBL_CharacterName[1].gameObject;
+            Text pageButton = Instantiate(templateCharacterLabel, templateCharacterLabel.transform.parent).GetComponent<Text>();
+            pageButton.alignment = TextAnchor.MiddleCenter;
+            pageButton.transform.localPosition = new Vector3(350, -425, 0);
+            pageButton.text = "Next";
+            Button buttonComp = pageButton.gameObject.GetComponent<Button>();
+            pageButton.GetComponent<BoxCollider>().size = new Vector3(100, 45, 13);
+
+            buttonComp.onClick = new Button.ButtonClickedEvent();
+            buttonComp.onClick.AddListener(() => { NextCharacterPage(); });
+        }
+
+        private Text CreatePageNumberText()
+        {
+            GameObject templateCharacterLabel = baseUI.LBL_CharacterName[1].gameObject;
+            Text pageText = Instantiate(templateCharacterLabel, templateCharacterLabel.transform.parent).GetComponent<Text>();
+            pageText.transform.localPosition = new Vector3(400, -425, 0);
+            pageText.text = "0";
+
+            Destroy(pageText.GetComponent<Button>());
+            Destroy(pageText.GetComponent<FVRPointableButton>());
+            Destroy(pageText.GetComponent<BoxCollider>());
+
+            return pageText;
+        }
+
+        private void PrevCharacterPage()
+        {
+            baseUI.PlayButtonSound(2);
+
+            if (CurrentCharacterPage > 0)
+            {
+                CurrentCharacterPage -= 1;
+                characterPageText.text = CurrentCharacterPage.ToString();
+                RefreshCharactersInCategory();
+            }
+        }
+
+        private void NextCharacterPage()
+        {
+            baseUI.PlayButtonSound(2);
+
+            int pageSize = baseUI.LBL_CharacterName.Count;
+            int characterCount = baseUI.Categories[baseUI.m_selectedCategory].Characters.Count;
+            var totalPages = (int)Math.Ceiling((float)characterCount / pageSize);
+
+            if (CurrentCharacterPage < totalPages - 1)
+            {
+                CurrentCharacterPage += 1;
+                characterPageText.text = CurrentCharacterPage.ToString();
+                RefreshCharactersInCategory();
             }
         }
 
         private void OnDestroy()
         {
             RemoveLoadingEvents();
+            Instance = null;
         }
 
         private void SetupLoadingEvents()

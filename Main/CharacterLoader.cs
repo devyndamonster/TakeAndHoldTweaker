@@ -71,6 +71,7 @@ namespace TNHTweaker
                 TNHTweaker.CustomSosigDict[baseSosig] = sosig;
                 TNHTweaker.BaseSosigDict[sosig] = baseSosig;
                 LoadSosigIntoVanillaDictionaries(baseSosig);
+                OnSosigLoaded?.Invoke(sosig);
             }
         }
 
@@ -83,6 +84,7 @@ namespace TNHTweaker
                 TNH_CharacterDef baseCharacter = CharacterConverter.ConvertCharacterToVanilla(character);
                 TNHTweaker.CustomCharacterDict[baseCharacter] = character;
                 TNHTweaker.BaseCharacterDict[character] = baseCharacter;
+                OnCharacterLoaded?.Invoke(character);
             }
         }
 

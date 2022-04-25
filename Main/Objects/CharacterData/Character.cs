@@ -22,7 +22,7 @@ namespace TNHTweaker.Objects.CharacterData
 		[Header("Character Identity Properties")]
 		public string DisplayName;
 		public TNH_Char CharacterID;
-		public TNH_CharacterDef.CharacterGroup Group;
+		public string Group;
 		public string TableID;
 		public Sprite Picture;
 		public string Description;
