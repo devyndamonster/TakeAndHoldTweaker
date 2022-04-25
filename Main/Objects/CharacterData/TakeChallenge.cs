@@ -7,9 +7,11 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.CharacterData
 {
-    public class TakeChallenge : ScriptableObject
+
+	[CreateAssetMenu(menuName = "TNHTweaker/TakeChallenge", fileName = "NewTakeChallenge")]
+	public class TakeChallenge : ScriptableObject
     {
-		public List<SosigEnemyID> SosigEnemyIDs;
+		public List<SosigEnemyID> SosigEnemyIDs = new List<SosigEnemyID>();
 
 		public TNH_TurretType TurretType;
 

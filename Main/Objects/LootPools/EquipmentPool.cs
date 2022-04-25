@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.LootPools
 {
+    [CreateAssetMenu(menuName = "TNHTweaker/EquipmentPool", fileName = "NewEquipmentPool")]
     public class EquipmentPool : ScriptableObject
     {
         public EquipmentPoolDef.PoolEntry.PoolEntryType Type;

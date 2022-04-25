@@ -7,15 +7,16 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.CharacterData
 {
-    public class HoldPhase : ScriptableObject
+	[CreateAssetMenu(menuName = "TNHTweaker/HoldPhase", fileName = "NewPhase")]
+	public class HoldPhase : ScriptableObject
     {
-		public TNH_EncryptionType Encryptions;
+		public List<TNH_EncryptionType> Encryptions = new List<TNH_EncryptionType>();
 
 		public int MinTargets;
 
 		public int MaxTargets;
 
-		public SosigEnemyID EnemyType;
+		public List<SosigEnemyID> EnemyTypes = new List<SosigEnemyID>();
 
 		public SosigEnemyID LeaderType;
 

@@ -116,8 +116,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main\CharacterLoader.cs" />
+    <Compile Include="Main\ObjectConverters\HoldPhaseConverter.cs" />
+    <Compile Include="Main\ObjectConverters\LevelConverter.cs" />
     <Compile Include="Main\ObjectConverters\OutfitConfigConverter.cs" />
+    <Compile Include="Main\ObjectConverters\PatrolConverter.cs" />
+    <Compile Include="Main\ObjectConverters\ProgressionConverter.cs" />
     <Compile Include="Main\ObjectConverters\SosigTemplateConverter.cs" />
+    <Compile Include="Main\ObjectConverters\TakeChallengeConverter.cs" />
     <Compile Include="Main\Objects\SosigData\OutfitConfig.cs" />
     <Compile Include="Main\ObjectWrappers\TNHMenuUIWrapper.cs" />
     <Compile Include="Main\Patches\TNHMenuPatches.cs" />

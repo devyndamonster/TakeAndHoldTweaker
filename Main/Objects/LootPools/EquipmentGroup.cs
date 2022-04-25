@@ -6,6 +6,8 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.LootPools
 {
+
+    [CreateAssetMenu(menuName = "TNHTweaker/EquipmentGroup", fileName = "NewEquipmentGroup")]
     public class EquipmentGroup : ScriptableObject
     {
         [Tooltip("Cummulative chance of this group being spawned from. Larger values means more likely. Default value is 1")]

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TNHTweaker.Objects.CharacterData;
+using TNHTweaker.Objects.LootPools;
 using UnityEngine;
 
 namespace TNHTweaker.ObjectConverters
@@ -23,12 +24,13 @@ namespace TNHTweaker.ObjectConverters
 			character.StartingTokens = from.StartingTokens;
 			character.ForceAllAgentWeapons = from.ForceAllAgentWeapons;
 			character.UsesPurchasePriceIncrement = from.UsesPurchasePriceIncrement;
-			character.RequireSightTable = from.RequireSightTable;
+			character.RequireSightTable = ScriptableObject.CreateInstance<EquipmentGroup>();
+			character.RequireSightTable.ObjectTable = ObjectTableConverter.ConvertObjectTableFromVanilla(from.RequireSightTable);
 			character.ValidAmmoEras = from.ValidAmmoEras;
 			character.ValidAmmoSets = from.ValidAmmoSets;
 			character.EquipmentPools = from.EquipmentPool.Entries.Select(o => EquipmentPoolConverter.ConvertEquipmentPoolEntryFromVanilla(o)).ToList();
-			character.Progressions = from.Progressions;
-			character.Progressions_Endless = from.Progressions_Endless;
+			character.Progressions = from.Progressions.Select(o => ProgressionConverter.ConvertProgressionFromVanilla(o)).ToList();
+			character.Progressions_Endless = from.Progressions_Endless.Select(o => ProgressionConverter.ConvertProgressionFromVanilla(o)).ToList();
 			character.Has_Weapon_Primary = from.Has_Weapon_Primary;
 			character.Has_Weapon_Secondary = from.Has_Weapon_Secondary;
 			character.Has_Weapon_Tertiary = from.Has_Weapon_Tertiary;
@@ -61,11 +63,13 @@ namespace TNHTweaker.ObjectConverters
 			character.StartingTokens = from.StartingTokens;
 			character.ForceAllAgentWeapons = from.ForceAllAgentWeapons;
 			character.UsesPurchasePriceIncrement = from.UsesPurchasePriceIncrement;
-			character.RequireSightTable = from.RequireSightTable;
+			character.RequireSightTable = ObjectTableConverter.ConvertObjectTableToVanilla(from.RequireSightTable.ObjectTable);
 			character.ValidAmmoEras = from.ValidAmmoEras;
 			character.ValidAmmoSets = from.ValidAmmoSets;
-			character.Progressions = from.Progressions;
-			character.Progressions_Endless = from.Progressions_Endless;
+			character.EquipmentPool = ScriptableObject.CreateInstance<EquipmentPoolDef>();
+			character.EquipmentPool.Entries = from.EquipmentPools.Select(o => EquipmentPoolConverter.ConvertEquipmentPoolEntryToVanilla(o)).ToList();
+			character.Progressions = from.Progressions.Select(o => ProgressionConverter.ConvertProgressionToVanilla(o)).ToList();
+			character.Progressions_Endless = from.Progressions_Endless.Select(o => ProgressionConverter.ConvertProgressionToVanilla(o)).ToList();
 			character.Has_Weapon_Primary = from.Has_Weapon_Primary;
 			character.Has_Weapon_Secondary = from.Has_Weapon_Secondary;
 			character.Has_Weapon_Tertiary = from.Has_Weapon_Tertiary;
@@ -80,9 +84,7 @@ namespace TNHTweaker.ObjectConverters
 			character.Item_Secondary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Secondary);
 			character.Item_Tertiary = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Tertiary);
 			character.Item_Shield = LoadoutEntryConverter.ConvertLoadoutEntryToVanilla(from.Item_Shield);
-
-			character.EquipmentPool = ScriptableObject.CreateInstance<EquipmentPoolDef>();
-			character.EquipmentPool.Entries = from.EquipmentPools.Select(o => EquipmentPoolConverter.ConvertEquipmentPoolEntryToVanilla(o)).ToList();
+			
 
 			return character;
 		}

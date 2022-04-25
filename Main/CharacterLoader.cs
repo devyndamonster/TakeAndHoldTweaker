@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using TNHTweaker.ObjectConverters;
@@ -23,13 +24,14 @@ namespace TNHTweaker
         private static List<string> customCharacterBundlePaths = new List<string>();
 
 
-        public static void RegisterCharacterBundleToLoad(string bundlePath)
+        public static void RegisterCharacterBundleToLoad(string modPath, string bundleName)
         {
             if (customCharacterBundlePaths.Count() == 0)
             {
                 AnvilManager.Instance.StartCoroutine(WaitToLoadCharacters());
             }
 
+            string bundlePath = Path.Combine(modPath, bundleName);
             customCharacterBundlePaths.Add(bundlePath);
         }
 

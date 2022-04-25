@@ -15,7 +15,9 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.CharacterData
 {
-    public class Character : ScriptableObject
+
+	[CreateAssetMenu(menuName = "TNHTweaker/Character", fileName = "NewCharacter")]
+	public class Character : ScriptableObject
     {
 		[Header("Character Identity Properties")]
 		public string DisplayName;
@@ -31,14 +33,14 @@ namespace TNHTweaker.Objects.CharacterData
 		public bool UsesPurchasePriceIncrement = true;
 
 		[Header("Loot Properties")]
-		public ObjectTableDef RequireSightTable;
+		public EquipmentGroup RequireSightTable;
 		public List<FVRObject.OTagEra> ValidAmmoEras;
 		public List<FVRObject.OTagSet> ValidAmmoSets;
 		public List<EquipmentPool> EquipmentPools;
 
 		[Header("Progression Properties")]
-		public List<TNH_Progression> Progressions;
-		public List<TNH_Progression> Progressions_Endless;
+		public List<Progression> Progressions;
+		public List<Progression> Progressions_Endless;
 
 		[Header("Starting Loadout Properties")]
 		public bool Has_Weapon_Primary;

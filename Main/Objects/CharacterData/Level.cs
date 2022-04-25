@@ -6,6 +6,8 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.CharacterData
 {
+
+    [CreateAssetMenu(menuName = "TNHTweaker/Level", fileName = "NewLevel")]
     public class Level : ScriptableObject
     {
         public int NumOverrideTokensForHold;

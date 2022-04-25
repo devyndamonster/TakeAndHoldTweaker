@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.SosigData
 {
+	[CreateAssetMenu(menuName = "TNHTweaker/OutfitConfig", fileName = "NewOutfitConfig")]
 	public class OutfitConfig : ScriptableObject
 	{
 		public List<string> Headwear = new List<string>();

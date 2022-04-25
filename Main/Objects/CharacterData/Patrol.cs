@@ -7,7 +7,8 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.CharacterData
 {
-    public class Patrol : ScriptableObject
+	[CreateAssetMenu(menuName = "TNHTweaker/Patrol", fileName = "NewPatrol")]
+	public class Patrol : ScriptableObject
     {
 		public List<SosigEnemyID> EnemyTypes = new List<SosigEnemyID>();
 

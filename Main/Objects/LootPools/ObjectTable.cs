@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.LootPools
 {
+	[CreateAssetMenu(menuName = "TNHTweaker/ObjectTable", fileName = "NewObjectTable")]
 	public class ObjectTable : ScriptableObject
 	{
 		[Header("General Tags")]

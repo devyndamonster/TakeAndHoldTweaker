@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace TNHTweaker.Objects.SosigData
 {
+    [CreateAssetMenu(menuName = "TNHTweaker/SosigTemplate", fileName = "NewSosigTemplate")]
     public class SosigTemplate : ScriptableObject
     {
         public string DisplayName;
