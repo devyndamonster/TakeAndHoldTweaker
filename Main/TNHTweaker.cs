@@ -40,6 +40,8 @@ namespace TNHTweaker
             TNHTweakerLogger.Log("Hello World (from TNH Tweaker)", TNHTweakerLogger.LogType.General);
 
             Harmony.CreateAndPatchAll(typeof(TNHMenuPatches));
+            Harmony.CreateAndPatchAll(typeof(HoldPointPatches));
+            Harmony.CreateAndPatchAll(typeof(TNHManagerStatePatches));
         }
 
     }

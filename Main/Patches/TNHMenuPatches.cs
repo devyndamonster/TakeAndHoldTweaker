@@ -21,7 +21,7 @@ namespace TNHTweaker.Patches
 
         [HarmonyPatch(typeof(TNH_UIManager), "Start")]
         [HarmonyPrefix]
-        public static bool InitTNH(TNH_UIManager __instance)
+        public static bool InitTNHPatch(TNH_UIManager __instance)
         {
             TNHTweakerLogger.Log("Initializing TNH UI", TNHTweakerLogger.LogType.General);
 
@@ -29,7 +29,6 @@ namespace TNHTweaker.Patches
 
             //Add menu wrapper to UI
             TNHMenuUIWrapper menuWrapper = __instance.gameObject.AddComponent<TNHMenuUIWrapper>();
-            menuWrapper.InitTNHUI(__instance);
 
             return true;
         }

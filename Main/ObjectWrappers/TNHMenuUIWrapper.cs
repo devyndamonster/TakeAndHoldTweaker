@@ -20,10 +20,10 @@ namespace TNHTweaker.ObjectWrappers
         private Text detailListText;
         private Text characterPageText;
 
-        public void InitTNHUI(TNH_UIManager baseUI)
+        private void Awake()
         {
             Instance = this;
-            this.baseUI = baseUI;
+            baseUI = GetComponent<TNH_UIManager>();
 
             statusText = CreateStatusText();
             detailListText = CreateDetailListText();
