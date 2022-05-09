@@ -16,8 +16,6 @@ namespace LegacyCharacterLoader.Loaders
             {
                 throw new ArgumentException("Could not load character! Character should point to a folder holding the character.json and thumb.png");
             }
-
-
         }
     }
 }

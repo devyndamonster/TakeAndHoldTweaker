@@ -16,8 +16,6 @@ namespace LegacyCharacterLoader.Loaders
             {
                 throw new ArgumentException("Could not load sosig! Make sure you're pointing to a sosig template json file in the manifest");
             }
-
-
         }
     }
 }

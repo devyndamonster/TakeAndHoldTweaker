@@ -12,7 +12,6 @@ namespace LegacyCharacterLoader.Loaders
     {
         public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
-
             if (handle is not IFileHandle file)
             {
                 throw new ArgumentException("Could not load vault file! Make sure you're pointing to a vault json file in the manifest");
