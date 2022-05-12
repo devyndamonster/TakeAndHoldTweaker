@@ -1,4 +1,5 @@
 ﻿using LegacyCharacterLoader.Enums;
+using LegacyCharacterLoader.Objects.LootPools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace LegacyCharacterLoader.Objects.CharacterData
         public List<string> GlobalAmmoBlacklist;
         public List<MagazineBlacklistEntry> MagazineBlacklist;
 
-        public EquipmentGroup RequireSightTable;
+        public LegacyEquipmentGroup RequireSightTable;
         public LoadoutEntry PrimaryWeapon;
         public LoadoutEntry SecondaryWeapon;
         public LoadoutEntry TertiaryWeapon;

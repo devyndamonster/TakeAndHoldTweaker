@@ -18,7 +18,7 @@ namespace TNHTweaker.ObjectConverters
 
 			character.DisplayName = from.DisplayName;
 			character.CharacterID = from.CharacterID;
-			character.Group = GetGroupStringFromEnum(from.Group);
+			character.Group = CharacterUtils.GetGroupStringFromEnum(from.Group);
 			character.TableID = from.TableID;
 			character.Picture = from.Picture;
 			character.Description = from.Description;
@@ -102,20 +102,5 @@ namespace TNHTweaker.ObjectConverters
 			if (character.Has_Weapon_Secondary) TNHTweakerLogger.Log("Has secondary loadout, is it null? : " + (character.Weapon_Secondary == null), TNHTweakerLogger.LogType.Loading);
 			TNHTweakerLogger.Log("- Successfully converted character to vanilla -", TNHTweakerLogger.LogType.Loading);
 		}
-
-		public static string GetGroupStringFromEnum(TNH_CharacterDef.CharacterGroup groupEnum)
-        {
-            switch (groupEnum)
-            {
-				case TNH_CharacterDef.CharacterGroup.DaringDefaults:
-					return "Daring Defaults";
-				case TNH_CharacterDef.CharacterGroup.WienersThroughTime:
-					return "Weiners Through Time";
-				case TNH_CharacterDef.CharacterGroup.MemetasticMeats:
-					return "Memetastic Meats";
-				default: return "Misc";
-            }
-        }
-
 	}
 }

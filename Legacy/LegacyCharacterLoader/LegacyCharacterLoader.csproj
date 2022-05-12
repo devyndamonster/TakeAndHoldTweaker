@@ -97,11 +97,13 @@
     <Compile Include="Enums\CharacterEnums.cs" />
     <Compile Include="Enums\TolerantEnumConverter.cs" />
     <Compile Include="LegacyCharacterLoader.cs" />
-    <Compile Include="LegacyConverters\CharacterConverter.cs" />
+    <Compile Include="LegacyConverters\LegacyCharacterConverter.cs" />
+    <Compile Include="LegacyConverters\LegacyEquipmentGroupConverter.cs" />
     <Compile Include="Loaders\CharacterLoader.cs" />
     <Compile Include="Loaders\SosigLoader.cs" />
     <Compile Include="Loaders\VaultFileLoader.cs" />
     <Compile Include="Objects\CharacterData\LegacyCharacter.cs" />
+    <Compile Include="Objects\LootPools\LegacyEquipmentGroup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
