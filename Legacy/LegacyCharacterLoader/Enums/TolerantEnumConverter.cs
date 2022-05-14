@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Valve.Newtonsoft.Json;
 
-namespace LegacyCharacterLoader.Enums
+namespace LegacyCharacterLoader
 {
 
     //This code is taken from this stack overflow page: https://stackoverflow.com/questions/22752075/how-can-i-ignore-unknown-enum-values-during-json-deserialization

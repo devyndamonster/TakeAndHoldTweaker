@@ -59,6 +59,9 @@
     <Reference Include="DotNetZip, Version=1.12.0.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DotNetZip.1.12.0\lib\net20\DotNetZip.dll</HintPath>
     </Reference>
+    <Reference Include="MagazinePatcher">
+      <HintPath>..\..\Libs\MagazinePatcher.dll</HintPath>
+    </Reference>
     <Reference Include="Mono.Cecil, Version=0.10.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.dll</HintPath>
     </Reference>
@@ -97,14 +100,28 @@
     <Compile Include="Enums\CharacterEnums.cs" />
     <Compile Include="Enums\TolerantEnumConverter.cs" />
     <Compile Include="LegacyCharacterLoader.cs" />
-    <Compile Include="LegacyConverters\LegacyCharacterConverter.cs" />
-    <Compile Include="LegacyConverters\LegacyEquipmentGroupConverter.cs" />
+    <Compile Include="LegacyConverters\CharacterData\LegacyCharacterConverter.cs" />
+    <Compile Include="LegacyConverters\CharacterData\LegacyHoldPhaseConverter.cs" />
+    <Compile Include="LegacyConverters\CharacterData\LegacyLevelConverter.cs" />
+    <Compile Include="LegacyConverters\CharacterData\LegacyPatrolConverter.cs" />
+    <Compile Include="LegacyConverters\LootPools\LegacyLoadoutEntryConverter.cs" />
+    <Compile Include="Objects\CharacterData\LegacyHoldPhase.cs" />
+    <Compile Include="LegacyConverters\CharacterData\LegacyProgressionConverter.cs" />
+    <Compile Include="LegacyConverters\CharacterData\LegacyTakeChallengeConverter.cs" />
+    <Compile Include="LegacyConverters\LootPools\LegacyEquipmentGroupConverter.cs" />
+    <Compile Include="LegacyConverters\LootPools\LegacyEquipmentPoolConverter.cs" />
     <Compile Include="Loaders\CharacterLoader.cs" />
     <Compile Include="Loaders\SosigLoader.cs" />
     <Compile Include="Loaders\VaultFileLoader.cs" />
     <Compile Include="Objects\CharacterData\LegacyCharacter.cs" />
+    <Compile Include="Objects\CharacterData\LegacyLevel.cs" />
+    <Compile Include="Objects\CharacterData\LegacyPatrol.cs" />
+    <Compile Include="Objects\CharacterData\LegacyTakeChallenge.cs" />
     <Compile Include="Objects\LootPools\LegacyEquipmentGroup.cs" />
+    <Compile Include="Objects\LootPools\LegacyEquipmentPool.cs" />
+    <Compile Include="Objects\LootPools\LegacyLoadoutEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utilities\LegacyCharacterUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

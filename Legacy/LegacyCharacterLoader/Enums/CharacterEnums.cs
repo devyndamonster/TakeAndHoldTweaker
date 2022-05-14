@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Valve.Newtonsoft.Json;
 
-namespace LegacyCharacterLoader.Enums
+namespace LegacyCharacterLoader
 {
     [JsonConverter(typeof(TolerantEnumConverter))]
     public enum ObjectCategory

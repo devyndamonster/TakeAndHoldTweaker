@@ -1,5 +1,5 @@
-﻿using LegacyCharacterLoader.Enums;
-using LegacyCharacterLoader.Objects.LootPools;
+﻿using LegacyCharacterLoader.Objects.LootPools;
+using MagazinePatcher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,17 +29,16 @@ namespace LegacyCharacterLoader.Objects.CharacterData
         public List<TagSet> ValidAmmoSets;
         public List<string> GlobalAmmoBlacklist;
         public List<MagazineBlacklistEntry> MagazineBlacklist;
-
         public LegacyEquipmentGroup RequireSightTable;
-        public LoadoutEntry PrimaryWeapon;
-        public LoadoutEntry SecondaryWeapon;
-        public LoadoutEntry TertiaryWeapon;
-        public LoadoutEntry PrimaryItem;
-        public LoadoutEntry SecondaryItem;
-        public LoadoutEntry TertiaryItem;
-        public LoadoutEntry Shield;
-        public List<EquipmentPool> EquipmentPools;
-        public List<Level> Levels;
-        public List<Level> LevelsEndless;
+        public LegacyLoadoutEntry PrimaryWeapon;
+        public LegacyLoadoutEntry SecondaryWeapon;
+        public LegacyLoadoutEntry TertiaryWeapon;
+        public LegacyLoadoutEntry PrimaryItem;
+        public LegacyLoadoutEntry SecondaryItem;
+        public LegacyLoadoutEntry TertiaryItem;
+        public LegacyLoadoutEntry Shield;
+        public List<LegacyEquipmentPool> EquipmentPools;
+        public List<LegacyLevel> Levels;
+        public List<LegacyLevel> LevelsEndless;
     }
 }

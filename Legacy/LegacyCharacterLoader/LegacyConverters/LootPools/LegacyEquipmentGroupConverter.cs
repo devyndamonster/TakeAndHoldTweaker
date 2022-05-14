@@ -11,7 +11,7 @@ namespace LegacyCharacterLoader.LegacyConverters
 {
     public static class LegacyEquipmentGroupConverter
     {
-		public static EquipmentGroup ConvertObjectTableFromLegacy(LegacyEquipmentGroup from)
+		public static EquipmentGroup ConvertEquipmentGroupFromLegacy(LegacyEquipmentGroup from)
 		{
             TNHTweaker.Objects.LootPools.ObjectTable objectTable = ScriptableObject.CreateInstance<TNHTweaker.Objects.LootPools.ObjectTable>();
 
@@ -48,7 +48,7 @@ namespace LegacyCharacterLoader.LegacyConverters
 			equipmentGroup.SpawnMagAndClip = from.SpawnMagAndClip;
 			equipmentGroup.BespokeAttachmentChance = from.BespokeAttachmentChance;
 			equipmentGroup.ForceSpawnAllSubGroups = from.ForceSpawnAllSubPools;
-			equipmentGroup.SubGroups = from.SubGroups.Select(o => ConvertObjectTableFromLegacy(o)).ToList();
+			equipmentGroup.SubGroups = from.SubGroups.Select(o => ConvertEquipmentGroupFromLegacy(o)).ToList();
 
 			return equipmentGroup;
 		}

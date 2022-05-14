@@ -1,4 +1,5 @@
 ﻿using Deli.Setup;
+using FistVR;
 using LegacyCharacterLoader.Loaders;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,9 @@ namespace LegacyCharacterLoader
 {
     public class LegacyCharacterLoader : DeliBehaviour
     {
+        public static Dictionary<string, SosigEnemyID> SosigStringToID = new Dictionary<string, SosigEnemyID>();
+        public static Dictionary<string, TNH_Char> CharacterStringToID = new Dictionary<string, TNH_Char>();
+
         private void Awake()
         {
             Stages.Setup += OnSetup;

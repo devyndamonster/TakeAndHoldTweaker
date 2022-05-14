@@ -128,13 +128,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main\CharacterLoader.cs" />
-    <Compile Include="Main\ObjectConverters\HoldPhaseConverter.cs" />
-    <Compile Include="Main\ObjectConverters\LevelConverter.cs" />
-    <Compile Include="Main\ObjectConverters\OutfitConfigConverter.cs" />
-    <Compile Include="Main\ObjectConverters\PatrolConverter.cs" />
-    <Compile Include="Main\ObjectConverters\ProgressionConverter.cs" />
-    <Compile Include="Main\ObjectConverters\SosigTemplateConverter.cs" />
-    <Compile Include="Main\ObjectConverters\TakeChallengeConverter.cs" />
+    <Compile Include="Main\Enums\PanelType.cs" />
+    <Compile Include="Main\ObjectConverters\CharacterData\HoldPhaseConverter.cs" />
+    <Compile Include="Main\ObjectConverters\CharacterData\LevelConverter.cs" />
+    <Compile Include="Main\ObjectConverters\SosigData\OutfitConfigConverter.cs" />
+    <Compile Include="Main\ObjectConverters\CharacterData\PatrolConverter.cs" />
+    <Compile Include="Main\ObjectConverters\CharacterData\ProgressionConverter.cs" />
+    <Compile Include="Main\ObjectConverters\SosigData\SosigTemplateConverter.cs" />
+    <Compile Include="Main\ObjectConverters\CharacterData\TakeChallengeConverter.cs" />
     <Compile Include="Main\Objects\SosigData\OutfitConfig.cs" />
     <Compile Include="Main\ObjectWrappers\TNHManagerStateWrapper.cs" />
     <Compile Include="Main\ObjectWrappers\TNHMenuUIWrapper.cs" />
@@ -142,10 +143,10 @@
     <Compile Include="Main\Patches\TNHManagerStatePatches.cs" />
     <Compile Include="Main\Patches\TNHMenuPatches.cs" />
     <Compile Include="Main\TNHTweakerConfig.cs" />
-    <Compile Include="Main\ObjectConverters\CharacterConverter.cs" />
-    <Compile Include="Main\ObjectConverters\LoadoutEntryConverter.cs" />
-    <Compile Include="Main\ObjectConverters\ObjectTableConverter.cs" />
-    <Compile Include="Main\ObjectConverters\EquipmentPoolConverter.cs" />
+    <Compile Include="Main\ObjectConverters\CharacterData\CharacterConverter.cs" />
+    <Compile Include="Main\ObjectConverters\LootPools\LoadoutEntryConverter.cs" />
+    <Compile Include="Main\ObjectConverters\LootPools\ObjectTableConverter.cs" />
+    <Compile Include="Main\ObjectConverters\LootPools\EquipmentPoolConverter.cs" />
     <Compile Include="Main\Objects\CharacterData\Character.cs" />
     <Compile Include="Main\Objects\CharacterData\HoldPhase.cs" />
     <Compile Include="Main\Objects\CharacterData\Level.cs" />

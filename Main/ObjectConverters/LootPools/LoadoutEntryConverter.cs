@@ -15,7 +15,6 @@ namespace TNHTweaker.ObjectConverters
 		public static LoadoutEntry ConvertLoadoutEntryFromVanilla(TNH_CharacterDef.LoadoutEntry from)
 		{
 			LoadoutEntry loadoutEntry = ScriptableObject.CreateInstance<LoadoutEntry>();
-			loadoutEntry.EquipmentGroups = new List<EquipmentGroup>();
 
 			if (from.ListOverride != null && from.ListOverride.Count > 0)
             {

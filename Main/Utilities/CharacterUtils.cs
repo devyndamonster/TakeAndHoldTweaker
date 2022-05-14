@@ -21,10 +21,5 @@ namespace TNHTweaker.Utilities
                 default: return "Misc";
             }
         }
-
-        public static TNH_Char GetUniqueTNHCharValue()
-        {
-            return (TNH_Char)(111000 + TNHTweaker.CustomCharacterDict.Keys.Count());
-        }
     }
 }
