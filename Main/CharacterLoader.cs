@@ -58,7 +58,7 @@ namespace TNHTweaker
             AssetBundle characterBundle = AssetBundle.LoadFromFile(bundlePath);
 
             LoadSosigsFromBundle(characterBundle);
-            LoadCharacterFromBundle(characterBundle);
+            LoadCharactersFromBundle(characterBundle);
         }
 
         private static void LoadSosigsFromBundle(AssetBundle bundle)
@@ -67,25 +67,35 @@ namespace TNHTweaker
 
             foreach (SosigTemplate sosig in sosigs)
             {
-                SosigEnemyTemplate baseSosig = SosigTemplateConverter.ConvertSosigTemplateToVanilla(sosig);
-                TNHTweaker.CustomSosigDict[baseSosig] = sosig;
-                TNHTweaker.BaseSosigDict[sosig] = baseSosig;
-                LoadSosigIntoVanillaDictionaries(baseSosig);
-                OnSosigLoaded?.Invoke(sosig);
+                LoadSosig(sosig);
             }
         }
 
-        private static void LoadCharacterFromBundle(AssetBundle bundle)
+        private static void LoadCharactersFromBundle(AssetBundle bundle)
         {
             Character[] characters = bundle.LoadAllAssets<Character>();
 
             foreach (Character character in characters)
             {
-                TNH_CharacterDef baseCharacter = CharacterConverter.ConvertCharacterToVanilla(character);
-                TNHTweaker.CustomCharacterDict[baseCharacter] = character;
-                TNHTweaker.BaseCharacterDict[character] = baseCharacter;
-                OnCharacterLoaded?.Invoke(character);
+                LoadCharacter(character);
             }
+        }
+
+        public static void LoadCharacter(Character character)
+        {
+            TNH_CharacterDef baseCharacter = CharacterConverter.ConvertCharacterToVanilla(character);
+            TNHTweaker.CustomCharacterDict[baseCharacter] = character;
+            TNHTweaker.BaseCharacterDict[character] = baseCharacter;
+            OnCharacterLoaded?.Invoke(character);
+        }
+
+        public static void LoadSosig(SosigTemplate sosig)
+        {
+            SosigEnemyTemplate baseSosig = SosigTemplateConverter.ConvertSosigTemplateToVanilla(sosig);
+            TNHTweaker.CustomSosigDict[baseSosig] = sosig;
+            TNHTweaker.BaseSosigDict[sosig] = baseSosig;
+            LoadSosigIntoVanillaDictionaries(baseSosig);
+            OnSosigLoaded?.Invoke(sosig);
         }
 
         private static void LoadSosigIntoVanillaDictionaries(SosigEnemyTemplate sosig)

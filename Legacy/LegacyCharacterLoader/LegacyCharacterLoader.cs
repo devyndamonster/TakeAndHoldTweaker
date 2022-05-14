@@ -20,9 +20,9 @@ namespace LegacyCharacterLoader
 
         private void OnSetup(SetupStage stage)
         {
-            stage.SetupAssetLoaders[Source, "sosig"] = new SosigLoader().LoadAsset;
-            stage.SetupAssetLoaders[Source, "vault_file"] = new VaultFileLoader().LoadAsset;
-            stage.SetupAssetLoaders[Source, "character"] = new CharacterLoader().LoadAsset;
+            stage.SetupAssetLoaders[Source, "sosig"] = new LegacySosigLoader().LoadAsset;
+            stage.SetupAssetLoaders[Source, "vault_file"] = new LegacyVaultFileLoader().LoadAsset;
+            stage.SetupAssetLoaders[Source, "character"] = new Loaders.LegacyCharacterLoader().LoadAsset;
         }
     }
 }

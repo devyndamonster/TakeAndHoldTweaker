@@ -1,4 +1,6 @@
-﻿using LegacyCharacterLoader.Objects.LootPools;
+﻿using Deli.VFS;
+using LegacyCharacterLoader.Objects.LootPools;
+using LegacyCharacterLoader.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,12 +14,12 @@ namespace LegacyCharacterLoader.LegacyConverters
 {
     public static class LegacyEquipmentPoolConverter
     {
-		public static EquipmentPool ConvertEquipmentPoolFromLegacy(LegacyEquipmentPool from, string characterPath)
+		public static EquipmentPool ConvertEquipmentPoolFromLegacy(LegacyEquipmentPool from, IDirectoryHandle dir)
 		{
 			EquipmentPool equipmentPool = ScriptableObject.CreateInstance<EquipmentPool>();
 
 			equipmentPool.Type = from.Type;
-			equipmentPool.Icon = ImageUtils.LoadSpriteFromPath(Path.Combine(characterPath, from.IconName));
+			equipmentPool.Icon = LegacyImageUtils.LoadSpriteFromFileHandle(dir.GetFile(from.IconName));
 			equipmentPool.TokenCost = from.TokenCost;
 			equipmentPool.TokenCostLimited = from.TokenCostLimited;
 			equipmentPool.MinLevelAppears = from.MinLevelAppears;

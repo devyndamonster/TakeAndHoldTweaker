@@ -8,7 +8,7 @@ using System.Text;
 
 namespace LegacyCharacterLoader.Loaders
 {
-    public class VaultFileLoader
+    public class LegacyVaultFileLoader
     {
         public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {

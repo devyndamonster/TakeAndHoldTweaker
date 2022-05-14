@@ -1,5 +1,7 @@
-﻿using FistVR;
+﻿using Deli.VFS;
+using FistVR;
 using LegacyCharacterLoader.Objects.CharacterData;
+using LegacyCharacterLoader.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +16,7 @@ namespace LegacyCharacterLoader.LegacyConverters
 {
     public static class LegacyCharacterConverter
     {
-		public static Character ConvertCharacterFromLegacy(LegacyCharacter from, string characterPath)
+		public static Character ConvertCharacterFromLegacy(LegacyCharacter from, IDirectoryHandle characterDirectory)
 		{
 			Character character = ScriptableObject.CreateInstance<Character>();
 
@@ -22,7 +24,7 @@ namespace LegacyCharacterLoader.LegacyConverters
 			character.CharacterID = Utilities.LegacyCharacterUtils.GetUniqueTNHCharValue(from.DisplayName);
 			character.Group = CharacterUtils.GetGroupStringFromEnum((TNH_CharacterDef.CharacterGroup)from.CharacterGroup);
 			character.TableID = from.TableID;
-			character.Picture = ImageUtils.LoadSpriteFromPath(Path.Combine(characterPath, "thumb.png"));
+			character.Picture = LegacyImageUtils.LoadSpriteFromFileHandle(characterDirectory.GetFile("thumb.png"));
 			character.Description = from.Description;
 			character.StartingTokens = from.StartingTokens;
 			character.ForceAllAgentWeapons = from.ForceAllAgentWeapons;
@@ -30,7 +32,7 @@ namespace LegacyCharacterLoader.LegacyConverters
 			character.RequireSightTable = LegacyEquipmentGroupConverter.ConvertEquipmentGroupFromLegacy(from.RequireSightTable);
 			character.ValidAmmoEras = from.ValidAmmoEras.Select(o => (FVRObject.OTagEra)o).ToList();
 			character.ValidAmmoSets = from.ValidAmmoSets.Select(o => (FVRObject.OTagSet)o).ToList();
-			character.EquipmentPools = from.EquipmentPools.Select(o => LegacyEquipmentPoolConverter.ConvertEquipmentPoolFromLegacy(o, characterPath)).ToList();
+			character.EquipmentPools = from.EquipmentPools.Select(o => LegacyEquipmentPoolConverter.ConvertEquipmentPoolFromLegacy(o, characterDirectory)).ToList();
 			character.Progressions.Add(LegacyProgressionConverter.ConvertProgressionFromLegacy(from.Levels));
 			character.Progressions_Endless.Add(LegacyProgressionConverter.ConvertProgressionFromLegacy(from.LevelsEndless));
 			character.Has_Weapon_Primary = from.HasPrimaryWeapon;

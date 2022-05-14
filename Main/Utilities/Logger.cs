@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace TNHTweaker.Utilities
 {
-    static class TNHTweakerLogger
+    public static class TNHTweakerLogger
     {
         public static ManualLogSource BepLog;
 
