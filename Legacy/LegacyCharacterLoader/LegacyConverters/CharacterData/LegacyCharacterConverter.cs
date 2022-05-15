@@ -18,6 +18,7 @@ namespace LegacyCharacterLoader.LegacyConverters
     {
 		public static Character ConvertCharacterFromLegacy(LegacyCharacter from, IDirectoryHandle characterDirectory)
 		{
+			LogConversionStart(from);
 			Character character = ScriptableObject.CreateInstance<Character>();
 
 			character.DisplayName = from.DisplayName;
@@ -50,7 +51,18 @@ namespace LegacyCharacterLoader.LegacyConverters
 			if (from.TertiaryItem != null) character.Item_Tertiary = LegacyLoadoutEntryConverter.ConvertLoadoutEntryFromLegacy(from.TertiaryItem);
 			if (from.Shield != null) character.Item_Shield = LegacyLoadoutEntryConverter.ConvertLoadoutEntryFromLegacy(from.Shield);
 
+			LogConversionEnd(character);
 			return character;
+		}
+
+		private static void LogConversionStart(LegacyCharacter from)
+		{
+			LegacyLogger.Log($"- Starting conversion of legacy character ({from.DisplayName}) -", LegacyLogger.LogType.Loading);
+		}
+
+		private static void LogConversionEnd(Character to)
+		{
+			LegacyLogger.Log($"- Finished conversion of legacy character ({to.DisplayName}) -", LegacyLogger.LogType.Loading);
 		}
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using LegacyCharacterLoader.Objects.CharacterData;
+using LegacyCharacterLoader.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace LegacyCharacterLoader.LegacyConverters
     {
 		public static Patrol ConvertPatrolFromLegacy(LegacyPatrol from)
 		{
+			LogConversionStart(from);
 			Patrol patrol = ScriptableObject.CreateInstance<Patrol>();
 
 			patrol.EnemyTypes = from.EnemyType.Select(o => Utilities.LegacyCharacterUtils.GetUniqueSosigIDValue(o)).ToList();
@@ -23,7 +25,18 @@ namespace LegacyCharacterLoader.LegacyConverters
 			patrol.TimeTilRegen_LimitedAmmo = from.PatrolCadenceLimited;
 			patrol.IFFUsed = from.IFFUsed;
 
+			LogConversionEnd(patrol);
 			return patrol;
+		}
+
+		private static void LogConversionStart(LegacyPatrol from)
+		{
+			LegacyLogger.Log($"- Starting conversion of legacy patrol -", LegacyLogger.LogType.Loading);
+		}
+
+		private static void LogConversionEnd(Patrol to)
+		{
+			LegacyLogger.Log($"- Finished conversion of legacy patrol -", LegacyLogger.LogType.Loading);
 		}
 	}
 }

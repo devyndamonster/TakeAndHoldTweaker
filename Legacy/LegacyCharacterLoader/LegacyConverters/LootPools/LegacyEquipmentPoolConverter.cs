@@ -16,6 +16,7 @@ namespace LegacyCharacterLoader.LegacyConverters
     {
 		public static EquipmentPool ConvertEquipmentPoolFromLegacy(LegacyEquipmentPool from, IDirectoryHandle dir)
 		{
+			LogConversionStart(from);
 			EquipmentPool equipmentPool = ScriptableObject.CreateInstance<EquipmentPool>();
 
 			equipmentPool.Type = from.Type;
@@ -28,7 +29,18 @@ namespace LegacyCharacterLoader.LegacyConverters
 			equipmentPool.SpawnsInLargeCase = from.SpawnsInLargeCase;
 			equipmentPool.EquipmentGroup = LegacyEquipmentGroupConverter.ConvertEquipmentGroupFromLegacy(from.PrimaryGroup);
 
+			LogConversionEnd(equipmentPool);
 			return equipmentPool;
+		}
+
+		private static void LogConversionStart(LegacyEquipmentPool from)
+		{
+			LegacyLogger.Log($"- Starting conversion of legacy equipment pool -", LegacyLogger.LogType.Loading);
+		}
+
+		private static void LogConversionEnd(EquipmentPool to)
+		{
+			LegacyLogger.Log($"- Finished conversion of legacy equipment pool -", LegacyLogger.LogType.Loading);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using FistVR;
 using LegacyCharacterLoader.Objects.LootPools;
+using LegacyCharacterLoader.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace LegacyCharacterLoader.LegacyConverters
     {
 		public static EquipmentGroup ConvertEquipmentGroupFromLegacy(LegacyEquipmentGroup from)
 		{
+			LogConversionStart(from);
             TNHTweaker.Objects.LootPools.ObjectTable objectTable = ScriptableObject.CreateInstance<TNHTweaker.Objects.LootPools.ObjectTable>();
 
 			objectTable.Category = (FVRObject.ObjectCategory)from.Category;
@@ -48,9 +50,24 @@ namespace LegacyCharacterLoader.LegacyConverters
 			equipmentGroup.SpawnMagAndClip = from.SpawnMagAndClip;
 			equipmentGroup.BespokeAttachmentChance = from.BespokeAttachmentChance;
 			equipmentGroup.ForceSpawnAllSubGroups = from.ForceSpawnAllSubPools;
-			equipmentGroup.SubGroups = from.SubGroups.Select(o => ConvertEquipmentGroupFromLegacy(o)).ToList();
 
+			if(from.SubGroups != null)
+            {
+				equipmentGroup.SubGroups = from.SubGroups.Select(o => ConvertEquipmentGroupFromLegacy(o)).ToList();
+			}
+			
+			LogConversionEnd(equipmentGroup);
 			return equipmentGroup;
+		}
+
+		private static void LogConversionStart(LegacyEquipmentGroup from)
+		{
+			LegacyLogger.Log($"- Starting conversion of legacy equipment group -", LegacyLogger.LogType.Loading);
+		}
+
+		private static void LogConversionEnd(EquipmentGroup to)
+		{
+			LegacyLogger.Log($"- Finished conversion of legacy equipment group -", LegacyLogger.LogType.Loading);
 		}
 	}
 }

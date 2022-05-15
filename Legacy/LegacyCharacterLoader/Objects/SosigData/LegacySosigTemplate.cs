@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Valve.Newtonsoft.Json;
+using Valve.Newtonsoft.Json.Converters;
 
 namespace LegacyCharacterLoader.Objects.SosigData
 {
@@ -23,5 +25,10 @@ namespace LegacyCharacterLoader.Objects.SosigData
         public float TertiaryChance;
         public float DroppedLootChance;
         public LegacyEquipmentGroup DroppedObjectPool;
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented, new StringEnumConverter());
+        }
     }
 }

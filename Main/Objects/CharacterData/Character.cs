@@ -34,13 +34,13 @@ namespace TNHTweaker.Objects.CharacterData
 
 		[Header("Loot Properties")]
 		public EquipmentGroup RequireSightTable;
-		public List<FVRObject.OTagEra> ValidAmmoEras;
-		public List<FVRObject.OTagSet> ValidAmmoSets;
-		public List<EquipmentPool> EquipmentPools;
+		public List<FVRObject.OTagEra> ValidAmmoEras = new List<FVRObject.OTagEra>();
+		public List<FVRObject.OTagSet> ValidAmmoSets = new List<FVRObject.OTagSet>();
+		public List<EquipmentPool> EquipmentPools = new List<EquipmentPool>();
 
 		[Header("Progression Properties")]
-		public List<Progression> Progressions;
-		public List<Progression> Progressions_Endless;
+		public List<Progression> Progressions = new List<Progression>();
+		public List<Progression> Progressions_Endless = new List<Progression>();
 
 		[Header("Starting Loadout Properties")]
 		public bool Has_Weapon_Primary;

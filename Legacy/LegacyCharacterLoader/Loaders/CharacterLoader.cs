@@ -3,21 +3,24 @@ using Deli.Setup;
 using Deli.VFS;
 using LegacyCharacterLoader.LegacyConverters;
 using LegacyCharacterLoader.Objects.CharacterData;
+using LegacyCharacterLoader.Utilities;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using TNHTweaker;
 using TNHTweaker.Objects.CharacterData;
-using TNHTweaker.Utilities;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 
 namespace LegacyCharacterLoader.Loaders
 {
-    public class LegacyCharacterLoader
+    public class CharacterLoader
     {
+        private static Dictionary<LegacyCharacter, IDirectoryHandle> CharacterDirectoryDict = new Dictionary<LegacyCharacter, IDirectoryHandle>();
+
         public void LoadAsset(SetupStage stage, Mod mod, IHandle handle)
         {
             if (handle is not IDirectoryHandle dir)
@@ -27,13 +30,14 @@ namespace LegacyCharacterLoader.Loaders
 
             try
             {
+                LegacyLogger.Log("Loading legacy character: " + dir.Path, LegacyLogger.LogType.Loading);
                 LegacyCharacter legacyCharacter = LoadLegacyCharacter(stage, dir);
-                Character convertedCharacter = LegacyCharacterConverter.ConvertCharacterFromLegacy(legacyCharacter, dir);
-                CharacterLoader.LoadCharacter(convertedCharacter);
+                CharacterDirectoryDict[legacyCharacter] = dir;
+                LegacyLogger.Log(legacyCharacter.ToString(), LegacyLogger.LogType.Loading);
             }
             catch(Exception ex)
             {
-                TNHTweakerLogger.LogError("Failed to load legacy character! Error:\n" + ex.ToString());
+                LegacyLogger.LogError("Failed to load legacy character! Error:\n" + ex.ToString());
             }
 
         }
@@ -49,6 +53,18 @@ namespace LegacyCharacterLoader.Loaders
 
             return JsonConvert.DeserializeObject<LegacyCharacter>(characterJson, settings);
         }
+
+        public static void DelayedLoadAllCharacters()
+        {
+            foreach (KeyValuePair<LegacyCharacter, IDirectoryHandle> pair in CharacterDirectoryDict)
+            {
+                LegacyLogger.Log("Converting legacy character to new format: " + pair.Key.DisplayName, LegacyLogger.LogType.Loading);
+                Character convertedCharacter = LegacyCharacterConverter.ConvertCharacterFromLegacy(pair.Key, pair.Value);
+                TNHTweaker.CharacterLoader.LoadCharacter(convertedCharacter);
+            }
+        }
+
+        
 
     }
 }

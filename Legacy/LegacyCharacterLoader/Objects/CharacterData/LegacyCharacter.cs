@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Valve.Newtonsoft.Json;
+using Valve.Newtonsoft.Json.Converters;
 
 namespace LegacyCharacterLoader.Objects.CharacterData
 {
@@ -40,5 +42,12 @@ namespace LegacyCharacterLoader.Objects.CharacterData
         public List<LegacyEquipmentPool> EquipmentPools;
         public List<LegacyLevel> Levels;
         public List<LegacyLevel> LevelsEndless;
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented, new StringEnumConverter());
+        }
     }
+
+    
 }

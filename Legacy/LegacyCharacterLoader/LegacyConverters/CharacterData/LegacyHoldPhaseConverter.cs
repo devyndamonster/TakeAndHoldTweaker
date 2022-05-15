@@ -1,4 +1,5 @@
 ﻿using LegacyCharacterLoader.Objects.CharacterData;
+using LegacyCharacterLoader.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace LegacyCharacterLoader.LegacyConverters
     {
 		public static HoldPhase ConvertHoldPhaseFromLegacy(LegacyHoldPhase from)
 		{
+			LogConversionStart(from);
 			HoldPhase holdPhase = ScriptableObject.CreateInstance<HoldPhase>();
 
 			holdPhase.Encryptions = from.Encryptions;
@@ -28,7 +30,18 @@ namespace LegacyCharacterLoader.LegacyConverters
 			holdPhase.WarmUp = from.WarmupTime;
 			holdPhase.IFFUsed = from.IFFUsed;
 
+			LogConversionEnd(holdPhase);
 			return holdPhase;
+		}
+
+		private static void LogConversionStart(LegacyHoldPhase from)
+		{
+			LegacyLogger.Log($"- Starting conversion of legacy hold phase -", LegacyLogger.LogType.Loading);
+		}
+
+		private static void LogConversionEnd(HoldPhase to)
+		{
+			LegacyLogger.Log($"- Finished conversion of legacy hold phase -", LegacyLogger.LogType.Loading);
 		}
 	}
 }

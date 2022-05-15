@@ -74,7 +74,7 @@ namespace TNHTweaker.ObjectConverters
 			objectTable.PowerupTypes = from.PowerupTypes;
 			objectTable.MinAmmoCapacity = from.MinAmmoCapacity;
 			objectTable.MaxAmmoCapacity = from.MaxAmmoCapacity;
-			objectTable.IDOverride = from.WhitelistedObjectIDs;
+			objectTable.IDOverride = from.WhitelistedObjectIDs.Where(o => IM.OD.ContainsKey(o)).ToList();
 			objectTable.UseIDListOverride = from.WhitelistedObjectIDs.Count > 0;
 
 			LogConversionEnd(objectTable);

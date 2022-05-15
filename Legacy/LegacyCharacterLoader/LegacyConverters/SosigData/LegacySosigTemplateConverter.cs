@@ -1,5 +1,6 @@
 ﻿using FistVR;
 using LegacyCharacterLoader.Objects.SosigData;
+using LegacyCharacterLoader.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace LegacyCharacterLoader.LegacyConverters
     {
 		public static SosigTemplate ConvertSosigTemplateFromLegacy(LegacySosigTemplate from)
 		{
+			LogConversionStart(from);
 			SosigTemplate sosigTemplate = ScriptableObject.CreateInstance<SosigTemplate>();
 
 			sosigTemplate.DisplayName = from.DisplayName;
@@ -30,7 +32,18 @@ namespace LegacyCharacterLoader.LegacyConverters
 			sosigTemplate.DroppedLootChance = from.DroppedLootChance;
 			sosigTemplate.DroppedLootPool = LegacyEquipmentGroupConverter.ConvertEquipmentGroupFromLegacy(from.DroppedObjectPool);
 
+			LogConversionEnd(sosigTemplate);
 			return sosigTemplate;
+		}
+
+		private static void LogConversionStart(LegacySosigTemplate from)
+		{
+			LegacyLogger.Log($"- Starting conversion of legacy sosig template -", LegacyLogger.LogType.Loading);
+		}
+
+		private static void LogConversionEnd(SosigTemplate to)
+		{
+			LegacyLogger.Log($"- Finished conversion of legacy sosig template -", LegacyLogger.LogType.Loading);
 		}
 	}
 }
