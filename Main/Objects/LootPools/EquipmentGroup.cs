@@ -13,9 +13,6 @@ namespace TNHTweaker.Objects.LootPools
         [Tooltip("Cummulative chance of this group being spawned from. Larger values means more likely. Default value is 1")]
         public float Rarity = 1;
 
-        [Tooltip("Quest required for this group to be spawnable from. Considered unlocked if value is null or empty")]
-        public string RequiredQuest = "";
-
         [Tooltip("Number of items from this group that will be selected to spawn (randomly selected)")]
         public int ItemsToSpawn = 1;
 
@@ -40,17 +37,64 @@ namespace TNHTweaker.Objects.LootPools
         [Tooltip("The table of items that can spawn for this group")]
         public ObjectTable ObjectTable;
 
+        [Tooltip("A list of tags that determine whether this table is spawnable from")]
+        public List<string> RequiredTags = new List<string>();
+
         [Tooltip("A list of groups which could also be spawned from instead of spawning an item from this group. Based on the rarity of the subgroups")]
         public List<EquipmentGroup> SubGroups = new List<EquipmentGroup>();
 
 
-        
-        public static EquipmentGroup SelectGroupFromList(List<EquipmentGroup> groups)
+        public List<EquipmentGroup> GetEquipmentGroupsToSpawnFrom()
         {
-            //TODO function that will select a group based on cummulative chance
-            return null;
+            if (ForceSpawnAllSubGroups)
+            {
+                return GetGroupsForForcedSpawnAll();
+            }
+
+            return GetRandomGroupsToSpawnFrom();
         }
 
+        private List<EquipmentGroup> GetGroupsForForcedSpawnAll()
+        {
+            List<EquipmentGroup> selectedGroups = new List<EquipmentGroup>();
 
+            selectedGroups.Add(this);
+
+            foreach(EquipmentGroup group in SubGroups)
+            {
+                selectedGroups.AddRange(group.GetEquipmentGroupsToSpawnFrom());
+            }
+
+            return selectedGroups;
+        }
+
+        private List<EquipmentGroup> GetRandomGroupsToSpawnFrom()
+        {
+            List<EquipmentGroup> selectedGroups = new List<EquipmentGroup>();
+            float totalChanceRange = ObjectTable.GeneratedObjects.Count + SubGroups.Sum(o => o.Rarity);
+            float randomValueSelection = UnityEngine.Random.Range(0, totalChanceRange);
+
+            if (randomValueSelection < ObjectTable.GeneratedObjects.Count)
+            {
+                selectedGroups.Add(this);
+                return selectedGroups;
+            }
+            else
+            {
+                float summedChanceValue = ObjectTable.GeneratedObjects.Count;
+
+                foreach (EquipmentGroup group in SubGroups)
+                {
+                    if (summedChanceValue >= randomValueSelection)
+                    {
+                        selectedGroups.AddRange(group.GetEquipmentGroupsToSpawnFrom());
+                        return selectedGroups;
+                    }
+                    summedChanceValue += group.Rarity;
+                }
+            }
+
+            return selectedGroups;
+        }
     }
 }

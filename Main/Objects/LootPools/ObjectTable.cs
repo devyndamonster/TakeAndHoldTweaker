@@ -53,17 +53,17 @@ namespace TNHTweaker.Objects.LootPools
 		public List<string> BlacklistedObjectIDs = new List<string>();
 
 		[NonSerialized]
-		public List<FVRObject> generatedObjects;
+		public List<FVRObject> GeneratedObjects;
 
 		public void GenerateTable()
 		{
-			generatedObjects = new List<FVRObject>();
+			GeneratedObjects = new List<FVRObject>();
 
 			foreach (FVRObject fvr in IM.OD.Values)
 			{
 				if (WhitelistedObjectIDs.Contains(fvr.ItemID))
 				{
-					generatedObjects.Add(fvr);
+					GeneratedObjects.Add(fvr);
 					continue;
 				}
 
@@ -119,7 +119,7 @@ namespace TNHTweaker.Objects.LootPools
 
 				if (OverrideRoundType && fvr.RoundType != RoundTypeOverride) continue;
 
-				generatedObjects.Add(fvr);
+				GeneratedObjects.Add(fvr);
 			}
 		}
 	}

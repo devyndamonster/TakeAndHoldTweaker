@@ -140,6 +140,7 @@
     <Compile Include="Main\ObjectWrappers\TNHManagerStateWrapper.cs" />
     <Compile Include="Main\ObjectWrappers\TNHMenuUIWrapper.cs" />
     <Compile Include="Main\Patches\HoldPointPatches.cs" />
+    <Compile Include="Main\Patches\SupplyPointPatches.cs" />
     <Compile Include="Main\Patches\TNHManagerStatePatches.cs" />
     <Compile Include="Main\Patches\TNHMenuPatches.cs" />
     <Compile Include="Main\TNHTweakerConfig.cs" />
