@@ -17,7 +17,6 @@ namespace LegacyCharacterLoader.LegacyConverters
 			LoadoutEntry loadoutEntry = ScriptableObject.CreateInstance<LoadoutEntry>();
 
 			loadoutEntry.EquipmentGroups.Add(LegacyEquipmentGroupConverter.ConvertEquipmentGroupFromLegacy(from.PrimaryGroup));
-			loadoutEntry.EquipmentGroups.Add(LegacyEquipmentGroupConverter.ConvertEquipmentGroupFromLegacy(from.BackupGroup));
 
 			LogConversionEnd(loadoutEntry);
 			return loadoutEntry;

@@ -17,8 +17,10 @@ namespace LegacyCharacterLoader.Utilities
 
             else
             {
-                TNH_Char characterID = (TNH_Char)(111000 + LegacyCharacterLoader.CharacterStringToID.Keys.Count());
+                int characterIDValue = 111000 + LegacyCharacterLoader.CharacterStringToID.Keys.Count();
+                TNH_Char characterID = (TNH_Char)characterIDValue;
                 LegacyCharacterLoader.CharacterStringToID[characterName] = characterID;
+                LegacyLogger.Log($"Assigning character ({characterName}) value ({characterIDValue})", LegacyLogger.LogType.Loading);
                 return characterID;
             }
         }
@@ -32,8 +34,10 @@ namespace LegacyCharacterLoader.Utilities
 
             else
             {
-                SosigEnemyID sosigID = (SosigEnemyID)(111000 + LegacyCharacterLoader.CharacterStringToID.Keys.Count());
+                int sosigIDValue = 111000 + LegacyCharacterLoader.SosigStringToID.Keys.Count();
+                SosigEnemyID sosigID = (SosigEnemyID)sosigIDValue;
                 LegacyCharacterLoader.SosigStringToID[sosigTypeString] = sosigID;
+                LegacyLogger.Log($"Assigning sosig ({sosigTypeString}) value ({sosigIDValue})", LegacyLogger.LogType.Loading);
                 return sosigID;
             }
         }
