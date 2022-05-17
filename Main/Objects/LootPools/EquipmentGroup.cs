@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TNHTweaker.ObjectWrappers;
 using UnityEngine;
 
 namespace TNHTweaker.Objects.LootPools
@@ -44,6 +45,28 @@ namespace TNHTweaker.Objects.LootPools
         public List<EquipmentGroup> SubGroups = new List<EquipmentGroup>();
 
 
+        public bool CanSpawnFromPool()
+        {
+            foreach(string tag in RequiredTags)
+            {
+                if (!TNHManagerStateWrapper.Instance.IsTagActive(tag))
+                {
+                    return false;
+                }
+            }
+            return ObjectTable.HasItems() || SubGroups.Any(o => o.CanSpawnFromPool());
+        }
+
+        public void GenerateTables()
+        {
+            ObjectTable.GenerateTable();
+
+            foreach(EquipmentGroup group in SubGroups)
+            {
+                group.GenerateTables();
+            }
+        }
+
         public List<EquipmentGroup> GetEquipmentGroupsToSpawnFrom()
         {
             if (ForceSpawnAllSubGroups)
@@ -59,8 +82,7 @@ namespace TNHTweaker.Objects.LootPools
             List<EquipmentGroup> selectedGroups = new List<EquipmentGroup>();
 
             selectedGroups.Add(this);
-
-            foreach(EquipmentGroup group in SubGroups)
+            foreach(EquipmentGroup group in SubGroups.Where(o => o.CanSpawnFromPool()))
             {
                 selectedGroups.AddRange(group.GetEquipmentGroupsToSpawnFrom());
             }
@@ -70,31 +92,29 @@ namespace TNHTweaker.Objects.LootPools
 
         private List<EquipmentGroup> GetRandomGroupsToSpawnFrom()
         {
-            List<EquipmentGroup> selectedGroups = new List<EquipmentGroup>();
-            float totalChanceRange = ObjectTable.GeneratedObjects.Count + SubGroups.Sum(o => o.Rarity);
+            List<EquipmentGroup> validSubGroups = SubGroups.Where(o => o.CanSpawnFromPool()).ToList();
+            float totalChanceRange = ObjectTable.GeneratedObjects.Count + validSubGroups.Sum(o => o.Rarity);
             float randomValueSelection = UnityEngine.Random.Range(0, totalChanceRange);
 
             if (randomValueSelection < ObjectTable.GeneratedObjects.Count)
             {
-                selectedGroups.Add(this);
-                return selectedGroups;
+                return new List<EquipmentGroup>() { this };
             }
             else
             {
                 float summedChanceValue = ObjectTable.GeneratedObjects.Count;
 
-                foreach (EquipmentGroup group in SubGroups)
+                foreach (EquipmentGroup group in validSubGroups)
                 {
                     if (summedChanceValue >= randomValueSelection)
                     {
-                        selectedGroups.AddRange(group.GetEquipmentGroupsToSpawnFrom());
-                        return selectedGroups;
+                        return group.GetEquipmentGroupsToSpawnFrom();
                     }
                     summedChanceValue += group.Rarity;
                 }
             }
 
-            return selectedGroups;
+            return new List<EquipmentGroup>();
         }
     }
 }

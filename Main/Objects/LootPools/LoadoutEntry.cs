@@ -12,6 +12,14 @@ namespace TNHTweaker.Objects.LootPools
     {
         public List<EquipmentGroup> EquipmentGroups = new List<EquipmentGroup>();
 
+        public void GenerateTables()
+        {
+            foreach(EquipmentGroup group in EquipmentGroups)
+            {
+                group.GenerateTables();
+            }
+        }
+
         public List<EquipmentGroup> GetStartingEquipmentGroups()
         {
             return SelectRandomEquipmentGroup().GetEquipmentGroupsToSpawnFrom();

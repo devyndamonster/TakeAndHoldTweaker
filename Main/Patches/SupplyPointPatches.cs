@@ -1,5 +1,6 @@
 ﻿using FistVR;
 using HarmonyLib;
+using Sodalite.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,8 +22,8 @@ namespace TNHTweaker.Main.Patches
             SpawnStartingTables(__instance);
 
             Character character = TNHTweaker.CustomCharacterDict[c];
-            if (character.Has_Weapon_Primary) SpawnStartingWeaponCrate(character.Weapon_Primary, GM.TNH_Manager.Prefab_WeaponCaseLarge, __instance.SpawnPoint_CaseLarge);
-            if (character.Has_Weapon_Secondary) SpawnStartingWeaponCrate(character.Weapon_Secondary, GM.TNH_Manager.Prefab_WeaponCaseSmall, __instance.SpawnPoint_CaseSmall);
+            if (character.Has_Weapon_Primary) SpawnStartingWeaponCrate(character.Weapon_Primary, GM.TNH_Manager.Prefab_WeaponCaseLarge, __instance.SpawnPoint_CaseLarge, __instance);
+            if (character.Has_Weapon_Secondary) SpawnStartingWeaponCrate(character.Weapon_Secondary, GM.TNH_Manager.Prefab_WeaponCaseSmall, __instance.SpawnPoint_CaseSmall, __instance);
             if (character.Has_Weapon_Tertiary) SpawnStartingLooseEquipment(character.Weapon_Tertiary, __instance.SpawnPoint_Melee);
             if (character.Has_Item_Primary) SpawnStartingLooseEquipment(character.Item_Primary, __instance.SpawnPoints_SmallItem[0]);
             if (character.Has_Item_Secondary) SpawnStartingLooseEquipment(character.Item_Secondary, __instance.SpawnPoints_SmallItem[1]);
@@ -51,14 +52,36 @@ namespace TNHTweaker.Main.Patches
             }
         }
 
-        private static void SpawnStartingWeaponCrate(LoadoutEntry loadoutEntry, GameObject casePrefab, Transform spawnPoint)
+        private static void SpawnStartingWeaponCrate(LoadoutEntry loadoutEntry, GameObject casePrefab, Transform spawnPoint, TNH_SupplyPoint __instance)
         {
+            loadoutEntry.GenerateTables();
+            EquipmentGroup selectedGroup = loadoutEntry.GetStartingEquipmentGroups().GetRandom();
+            FVRObject selectedItem = selectedGroup.ObjectTable.GeneratedObjects.GetRandom();
 
+            GameObject weaponCase = GM.TNH_Manager.SpawnWeaponCase
+            ( 
+                casePrefab,
+                spawnPoint.position,
+                spawnPoint.forward,
+                selectedItem,
+                selectedGroup.NumMagsSpawned,
+                selectedGroup.NumRoundsSpawned,
+                selectedGroup.ObjectTable.MinAmmoCapacity,
+                selectedGroup.ObjectTable.MaxAmmoCapacity
+            );
+
+            __instance.m_trackedObjects.Add(weaponCase);
+            weaponCase.GetComponent<TNH_WeaponCrate>().M = GM.TNH_Manager;
         }
 
         private static void SpawnStartingLooseEquipment(LoadoutEntry loadoutEntry, Transform spawnPoint)
         {
+            loadoutEntry.GenerateTables();
+            EquipmentGroup selectedGroup = loadoutEntry.GetStartingEquipmentGroups().GetRandom();
+            FVRObject selectedItem = selectedGroup.ObjectTable.GeneratedObjects.GetRandom();
 
+            GameObject spawnedItem = GameObject.Instantiate(selectedItem.GetGameObject(), spawnPoint.position, spawnPoint.rotation);
+            GM.TNH_Manager.AddObjectToTrackedList(spawnedItem);
         }
     }
 }

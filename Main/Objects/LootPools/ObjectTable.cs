@@ -55,6 +55,11 @@ namespace TNHTweaker.Objects.LootPools
 		[NonSerialized]
 		public List<FVRObject> GeneratedObjects;
 
+		public bool HasItems()
+        {
+			return GeneratedObjects != null && GeneratedObjects.Count > 0;
+        }
+
 		public void GenerateTable()
 		{
 			GeneratedObjects = new List<FVRObject>();
