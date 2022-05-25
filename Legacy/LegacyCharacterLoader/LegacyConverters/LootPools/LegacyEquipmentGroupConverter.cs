@@ -42,7 +42,6 @@ namespace LegacyCharacterLoader.LegacyConverters
 
 			equipmentGroup.ObjectTable = objectTable;
 			equipmentGroup.Rarity = from.Rarity;
-			equipmentGroup.RequiredQuest = from.RequiredQuest;
 			equipmentGroup.ItemsToSpawn = from.ItemsToSpawn;
 			equipmentGroup.NumMagsSpawned = from.NumMagsSpawned;
 			equipmentGroup.NumClipsSpawned = from.NumClipsSpawned;

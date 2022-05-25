@@ -5,6 +5,7 @@ using MonoMod.Cil;
 using System;
 using System.Reflection;
 using TNHTweaker.ObjectWrappers;
+using TNHTweaker.Utilities;
 using UnityEngine;
 
 namespace TNHTweaker.Patches
@@ -12,12 +13,47 @@ namespace TNHTweaker.Patches
     public class HoldPointPatches
     {
 
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnWarpInMarkers")]
+        [HarmonyILManipulator]
+        private static void SpawnWarpInMarkersPatch(ILContext ctx, MethodBase orig)
+        {
+            ILCursor cursor = new ILCursor(ctx);
+
+            //Remove the first call that sets m_numTargsToSpawn
+            PatchUtils.RemoveStartToEnd(
+                cursor,
+                new Func<Instruction, bool>[]
+                {
+                    i => i.MatchLdarg(0),
+                    i => i.MatchLdarg(0),
+                    i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_curPhase")),
+                    i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldChallenge.Phase), "MinTargets"))
+                },
+                new Func<Instruction, bool>[]
+                {
+                    i => i.MatchAdd(),
+                    i => i.MatchCallOrCallvirt(AccessTools.Method(typeof(UnityEngine.Random), "Range", new Type[]{ typeof(int), typeof(int) })),
+                    i => i.MatchStfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_numTargsToSpawn"))
+                }
+            );
+
+            /*
+            c.GotoNext(
+                i => i.MatchLdarg(0),
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_curPhase")),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldChallenge.Phase), "MinTargets"))
+            );
+            */
+            //c.RemoveRange(14);
+        }
+
+
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTargetGroup")]
         [HarmonyPrefix]
         public static bool SpawnTargetGroupPatch(TNH_HoldPoint __instance)
         {
             __instance.DeleteAllActiveWarpIns();
-            SetNumEncryptionsToSpawn(__instance);
             ShuffleSpawnsIfStealth(__instance);
 
             for(int encryptionIndex = 0; encryptionIndex < __instance.m_numTargsToSpawn; encryptionIndex++)
@@ -37,16 +73,9 @@ namespace TNHTweaker.Patches
             }
         }
 
-        private static void SetNumEncryptionsToSpawn(TNH_HoldPoint __instance)
+        private static int GetNumEncryptionsToSpawn()
         {
-            if(GM.TNH_Manager.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
-            {
-                __instance.m_numTargsToSpawn = 1;
-            }
-            else
-            {
-                __instance.m_numTargsToSpawn = Mathf.Clamp(__instance.m_numTargsToSpawn, 1, 3);
-            }
+            return TNHManagerStateWrapper.Instance.GetCurrentHoldPhase().GetNumTargetsToSpawn(GM.TNH_Manager.EquipmentMode);
         }
 
         private static TNH_EncryptionType GetEncryptionTypeToSpawn(int encryptionIndex, TNH_HoldPoint __instance)
