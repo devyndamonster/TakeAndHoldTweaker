@@ -26,6 +26,7 @@ namespace TNHTweaker.Utilities
             Debug.Log("We are about to remove # instructions: " + removalLength);
 
             cursor.Index = startingIndex;
+            cursor.RemoveRange(removalLength);
         }
 
     }

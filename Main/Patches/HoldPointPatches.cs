@@ -19,33 +19,27 @@ namespace TNHTweaker.Patches
         {
             ILCursor cursor = new ILCursor(ctx);
 
-            //Remove the first call that sets m_numTargsToSpawn
+            //Remove the second call that sets m_numTargsToSpawn
             PatchUtils.RemoveStartToEnd(
                 cursor,
                 new Func<Instruction, bool>[]
                 {
                     i => i.MatchLdarg(0),
                     i => i.MatchLdarg(0),
-                    i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_curPhase")),
-                    i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldChallenge.Phase), "MinTargets"))
+                    i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_numTargsToSpawn")),
+                    i => i.MatchLdarg(0)
                 },
                 new Func<Instruction, bool>[]
                 {
-                    i => i.MatchAdd(),
-                    i => i.MatchCallOrCallvirt(AccessTools.Method(typeof(UnityEngine.Random), "Range", new Type[]{ typeof(int), typeof(int) })),
+                    i => i.MatchCallOrCallvirt(AccessTools.Method(typeof(UnityEngine.Mathf), "Min", new Type[]{ typeof(int), typeof(int) })),
                     i => i.MatchStfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_numTargsToSpawn"))
                 }
             );
 
-            /*
-            c.GotoNext(
-                i => i.MatchLdarg(0),
-                i => i.MatchLdarg(0),
-                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_curPhase")),
-                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldChallenge.Phase), "MinTargets"))
-            );
-            */
-            //c.RemoveRange(14);
+            //Set m_numTargsToSpawn from our own call
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.Emit(OpCodes.Call, ((Func<int>)GetNumEncryptionsToSpawn).Method);
+            cursor.Emit(OpCodes.Stfld, AccessTools.Field(typeof(TNH_HoldPoint), "m_numTargsToSpawn"));
         }
 
 
@@ -73,7 +67,7 @@ namespace TNHTweaker.Patches
             }
         }
 
-        private static int GetNumEncryptionsToSpawn()
+        public static int GetNumEncryptionsToSpawn()
         {
             return TNHManagerStateWrapper.Instance.GetCurrentHoldPhase().GetNumTargetsToSpawn(GM.TNH_Manager.EquipmentMode);
         }
