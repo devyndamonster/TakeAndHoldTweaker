@@ -4,19 +4,17 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using FistVR;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
-using Newtonsoft.Json.Schema.Generation;
 using TNHTweaker;
 using TNHTweaker.ObjectTemplates;
+
 
 namespace JSONBuilder
 {
     public static class JSONBuilder
     {
-
         public static void Main(string[] args)
         {
+            /*
             JSchemaGenerator generator = new JSchemaGenerator();
             generator.GenerationProviders.Add(new StringEnumGenerationProvider());
             JSchema schema = generator.Generate(typeof(CustomCharacter));
@@ -52,9 +50,7 @@ namespace JSONBuilder
                     schema.WriteTo(writer);
                 }
             }
-
-
-
+            */
         }
     }
 }

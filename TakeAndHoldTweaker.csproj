@@ -87,8 +87,9 @@
     <Reference Include="MagazinePatcher">
       <HintPath>Libs\MagazinePatcher.dll</HintPath>
     </Reference>
-    <Reference Include="OtherLoader">
-      <HintPath>Libs\OtherLoader.dll</HintPath>
+    <Reference Include="OtherLoader, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\OtherLoader\bin\Debug\OtherLoader.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Private>True</Private>

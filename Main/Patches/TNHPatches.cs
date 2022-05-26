@@ -19,6 +19,29 @@ namespace TNHTweaker.Patches
     public class TNHPatches
     {
 
+        [HarmonyPatch(typeof(TNH_Manager), "DelayedInit")]
+        [HarmonyPrefix]
+        public static bool InitTNH(TNH_Manager __instance)
+        {
+            if (!__instance.m_hasInit)
+            {
+                __instance.CharDB.Characters = TNHMenuInitializer.SavedCharacters;
+
+                /*
+                TNHTweakerLogger.Log("Delayed Init!", TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.Log("Last Played Character: " + ((TNH_Char)GM.TNHOptions.LastPlayedChar).ToString(), TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.Log("Is CharDB null? " + (__instance.CharDB == null), TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.Log("Is character null? " + (__instance.CharDB.GetDef((TNH_Char)GM.TNHOptions.LastPlayedChar) == null), TNHTweakerLogger.LogType.General);
+
+                TNH_CharacterDef C = __instance.CharDB.GetDef((TNH_Char)GM.TNHOptions.LastPlayedChar);
+                TNHTweakerLogger.Log("Is progression null? " + (C.Progressions == null), TNHTweakerLogger.LogType.General);
+                TNHTweakerLogger.Log("Is endless progression null? " + (C.Progressions_Endless == null), TNHTweakerLogger.LogType.General);
+                */
+            }
+
+            return true;
+        }
+
         #region Initializing TNH
 
         //////////////////////////////////

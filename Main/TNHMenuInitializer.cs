@@ -21,6 +21,7 @@ namespace TNHTweaker
 
         public static bool TNHInitialized = false;
         public static bool MagazineCacheFailed = false;
+        public static List<TNH_CharacterDef> SavedCharacters;
 
         public static IEnumerator InitializeTNHMenuAsync(string path, Text progressText, Text itemsText, SceneLoader hotdog, List<TNH_UIManager.CharacterCategory> Categories, TNH_CharacterDatabase CharDatabase, TNH_UIManager instance, bool outputFiles)
         {
@@ -77,6 +78,7 @@ namespace TNHTweaker
 
             //Now perform final steps of loading characters
             LoadTNHTemplates(CharDatabase);
+            SavedCharacters = CharDatabase.Characters;
 
             if (outputFiles)
             {
