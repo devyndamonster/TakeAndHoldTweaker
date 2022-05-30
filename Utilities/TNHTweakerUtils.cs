@@ -713,7 +713,6 @@ namespace TNHTweaker.Utilities
                 }
             }
             myGun.SetLoadedChambers(gun.LoadedRoundsInChambers);
-            myGun.SetFromFlagList(gun.SavedFlags);
             myGun.transform.rotation = rotation;
             yield break;
         }
