@@ -40,6 +40,66 @@ namespace TNHTweaker.Patches
 
 
         /// <summary>
+        /// Patches update method to treat zero encryptions as "NoTargets" mode <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/104"> Treat hold phases with no encryptions the same as 'NoTargets' mode </see><br/>
+        /// </summary>
+        [HarmonyPatch(typeof(TNH_HoldPoint), "Update")]
+        [HarmonyILManipulator]
+        public static void UpdateNoTargetsPatch(ILContext ctx, MethodBase orig)
+        {
+            ILCursor cursor = new ILCursor(ctx);
+
+            //Go to first place where target mode is compared to NoTargets and remove it
+            cursor.GotoNext(
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode")),
+                i => i.MatchLdcI4(2)
+                );
+            cursor.RemoveRange(2);
+
+            //Replace comparison target with results from our own method
+            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode>)GetTargetMode).Method);
+
+
+            //Go to second place where target mode is compared to NoTargets and remove it
+            cursor.GotoNext(
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode")),
+                i => i.MatchLdcI4(2)
+                );
+            cursor.RemoveRange(2);
+
+            //Replace comparison target with results from our own method
+            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode>)GetTargetMode).Method);
+        }
+
+
+        /// <summary>
+        /// Patches BeginAnalyzing method to treat zero encryptions as "NoTargets" mode <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/104"> Treat hold phases with no encryptions the same as 'NoTargets' mode </see><br/>
+        /// </summary>
+        [HarmonyPatch(typeof(TNH_HoldPoint), "BeginAnalyzing")]
+        [HarmonyILManipulator]
+        public static void BeginAnalyzingNoTargetsPatch(ILContext ctx, MethodBase orig)
+        {
+            ILCursor cursor = new ILCursor(ctx);
+
+            //Go to first place where target mode is compared to NoTargets and remove it
+            cursor.GotoNext(
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode")),
+                i => i.MatchLdcI4(2)
+                );
+            cursor.RemoveRange(2);
+
+            //Replace comparison target with results from our own method
+            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode>)GetTargetMode).Method);
+        }
+
+
+        /// <summary>
         /// Replaces entire call that spawns in encryptions with our own <br/><br/>
         /// Related Features: <br/>
         /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/99"> Allow for min and max encryptions to be set for limited ammo mode </see><br/>
@@ -72,6 +132,26 @@ namespace TNHTweaker.Patches
         public static int GetNumEncryptionsToSpawn()
         {
             return TNHManagerStateWrapper.Instance.GetCurrentHoldPhase().GetNumTargetsToSpawn(GM.TNH_Manager.EquipmentMode);
+        }
+
+        public static TNHSetting_TargetMode GetTargetMode()
+        {
+            if(GM.TNH_Manager.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
+            {
+                if (TNHManagerStateWrapper.Instance.GetCurrentHoldPhase().MinTargetsLimited <= 0)
+                {
+                    return TNHSetting_TargetMode.NoTargets;
+                }
+            }
+            else
+            {
+                if (TNHManagerStateWrapper.Instance.GetCurrentHoldPhase().MinTargets <= 0)
+                {
+                    return TNHSetting_TargetMode.NoTargets;
+                }
+            }
+
+            return GM.TNH_Manager.TargetMode;
         }
 
         private static TNH_EncryptionType GetEncryptionTypeToSpawn(int encryptionIndex, TNH_HoldPoint __instance)
