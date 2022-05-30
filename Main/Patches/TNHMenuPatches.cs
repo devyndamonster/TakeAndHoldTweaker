@@ -19,13 +19,19 @@ namespace TNHTweaker.Patches
     public class TNHMenuPatches
     {
 
+        /// <summary>
+        /// Before UI Manager starts, run initialization logic <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/102"> Add support for unlimited number of character pages in TNH Menu </see><br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/103"> Allow for vanilla characters to be converted into our own character class </see><br/>
+        /// </summary>
         [HarmonyPatch(typeof(TNH_UIManager), "Start")]
         [HarmonyPrefix]
         public static bool InitTNHPatch(TNH_UIManager __instance)
         {
             TNHTweakerLogger.Log("Initializing TNH UI", TNHTweakerLogger.LogType.General);
 
-            AddDefaultCharacters(__instance.CharDatabase);
+            ConvertDefaultCharacters(__instance.CharDatabase);
 
             //Add menu wrapper to UI
             TNHMenuUIWrapper menuWrapper = __instance.gameObject.AddComponent<TNHMenuUIWrapper>();
@@ -34,26 +40,14 @@ namespace TNHTweaker.Patches
         }
 
 
-        private static void AddDefaultCharacters(TNH_CharacterDatabase charDatabase)
-        {
-            foreach(TNH_CharacterDef character in charDatabase.Characters)
-            {
-                if (!TNHTweaker.CustomCharacterDict.ContainsKey(character))
-                {
-                    Character customCharacter = CharacterConverter.ConvertCharacterFromVanilla(character);
-                    TNHTweaker.CustomCharacterDict[character] = customCharacter;
-                    TNHTweaker.BaseCharacterDict[customCharacter] = character;
-                }
-            }
-        }
-
-
         /// <summary>
-        /// Replaces a for-loop responsible for refreshing character UI with a custom call to perform that logic
+        /// Overrides logic that displays a new character category with our own method call <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/102"> Add support for unlimited number of character pages in TNH Menu </see><br/>
         /// </summary>
         [HarmonyPatch(typeof(TNH_UIManager), "SetSelectedCategory")]
         [HarmonyILManipulator]
-        private static void CategoryRefreshPatch(ILContext ctx, MethodBase orig)
+        public static void CategoryRefreshPatch(ILContext ctx, MethodBase orig)
         {
             ILCursor c = new ILCursor(ctx);
 
@@ -87,6 +81,19 @@ namespace TNHTweaker.Patches
             c.Emit(OpCodes.Ldsfld, AccessTools.Field(typeof(TNHMenuUIWrapper), "Instance"));
             c.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(TNHMenuUIWrapper), "DisplayNewCategory"));
             c.Emit(OpCodes.Nop);
+        }
+
+        private static void ConvertDefaultCharacters(TNH_CharacterDatabase charDatabase)
+        {
+            foreach (TNH_CharacterDef character in charDatabase.Characters)
+            {
+                if (!TNHTweaker.CustomCharacterDict.ContainsKey(character))
+                {
+                    Character customCharacter = CharacterConverter.ConvertCharacterFromVanilla(character);
+                    TNHTweaker.CustomCharacterDict[character] = customCharacter;
+                    TNHTweaker.BaseCharacterDict[customCharacter] = character;
+                }
+            }
         }
     }
 }

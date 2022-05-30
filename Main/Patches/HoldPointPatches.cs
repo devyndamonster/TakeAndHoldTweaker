@@ -13,28 +13,24 @@ namespace TNHTweaker.Patches
     public class HoldPointPatches
     {
 
+        /// <summary>
+        /// Overrides logic that sets the number of encryptions that will spawn during a hold <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/99"> Allow for min and max encryptions to be set for limited ammo mode </see><br/>
+        /// </summary>
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnWarpInMarkers")]
         [HarmonyILManipulator]
-        private static void SpawnWarpInMarkersPatch(ILContext ctx, MethodBase orig)
+        public static void SpawnWarpInMarkersPatch(ILContext ctx, MethodBase orig)
         {
             ILCursor cursor = new ILCursor(ctx);
 
-            //Remove the second call that sets m_numTargsToSpawn
-            PatchUtils.RemoveStartToEnd(
-                cursor,
-                new Func<Instruction, bool>[]
-                {
-                    i => i.MatchLdarg(0),
-                    i => i.MatchLdarg(0),
-                    i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_numTargsToSpawn")),
-                    i => i.MatchLdarg(0)
-                },
-                new Func<Instruction, bool>[]
-                {
-                    i => i.MatchCallOrCallvirt(AccessTools.Method(typeof(UnityEngine.Mathf), "Min", new Type[]{ typeof(int), typeof(int) })),
-                    i => i.MatchStfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_numTargsToSpawn"))
-                }
-            );
+            //Go to right after we set m_numTargsToSpawn based on min and max targets
+            cursor.GotoNext(
+                i => i.MatchLdarg(0),
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_numTargsToSpawn")),
+                i => i.MatchLdarg(0)
+                );
 
             //Set m_numTargsToSpawn from our own call
             cursor.Emit(OpCodes.Ldarg_0);
@@ -43,6 +39,12 @@ namespace TNHTweaker.Patches
         }
 
 
+        /// <summary>
+        /// Replaces entire call that spawns in encryptions with our own <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/99"> Allow for min and max encryptions to be set for limited ammo mode </see><br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/100"> Allow for mixed encryption types to spawn in during hold phases </see><br/>
+        /// </summary>
         [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTargetGroup")]
         [HarmonyPrefix]
         public static bool SpawnTargetGroupPatch(TNH_HoldPoint __instance)
@@ -92,28 +94,5 @@ namespace TNHTweaker.Patches
             Transform selectedSpawnPoint = holdPoint.m_validSpawnPoints[encryptionIndex];
             return GameObject.Instantiate(encryptionPrefab.GetGameObject(), selectedSpawnPoint.position, selectedSpawnPoint.rotation);
         }
-
-
-        /* This was an attempt at making an IL patch, but couldn't get around a Label Not Marked error :(
-        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTargetGroup")]
-        [HarmonyILManipulator]
-        private static void SpawnTargetGroupPatch(ILContext ctx, MethodBase orig)
-        {
-            ILCursor c = new ILCursor(ctx);
-
-            //Remove call to instantiate a new encryption
-            c.GotoNext(
-                i => i.MatchLdloc(1),
-                i => i.MatchCallvirt(AccessTools.Method(typeof(AnvilAsset), "GetGameObject"))
-            );
-            c.RemoveRange(14);
-            
-            //Replace removed lines with our own call to spawn encryptions
-            c.Emit(OpCodes.Ldarg_0);
-            c.Emit(OpCodes.Ldloc_2);
-            c.Emit(OpCodes.Call, AccessTools.Method(typeof(HoldPointPatches), "SpawnEncryption"));
-            c.Emit(OpCodes.Stloc_3);
-        }
-        */
     }
 }

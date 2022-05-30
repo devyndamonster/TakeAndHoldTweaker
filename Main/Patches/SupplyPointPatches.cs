@@ -13,9 +13,15 @@ namespace TNHTweaker.Main.Patches
 {
     public class SupplyPointPatches
     {
+
+        /// <summary>
+        /// Replaces entire call that configures the player beginning equipment when the game starts <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/101"> Have starting equipment use our own EquipmentGroup loot system </see><br/>
+        /// </summary>
         [HarmonyPatch(typeof(TNH_SupplyPoint), "ConfigureAtBeginning")]
         [HarmonyPrefix]
-        public static bool SpawnTargetGroupPatch(TNH_SupplyPoint __instance, TNH_CharacterDef c)
+        public static bool ConfigureAtBeginningPatch(TNH_SupplyPoint __instance, TNH_CharacterDef c)
         {
             __instance.m_trackedObjects.Clear();
             MoveSpawnerIfEnabled(__instance);
