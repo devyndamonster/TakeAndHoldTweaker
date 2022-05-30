@@ -163,6 +163,7 @@
     <Compile Include="Main\Objects\LootPools\EquipmentPool.cs" />
     <Compile Include="Main\Objects\LootPools\ObjectTable.cs" />
     <Compile Include="Main\Utilities\CharacterUtils.cs" />
+    <Compile Include="Main\Utilities\DebugPanel.cs" />
     <Compile Include="Main\Utilities\FirearmUtils.cs" />
     <Compile Include="Main\Utilities\Extensions.cs" />
     <Compile Include="Main\Testing\ILTestClass.cs" />

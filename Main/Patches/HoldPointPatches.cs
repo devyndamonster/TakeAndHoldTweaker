@@ -61,7 +61,7 @@ namespace TNHTweaker.Patches
             cursor.Emit(OpCodes.Call, ((Func<TNH_HoldPoint, TNHSetting_TargetMode>)GetTargetMode).Method);
 
 
-            //Go to first place where target mode is compared to NoTargets
+            //Go to second place where target mode is compared to NoTargets
             cursor.GotoNext(
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode"))
