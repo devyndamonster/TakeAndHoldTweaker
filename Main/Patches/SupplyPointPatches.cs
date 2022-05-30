@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace TNHTweaker.Patches
 {
-    public class SupplyPointPatches
+    public static class SupplyPointPatches
     {
 
         /// <summary>

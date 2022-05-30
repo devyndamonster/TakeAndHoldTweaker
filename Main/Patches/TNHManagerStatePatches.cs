@@ -8,7 +8,7 @@ using TNHTweaker.ObjectWrappers;
 
 namespace TNHTweaker.Patches
 {
-    public class TNHManagerStatePatches
+    public static class TNHManagerStatePatches
     {
 
         [HarmonyPatch(typeof(TNH_Manager), "Start")]

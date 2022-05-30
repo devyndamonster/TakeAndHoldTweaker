@@ -41,6 +41,8 @@ namespace TNHTweaker
 
             Harmony.CreateAndPatchAll(typeof(TNHMenuPatches));
             Harmony.CreateAndPatchAll(typeof(HoldPointPatches));
+            Harmony.CreateAndPatchAll(typeof(SupplyPointPatches));
+            Harmony.CreateAndPatchAll(typeof(TNHManagerPatches));
             Harmony.CreateAndPatchAll(typeof(TNHManagerStatePatches));
         }
 

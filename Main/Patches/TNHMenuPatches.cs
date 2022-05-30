@@ -16,7 +16,7 @@ using UnityEngine.UI;
 
 namespace TNHTweaker.Patches
 {
-    public class TNHMenuPatches
+    public static class TNHMenuPatches
     {
 
         /// <summary>

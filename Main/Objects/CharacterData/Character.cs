@@ -89,6 +89,25 @@ namespace TNHTweaker.Objects.CharacterData
 		public LoadoutEntry Item_Tertiary;
 		/// <summary> A pool of possible starting shields </summary>
 		public LoadoutEntry Item_Shield;
+
+		public void GenerateTables()
+        {
+			RequireSightTable.GenerateTables();
+
+			if (Has_Weapon_Primary) Weapon_Primary.GenerateTables();
+			if (Has_Weapon_Secondary) Weapon_Secondary.GenerateTables();
+			if (Has_Weapon_Tertiary) Weapon_Tertiary.GenerateTables();
+			if (Has_Item_Primary) Item_Primary.GenerateTables();
+			if (Has_Item_Secondary) Item_Secondary.GenerateTables();
+			if (Has_Item_Tertiary) Item_Tertiary.GenerateTables();
+			if (Has_Item_Shield) Item_Shield.GenerateTables();
+
+			foreach (EquipmentPool pool in EquipmentPools)
+            {
+				pool.GenerateTables();
+            }
+		}
+
 	}
  
 }

@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace TNHTweaker.Patches
 {
-    public class HoldPointPatches
+    public static class HoldPointPatches
     {
 
         /// <summary>
@@ -50,28 +50,26 @@ namespace TNHTweaker.Patches
         {
             ILCursor cursor = new ILCursor(ctx);
 
-            //Go to first place where target mode is compared to NoTargets and remove it
-            cursor.GotoNext(
+            //Go to first place where target mode is compared to NoTargets
+            cursor.GotoNext(MoveType.After,
+                i => i.MatchLdarg(0),
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
-                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode")),
-                i => i.MatchLdcI4(2)
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode"))
                 );
-            cursor.RemoveRange(2);
 
             //Replace comparison target with results from our own method
-            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode>)GetTargetMode).Method);
+            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode, TNHSetting_TargetMode>)GetTargetMode).Method);
 
 
-            //Go to second place where target mode is compared to NoTargets and remove it
-            cursor.GotoNext(
+            //Go to second place where target mode is compared to NoTargets
+            cursor.GotoNext(MoveType.After,
+                i => i.MatchLdarg(0),
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
-                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode")),
-                i => i.MatchLdcI4(2)
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode"))
                 );
-            cursor.RemoveRange(2);
 
             //Replace comparison target with results from our own method
-            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode>)GetTargetMode).Method);
+            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode, TNHSetting_TargetMode>)GetTargetMode).Method);
         }
 
 
@@ -86,16 +84,15 @@ namespace TNHTweaker.Patches
         {
             ILCursor cursor = new ILCursor(ctx);
 
-            //Go to first place where target mode is compared to NoTargets and remove it
-            cursor.GotoNext(
+            //Go to first place where target mode is compared to NoTargets
+            cursor.GotoNext(MoveType.After,
+                i => i.MatchLdarg(0),
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
-                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode")),
-                i => i.MatchLdcI4(2)
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode"))
                 );
-            cursor.RemoveRange(2);
 
             //Replace comparison target with results from our own method
-            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode>)GetTargetMode).Method);
+            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode, TNHSetting_TargetMode>)GetTargetMode).Method);
         }
 
 
@@ -134,7 +131,7 @@ namespace TNHTweaker.Patches
             return TNHManagerStateWrapper.Instance.GetCurrentHoldPhase().GetNumTargetsToSpawn(GM.TNH_Manager.EquipmentMode);
         }
 
-        public static TNHSetting_TargetMode GetTargetMode()
+        public static TNHSetting_TargetMode GetTargetMode(TNHSetting_TargetMode currentMode)
         {
             if(GM.TNH_Manager.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
             {
@@ -151,7 +148,7 @@ namespace TNHTweaker.Patches
                 }
             }
 
-            return GM.TNH_Manager.TargetMode;
+            return currentMode;
         }
 
         private static TNH_EncryptionType GetEncryptionTypeToSpawn(int encryptionIndex, TNH_HoldPoint __instance)

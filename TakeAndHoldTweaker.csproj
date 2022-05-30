@@ -142,6 +142,7 @@
     <Compile Include="Main\ObjectWrappers\TNHMenuUIWrapper.cs" />
     <Compile Include="Main\Patches\HoldPointPatches.cs" />
     <Compile Include="Main\Patches\SupplyPointPatches.cs" />
+    <Compile Include="Main\Patches\TNHManagerPatches.cs" />
     <Compile Include="Main\Patches\TNHManagerStatePatches.cs" />
     <Compile Include="Main\Patches\TNHMenuPatches.cs" />
     <Compile Include="Main\TNHTweakerConfig.cs" />
@@ -164,6 +165,7 @@
     <Compile Include="Main\Utilities\CharacterUtils.cs" />
     <Compile Include="Main\Utilities\FirearmUtils.cs" />
     <Compile Include="Main\Utilities\Extensions.cs" />
+    <Compile Include="Main\Testing\ILTestClass.cs" />
     <Compile Include="Main\Utilities\ImageUtils.cs" />
     <Compile Include="Main\Utilities\Logger.cs" />
     <Compile Include="Main\Objects\SosigData\SosigTemplate.cs" />

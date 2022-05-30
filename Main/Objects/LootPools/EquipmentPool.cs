@@ -19,5 +19,10 @@ namespace TNHTweaker.Objects.LootPools
         public bool SpawnsInSmallCase;
         public bool SpawnsInLargeCase;
         public EquipmentGroup EquipmentGroup;
+
+        public void GenerateTables()
+        {
+            EquipmentGroup.GenerateTables();
+        }
     }
 }
