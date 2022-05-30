@@ -9,7 +9,7 @@ using TNHTweaker.Objects.CharacterData;
 using TNHTweaker.Objects.LootPools;
 using UnityEngine;
 
-namespace TNHTweaker.Main.Patches
+namespace TNHTweaker.Patches
 {
     public class SupplyPointPatches
     {

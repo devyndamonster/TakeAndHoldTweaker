@@ -172,9 +172,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".editorconfig" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Docs\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- This target copies dll to the folder, for quicker debbugging -->
   <Target Name="CopyDll" AfterTargets="AfterBuild" Condition="'$(TnhTweakerModDir)' != '' ">
@@ -187,5 +190,7 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\BepInEx.Core.5.4.16\build\BepInEx.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\BepInEx.Core.5.4.16\build\BepInEx.Core.targets'))" />
+    <Error Condition="!Exists('packages\DefaultDocumentation.0.8.1\build\DefaultDocumentation.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\DefaultDocumentation.0.8.1\build\DefaultDocumentation.targets'))" />
   </Target>
+  <Import Project="packages\DefaultDocumentation.0.8.1\build\DefaultDocumentation.targets" Condition="Exists('packages\DefaultDocumentation.0.8.1\build\DefaultDocumentation.targets')" />
 </Project>
