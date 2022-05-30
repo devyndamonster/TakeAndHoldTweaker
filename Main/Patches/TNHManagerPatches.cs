@@ -21,7 +21,7 @@ namespace TNHTweaker.Patches
         /// </summary>
         [HarmonyPatch(typeof(TNH_Manager), "InitTables")]
         [HarmonyPrefix]
-        public static bool InitTablesPatch(TNH_SupplyPoint __instance, TNH_CharacterDef c)
+        public static bool InitTablesPatch(TNH_Manager __instance)
         {
             TNHManagerStateWrapper.Instance.GetCurrentCharacter().GenerateTables();
 

@@ -37,6 +37,7 @@ namespace LegacyCharacterLoader.LegacyConverters
 			objectTable.MinAmmoCapacity = from.MinAmmoCapacity;
 			objectTable.MaxAmmoCapacity = from.MaxAmmoCapacity;
 			objectTable.WhitelistedObjectIDs = from.IDOverride;
+			objectTable.AutoPopulatePools = from.AutoPopulateGroup;
 
 			EquipmentGroup equipmentGroup = ScriptableObject.CreateInstance<EquipmentGroup>();
 

@@ -27,11 +27,12 @@ namespace TNHTweaker.Objects.LootPools
 
         private EquipmentGroup SelectRandomEquipmentGroup()
         {
-            float totalChanceRange = EquipmentGroups.Sum(o => o.Rarity);
+            List<EquipmentGroup> validGroups = EquipmentGroups.Where(o => o.CanSpawnFromPool()).ToList();
+            float totalChanceRange = validGroups.Sum(o => o.Rarity);
             float randomValueSelection = UnityEngine.Random.Range(0, totalChanceRange);
             float summedChanceValue = 0;
 
-            foreach(EquipmentGroup group in EquipmentGroups)
+            foreach(EquipmentGroup group in validGroups)
             {
                 if(summedChanceValue >= randomValueSelection)
                 {
@@ -40,7 +41,14 @@ namespace TNHTweaker.Objects.LootPools
                 summedChanceValue += group.Rarity;
             }
 
-            return EquipmentGroups.LastOrDefault();
+            return validGroups.LastOrDefault();
+        }
+
+        public override string ToString()
+        {
+            return  $"\nLoadoutEntry - " +
+                    $"\nNum EquipmentGroups = {EquipmentGroups.Count}" +
+                    $"\nGroups:\n{string.Join("\n\n", EquipmentGroups.Select(o => o.ToString()).ToArray())}";
         }
     }
 }

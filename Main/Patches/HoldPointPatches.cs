@@ -51,25 +51,25 @@ namespace TNHTweaker.Patches
             ILCursor cursor = new ILCursor(ctx);
 
             //Go to first place where target mode is compared to NoTargets
-            cursor.GotoNext(MoveType.After,
-                i => i.MatchLdarg(0),
+            cursor.GotoNext(
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode"))
                 );
+            cursor.RemoveRange(2);
 
             //Replace comparison target with results from our own method
-            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode, TNHSetting_TargetMode>)GetTargetMode).Method);
+            cursor.Emit(OpCodes.Call, ((Func<TNH_HoldPoint, TNHSetting_TargetMode>)GetTargetMode).Method);
 
 
-            //Go to second place where target mode is compared to NoTargets
-            cursor.GotoNext(MoveType.After,
-                i => i.MatchLdarg(0),
+            //Go to first place where target mode is compared to NoTargets
+            cursor.GotoNext(
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode"))
                 );
+            cursor.RemoveRange(2);
 
             //Replace comparison target with results from our own method
-            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode, TNHSetting_TargetMode>)GetTargetMode).Method);
+            cursor.Emit(OpCodes.Call, ((Func<TNH_HoldPoint, TNHSetting_TargetMode>)GetTargetMode).Method);
         }
 
 
@@ -85,14 +85,14 @@ namespace TNHTweaker.Patches
             ILCursor cursor = new ILCursor(ctx);
 
             //Go to first place where target mode is compared to NoTargets
-            cursor.GotoNext(MoveType.After,
-                i => i.MatchLdarg(0),
+            cursor.GotoNext(
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "M")),
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_Manager), "TargetMode"))
                 );
+            cursor.RemoveRange(2);
 
             //Replace comparison target with results from our own method
-            cursor.Emit(OpCodes.Call, ((Func<TNHSetting_TargetMode, TNHSetting_TargetMode>)GetTargetMode).Method);
+            cursor.Emit(OpCodes.Call, ((Func<TNH_HoldPoint, TNHSetting_TargetMode>)GetTargetMode).Method);
         }
 
 
@@ -109,10 +109,13 @@ namespace TNHTweaker.Patches
             __instance.DeleteAllActiveWarpIns();
             ShuffleSpawnsIfStealth(__instance);
 
+            TNHTweakerLogger.Log($"Spawning {__instance.m_numTargsToSpawn} encryptions!", TNHTweakerLogger.LogType.TNH);
             for(int encryptionIndex = 0; encryptionIndex < __instance.m_numTargsToSpawn; encryptionIndex++)
             {
                 TNH_EncryptionType selectedEncryptionType = GetEncryptionTypeToSpawn(encryptionIndex, __instance);
-                SpawnEncryption(__instance, encryptionIndex, selectedEncryptionType);
+                TNH_EncryptionTarget spawnedEncryption = SpawnEncryption(__instance, encryptionIndex, selectedEncryptionType);
+                spawnedEncryption.SetHoldPoint(__instance);
+                __instance.RegisterNewTarget(spawnedEncryption);
             }
 
             return false;
@@ -131,9 +134,14 @@ namespace TNHTweaker.Patches
             return TNHManagerStateWrapper.Instance.GetCurrentHoldPhase().GetNumTargetsToSpawn(GM.TNH_Manager.EquipmentMode);
         }
 
-        public static TNHSetting_TargetMode GetTargetMode(TNHSetting_TargetMode currentMode)
+        public static TNHSetting_TargetMode GetTargetMode(TNH_HoldPoint holdPoint)
         {
-            if(GM.TNH_Manager.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
+            if(holdPoint.m_phaseIndex >= holdPoint.H.Phases.Count)
+            {
+                TNHTweakerLogger.LogError("Phase index too high! Index at: " + holdPoint.m_phaseIndex);
+            }
+
+            if(holdPoint.M.EquipmentMode == TNHSetting_EquipmentMode.LimitedAmmo)
             {
                 if (TNHManagerStateWrapper.Instance.GetCurrentHoldPhase().MinTargetsLimited <= 0)
                 {
@@ -148,7 +156,7 @@ namespace TNHTweaker.Patches
                 }
             }
 
-            return currentMode;
+            return holdPoint.M.TargetMode;
         }
 
         private static TNH_EncryptionType GetEncryptionTypeToSpawn(int encryptionIndex, TNH_HoldPoint __instance)
@@ -165,11 +173,11 @@ namespace TNHTweaker.Patches
         }
 
 
-        public static GameObject SpawnEncryption(TNH_HoldPoint holdPoint, int encryptionIndex, TNH_EncryptionType encryptionType)
+        public static TNH_EncryptionTarget SpawnEncryption(TNH_HoldPoint holdPoint, int encryptionIndex, TNH_EncryptionType encryptionType)
         {
             FVRObject encryptionPrefab = holdPoint.M.GetEncryptionPrefab(encryptionType);
             Transform selectedSpawnPoint = holdPoint.m_validSpawnPoints[encryptionIndex];
-            return GameObject.Instantiate(encryptionPrefab.GetGameObject(), selectedSpawnPoint.position, selectedSpawnPoint.rotation);
+            return GameObject.Instantiate(encryptionPrefab.GetGameObject(), selectedSpawnPoint.position, selectedSpawnPoint.rotation).GetComponent<TNH_EncryptionTarget>();
         }
     }
 }

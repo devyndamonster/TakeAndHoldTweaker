@@ -36,6 +36,7 @@ namespace TNHTweaker.ObjectConverters
 			objectTable.MinAmmoCapacity = from.MinAmmoCapacity;
 			objectTable.MaxAmmoCapacity = from.MaxAmmoCapacity;
 			objectTable.WhitelistedObjectIDs = from.IDOverride;
+			objectTable.AutoPopulatePools = !from.UseIDListOverride;
 
 			return objectTable;
 		}

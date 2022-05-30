@@ -18,6 +18,11 @@ namespace LegacyCharacterLoader.LegacyConverters
 
 			loadoutEntry.EquipmentGroups.Add(LegacyEquipmentGroupConverter.ConvertEquipmentGroupFromLegacy(from.PrimaryGroup));
 
+			if(from.BackupGroup != null)
+            {
+				loadoutEntry.EquipmentGroups.Add(LegacyEquipmentGroupConverter.ConvertEquipmentGroupFromLegacy(from.BackupGroup));
+			}
+			
 			LogConversionEnd(loadoutEntry);
 			return loadoutEntry;
 		}

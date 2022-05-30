@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using TNHTweaker.Objects.CharacterData;
 using TNHTweaker.Objects.LootPools;
+using TNHTweaker.Utilities;
 using UnityEngine;
 
 namespace TNHTweaker.Patches
@@ -60,7 +61,8 @@ namespace TNHTweaker.Patches
 
         private static void SpawnStartingWeaponCrate(LoadoutEntry loadoutEntry, GameObject casePrefab, Transform spawnPoint, TNH_SupplyPoint __instance)
         {
-            loadoutEntry.GenerateTables();
+            TNHTweakerLogger.Log(loadoutEntry.ToString, TNHTweakerLogger.LogType.TNH);
+
             EquipmentGroup selectedGroup = loadoutEntry.GetStartingEquipmentGroups().GetRandom();
             FVRObject selectedItem = selectedGroup.ObjectTable.GeneratedObjects.GetRandom();
 
@@ -70,19 +72,19 @@ namespace TNHTweaker.Patches
                 spawnPoint.position,
                 spawnPoint.forward,
                 selectedItem,
-                selectedGroup.NumMagsSpawned,
-                selectedGroup.NumRoundsSpawned,
+                Mathf.Clamp(selectedGroup.NumMagsSpawned, 0, 3),
+                Mathf.Clamp(selectedGroup.NumRoundsSpawned, 0, 6),
                 selectedGroup.ObjectTable.MinAmmoCapacity,
                 selectedGroup.ObjectTable.MaxAmmoCapacity
             );
 
             __instance.m_trackedObjects.Add(weaponCase);
-            weaponCase.GetComponent<TNH_WeaponCrate>().M = GM.TNH_Manager;
+            TNH_WeaponCrate weaponCaseComp = weaponCase.GetComponent<TNH_WeaponCrate>();
+            weaponCaseComp.M = GM.TNH_Manager;
         }
 
         private static void SpawnStartingLooseEquipment(LoadoutEntry loadoutEntry, Transform spawnPoint)
         {
-            loadoutEntry.GenerateTables();
             EquipmentGroup selectedGroup = loadoutEntry.GetStartingEquipmentGroups().GetRandom();
             FVRObject selectedItem = selectedGroup.ObjectTable.GeneratedObjects.GetRandom();
 

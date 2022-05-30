@@ -31,7 +31,10 @@ namespace TNHTweaker.ObjectWrappers
 
         public HoldPhase GetCurrentHoldPhase()
         {
-            return GetCurrentLevel().HoldPhases[baseManager.m_curHoldPoint.m_phaseIndex];
+            Level currentLevel = GetCurrentLevel();
+            int currentPhaseIndex = Mathf.Clamp(baseManager.m_curHoldPoint.m_phaseIndex, 0, currentLevel.HoldPhases.Count - 1);
+
+            return currentLevel.HoldPhases[currentPhaseIndex];
         }
 
         public Level GetCurrentLevel()

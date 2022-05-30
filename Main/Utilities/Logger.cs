@@ -30,26 +30,29 @@ namespace TNHTweaker.Utilities
             BepLog = BepInEx.Logging.Logger.CreateLogSource("TNHTweaker");
         }
 
+        public static bool ShouldLog(LogType type)
+        {
+            return 
+                AllowLogging &&
+                ((type == LogType.General) ||
+                (type == LogType.Character && LogCharacter) ||
+                (type == LogType.Loading && LogLoading) ||
+                (type == LogType.TNH && LogTNH));
+        }
+
         public static void Log(string log, LogType type)
         {
-            if (AllowLogging)
+            if (ShouldLog(type))
             {
-                if(type == LogType.General)
-                {
-                    BepLog.LogInfo(log);
-                }
-                else if(type == LogType.Character && LogCharacter)
-                {
-                    BepLog.LogInfo(log);
-                }
-                else if (type == LogType.Loading && LogLoading)
-                {
-                    BepLog.LogInfo(log);
-                }
-                else if (type == LogType.TNH && LogTNH)
-                {
-                    BepLog.LogInfo(log);
-                }
+                BepLog.LogInfo(log);
+            }
+        }
+
+        public static void Log(Func<string> delayedLog, LogType type)
+        {
+            if (ShouldLog(type))
+            {
+                BepLog.LogInfo(delayedLog);
             }
         }
 

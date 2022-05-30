@@ -49,6 +49,7 @@ namespace TNHTweaker.Objects.LootPools
 		public FireArmRoundType RoundTypeOverride;
 
 		[Header("Misc Properties")]
+		public bool AutoPopulatePools;
 		public List<string> WhitelistedObjectIDs = new List<string>();
 		public List<string> BlacklistedObjectIDs = new List<string>();
 
@@ -71,6 +72,8 @@ namespace TNHTweaker.Objects.LootPools
 					GeneratedObjects.Add(fvr);
 					continue;
 				}
+
+				if (!AutoPopulatePools) continue;
 
 				if (BlacklistedObjectIDs.Contains(fvr.ItemID)) continue;
 
@@ -127,5 +130,12 @@ namespace TNHTweaker.Objects.LootPools
 				GeneratedObjects.Add(fvr);
 			}
 		}
-	}
+
+        public override string ToString()
+        {
+            return $"\nObject Table - " +
+				   $"\nNum objects = {GeneratedObjects.Count}" +
+                   $"\nContents:\n{string.Join("\n", GeneratedObjects.Select(o => "-" + o.ItemID).ToArray())}";
+        }
+    }
 }

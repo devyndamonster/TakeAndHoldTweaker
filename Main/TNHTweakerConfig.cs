@@ -24,6 +24,7 @@ namespace TNHTweaker
 
             TNHTweakerLogger.AllowLogging = true;
             TNHTweakerLogger.LogLoading = true;
+            TNHTweakerLogger.LogTNH = true;
 
         }
 

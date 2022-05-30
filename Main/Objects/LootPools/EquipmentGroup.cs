@@ -116,5 +116,10 @@ namespace TNHTweaker.Objects.LootPools
 
             return new List<EquipmentGroup>();
         }
+
+        public override string ToString()
+        {
+            return ObjectTable.ToString();
+        }
     }
 }
