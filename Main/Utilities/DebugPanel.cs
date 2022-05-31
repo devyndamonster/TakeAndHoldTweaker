@@ -39,12 +39,17 @@ namespace TNHTweaker.Utilities
                 ConfigureWidgetRect(widget.RectTransform);
                 ConfigureWidgetLayoutGroup(widget.LayoutGroup);
                 
-                widget.AddChild((ButtonWidget button) => button.ButtonText.text = "Button 1");
-                widget.AddChild((ButtonWidget button) => button.ButtonText.text = "Button 2");
-                widget.AddChild((ButtonWidget button) => button.ButtonText.text = "Button 3");
-                widget.AddChild((ButtonWidget button) => button.ButtonText.text = "Button 4");
-                widget.AddChild((ButtonWidget button) => button.ButtonText.text = "Button 5");
+                widget.AddChild((ButtonWidget button) => ConfigureButtonWidget(button, "Complete Hold Phase", OnCompletePhaseButtonPressed));
+                widget.AddChild((ButtonWidget button) => ConfigureButtonWidget(button, "Teleport To Hold", OnTeleportToHoldButtonPressed));
             });
+        }
+
+        private void ConfigureButtonWidget(ButtonWidget button, string text, EventHandler<ButtonClickEventArgs> onClick)
+        {
+            button.ButtonText.rectTransform.localRotation = Quaternion.identity;
+            button.ButtonText.text = text;
+            button.Pointable.ColorSelected = Color.white;
+            button.Pointable.ButtonClicked += onClick;
         }
 
         private GameObject GetMainCanvas()
@@ -70,6 +75,36 @@ namespace TNHTweaker.Utilities
             layoutGroup.childAlignment = TextAnchor.UpperCenter;
             layoutGroup.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             layoutGroup.constraintCount = 3;
+        }
+
+
+        private void OnCompletePhaseButtonPressed(object sender, ButtonClickEventArgs args)
+        {
+            if (GM.TNH_Manager == null) return;
+            TNHTweakerLogger.Log("Completing hold phase via DebugPanel!", TNHTweakerLogger.LogType.General);
+
+            TNH_HoldPoint currentHoldPoint = GM.TNH_Manager.m_curHoldPoint;
+            if (currentHoldPoint.m_systemNode == null ||
+                currentHoldPoint.m_systemNode.m_mode == TNH_HoldPointSystemNode.SystemNodeMode.Passive) return;
+
+            foreach(TNH_EncryptionTarget target in currentHoldPoint.m_activeTargets)
+            {
+                Destroy(target);
+            }
+            currentHoldPoint.m_activeTargets.Clear();
+
+            currentHoldPoint.CompletePhase();
+        }
+
+        private void OnTeleportToHoldButtonPressed(object sender, ButtonClickEventArgs args)
+        {
+            if (GM.TNH_Manager == null) return;
+            TNHTweakerLogger.Log("Teleporting player to hold via DebugPanel!", TNHTweakerLogger.LogType.General);
+
+            TNH_HoldPoint currentHoldPoint = GM.TNH_Manager.m_curHoldPoint;
+            if (currentHoldPoint.m_systemNode == null) return;
+
+            GM.CurrentMovementManager.TeleportToPoint(currentHoldPoint.m_systemNode.transform.position, true, Vector3.forward);
         }
 
 
