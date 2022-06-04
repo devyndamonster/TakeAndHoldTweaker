@@ -24,11 +24,15 @@ namespace TNHTweaker.Objects.CharacterData
         /// <summary> The minimum number of boxes that can spawn at a supply point </summary>
         public int MinBoxesSpawned = 1;
         /// <summary> The maximum number of boxes that can spawn at a supply point </summary>
-        public int MaxBoxesSpawned = 3;
+        public int MaxBoxesSpawned = 2;
         /// <summary> The minimum number of tokens that can spawn in boxes at a supply point </summary>
-        public int MinTokensPerSupply = 1;
+        public int MinTokensPerSupply = 0;
         /// <summary> The maximum number of tokens that can spawn in boxes at a supply point </summary>
         public int MaxTokensPerSupply = 1;
+        /// <summary> The minimum number of tokens that can spawn in boxes at a supply point </summary>
+        public int MinHealthDropsPerSupply = 0;
+        /// <summary> The maximum number of tokens that can spawn in boxes at a supply point </summary>
+        public int MaxHealthDropsPerSupply = 3;
         /// <summary> The change that a token will spawn per supply box </summary>
         public float BoxTokenChance = 1;
         /// <summary> The change that a health drop will spawn per supply box </summary>

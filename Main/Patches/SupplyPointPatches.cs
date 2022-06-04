@@ -1,12 +1,16 @@
 ﻿using FistVR;
 using HarmonyLib;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using Sodalite.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using TNHTweaker.Objects.CharacterData;
 using TNHTweaker.Objects.LootPools;
+using TNHTweaker.ObjectWrappers;
 using TNHTweaker.Utilities;
 using UnityEngine;
 
@@ -14,6 +18,92 @@ namespace TNHTweaker.Patches
 {
     public static class SupplyPointPatches
     {
+
+        /// <summary>
+        /// Replaces entire call that spawns supply point boxes <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/106"> Allow you to set min and max boxes spawned at supply points </see><br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/107"> Allow you to set min and max tokens per supply point </see><br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/108"> Allow you to set min and max health drops per supply point </see><br/>
+        /// </summary>
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnBoxes")]
+        [HarmonyPrefix]
+        public static bool SpawnBoxesReplacementPatch(TNH_SupplyPoint __instance, int min, int max, bool SpawnToken)
+        {
+            __instance.SpawnPoints_Boxes.Shuffle();
+
+             SupplyChallenge supplyChallenge = TNHManagerStateWrapper.Instance.GetCurrentLevel().SupplyChallenge;
+
+            int tokensSpawned = 0;
+            int healthSpawned = 0;
+            int boxesToSpawn = UnityEngine.Random.Range(min, max + 1);
+            for(int boxIndex = 0; boxIndex < boxesToSpawn; boxIndex++)
+            {
+                GameObject spawnedBox = SpawnSupplyBox(__instance);
+                __instance.m_spawnBoxes.Add(spawnedBox);
+
+                if (ShouldBoxContainToken(supplyChallenge, tokensSpawned, SpawnToken))
+                {
+                    spawnedBox.GetComponent<TNH_ShatterableCrate>().SetHoldingToken(__instance.M);
+                    tokensSpawned += 1;
+                }
+
+                else if (ShouldBoxContainHealth(supplyChallenge, healthSpawned))
+                {
+                    spawnedBox.GetComponent<TNH_ShatterableCrate>().SetHoldingHealth(__instance.M);
+                    healthSpawned += 1;
+                }
+            }
+
+            return false;
+        }
+
+        private static GameObject SpawnSupplyBox(TNH_SupplyPoint __instance)
+        {
+            Transform spawnTransform = __instance.SpawnPoints_Boxes.GetRandom();
+
+            Vector3 yOffset = Vector3.up * 0.1f;
+            Vector3 xOffset = Vector3.right * UnityEngine.Random.Range(-0.5f, 0.5f);
+            Vector3 zOffset = Vector3.forward * UnityEngine.Random.Range(-0.5f, 0.5f);
+            Vector3 spawnPosition = spawnTransform.position + yOffset + xOffset + zOffset;
+            Quaternion spawnRotation = Quaternion.Slerp(spawnTransform.rotation, UnityEngine.Random.rotation, 0.1f);
+
+            GameObject spawnedBox = UnityEngine.Object.Instantiate(__instance.M.Prefabs_ShatterableCrates.GetRandom(), spawnPosition, spawnRotation);
+
+            return spawnedBox;
+        }
+
+
+        private static bool ShouldBoxContainToken(SupplyChallenge supplyChallenge, int tokensSpawned, bool spawnToken)
+        {
+            if (tokensSpawned < supplyChallenge.MinTokensPerSupply) return true;
+            else if (tokensSpawned >= supplyChallenge.MaxTokensPerSupply) return false;
+            else return spawnToken && UnityEngine.Random.Range(0f, 1f) <= supplyChallenge.BoxTokenChance;
+        }
+
+
+        private static bool ShouldBoxContainHealth(SupplyChallenge supplyChallenge, int healthSpawned)
+        {
+            float spawnChance = GetHealthSpawnChance(healthSpawned);
+            if (healthSpawned < supplyChallenge.MinHealthDropsPerSupply) return true;
+            else if (healthSpawned >= supplyChallenge.MaxHealthDropsPerSupply) return false;
+            return UnityEngine.Random.Range(0f, 1f) <= spawnChance;
+        }
+
+
+        private static float GetHealthSpawnChance(int healthSpawned)
+        {
+            switch (healthSpawned)
+            {
+                case 0:
+                    return 0.9f;
+                case 1:
+                    return 0.6f;
+                default:
+                    return 0.2f;
+            }
+        }
+
 
         /// <summary>
         /// Replaces entire call that configures the player beginning equipment when the game starts <br/><br/>

@@ -29,6 +29,17 @@ namespace TNHTweaker.ObjectWrappers
             return GetCurrentHoldPhase().Encryptions.FirstOrDefault();
         }
 
+
+        public TakeChallenge GetCurrentTakeChallenge()
+        {
+            return GetCurrentLevel().TakeChallenge;
+        }
+
+        public SupplyChallenge GetCurrentSupplyChallenge()
+        {
+            return GetCurrentLevel().SupplyChallenge;
+        }
+
         public HoldPhase GetCurrentHoldPhase()
         {
             Level currentLevel = GetCurrentLevel();
