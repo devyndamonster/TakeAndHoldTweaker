@@ -104,6 +104,7 @@
     <Compile Include="LegacyConverters\CharacterData\LegacyHoldPhaseConverter.cs" />
     <Compile Include="LegacyConverters\CharacterData\LegacyLevelConverter.cs" />
     <Compile Include="LegacyConverters\CharacterData\LegacyPatrolConverter.cs" />
+    <Compile Include="LegacyConverters\CharacterData\LegacySupplyChallengeConverter.cs" />
     <Compile Include="LegacyConverters\LootPools\LegacyLoadoutEntryConverter.cs" />
     <Compile Include="LegacyConverters\SosigData\LegacyOutfitConfigConverter.cs" />
     <Compile Include="LegacyConverters\SosigData\LegacySosigConfigConverter.cs" />

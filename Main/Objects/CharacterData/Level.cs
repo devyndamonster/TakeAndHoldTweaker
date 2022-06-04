@@ -12,7 +12,7 @@ namespace TNHTweaker.Objects.CharacterData
     {
         public int NumOverrideTokensForHold;
 
-        public TakeChallenge SupplyChallenge;
+        public SupplyChallenge SupplyChallenge;
 
         public TakeChallenge TakeChallenge;
 

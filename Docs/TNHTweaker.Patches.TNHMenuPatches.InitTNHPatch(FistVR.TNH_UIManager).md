@@ -1,3 +1,4 @@
+#### [TakeAndHoldTweaker](index.md 'index')
 ### [TNHTweaker.Patches](TNHTweaker.Patches.md 'TNHTweaker.Patches').[TNHMenuPatches](TNHTweaker.Patches.TNHMenuPatches.md 'TNHTweaker.Patches.TNHMenuPatches')
 
 ## TNHMenuPatches.InitTNHPatch(TNH_UIManager) Method

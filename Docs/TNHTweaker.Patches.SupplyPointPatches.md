@@ -1,9 +1,10 @@
+#### [TakeAndHoldTweaker](index.md 'index')
 ### [TNHTweaker.Patches](TNHTweaker.Patches.md 'TNHTweaker.Patches')
 
 ## SupplyPointPatches Class
 
 ```csharp
-public class SupplyPointPatches
+public static class SupplyPointPatches
 ```
 
 Inheritance [System.Object](https://docs.microsoft.com/en-us/dotnet/api/System.Object 'System.Object') &#129106; SupplyPointPatches

@@ -18,7 +18,7 @@ namespace LegacyCharacterLoader.LegacyConverters
 
 			level.NumOverrideTokensForHold = from.NumOverrideTokensForHold;
 			level.TakeChallenge = LegacyTakeChallengeConverter.ConvertTakeChallengeFromLegacy(from.TakeChallenge);
-			level.SupplyChallenge = LegacyTakeChallengeConverter.ConvertTakeChallengeFromLegacy(from.SupplyChallenge);
+			level.SupplyChallenge = LegacySupplyChallengeConverter.ConvertSupplyChallengeFromLegacy(from);
 			level.Patrols = from.Patrols.Select(o => LegacyPatrolConverter.ConvertPatrolFromLegacy(o)).ToList();
 			level.HoldPhases = from.HoldPhases.Select(o => LegacyHoldPhaseConverter.ConvertHoldPhaseFromLegacy(o)).ToList();
 

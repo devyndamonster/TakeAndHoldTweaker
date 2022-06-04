@@ -1,3 +1,4 @@
+#### [TakeAndHoldTweaker](index.md 'index')
 ### [TNHTweaker.Patches](TNHTweaker.Patches.md 'TNHTweaker.Patches').[SupplyPointPatches](TNHTweaker.Patches.SupplyPointPatches.md 'TNHTweaker.Patches.SupplyPointPatches')
 
 ## SupplyPointPatches.ConfigureAtBeginningPatch(TNH_SupplyPoint, TNH_CharacterDef) Method

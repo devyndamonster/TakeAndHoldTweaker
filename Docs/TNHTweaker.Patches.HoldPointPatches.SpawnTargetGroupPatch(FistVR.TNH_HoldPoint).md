@@ -1,3 +1,4 @@
+#### [TakeAndHoldTweaker](index.md 'index')
 ### [TNHTweaker.Patches](TNHTweaker.Patches.md 'TNHTweaker.Patches').[HoldPointPatches](TNHTweaker.Patches.HoldPointPatches.md 'TNHTweaker.Patches.HoldPointPatches')
 
 ## HoldPointPatches.SpawnTargetGroupPatch(TNH_HoldPoint) Method

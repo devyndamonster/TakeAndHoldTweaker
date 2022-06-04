@@ -132,11 +132,13 @@
     <Compile Include="Main\Enums\PanelType.cs" />
     <Compile Include="Main\ObjectConverters\CharacterData\HoldPhaseConverter.cs" />
     <Compile Include="Main\ObjectConverters\CharacterData\LevelConverter.cs" />
+    <Compile Include="Main\ObjectConverters\CharacterData\SupplyChallengeConverter.cs" />
     <Compile Include="Main\ObjectConverters\SosigData\OutfitConfigConverter.cs" />
     <Compile Include="Main\ObjectConverters\CharacterData\PatrolConverter.cs" />
     <Compile Include="Main\ObjectConverters\CharacterData\ProgressionConverter.cs" />
     <Compile Include="Main\ObjectConverters\SosigData\SosigTemplateConverter.cs" />
     <Compile Include="Main\ObjectConverters\CharacterData\TakeChallengeConverter.cs" />
+    <Compile Include="Main\Objects\CharacterData\SupplyChallenge.cs" />
     <Compile Include="Main\Objects\SosigData\OutfitConfig.cs" />
     <Compile Include="Main\ObjectWrappers\TNHManagerStateWrapper.cs" />
     <Compile Include="Main\ObjectWrappers\TNHMenuUIWrapper.cs" />

@@ -1,9 +1,10 @@
+#### [TakeAndHoldTweaker](index.md 'index')
 ### [TNHTweaker.Patches](TNHTweaker.Patches.md 'TNHTweaker.Patches')
 
 ## TNHMenuPatches Class
 
 ```csharp
-public class TNHMenuPatches
+public static class TNHMenuPatches
 ```
 
 Inheritance [System.Object](https://docs.microsoft.com/en-us/dotnet/api/System.Object 'System.Object') &#129106; TNHMenuPatches

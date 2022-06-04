@@ -17,7 +17,7 @@ namespace TNHTweaker.ObjectConverters
 
 			level.NumOverrideTokensForHold = from.NumOverrideTokensForHold;
 			level.TakeChallenge = TakeChallengeConverter.ConvertTakeChallengeFromVanilla(from.TakeChallenge);
-			level.SupplyChallenge = TakeChallengeConverter.ConvertTakeChallengeFromVanilla(from.SupplyChallenge);
+			level.SupplyChallenge = SupplyChallengeConverter.ConvertSupplyChallengeFromVanilla(from.SupplyChallenge);
 			level.Patrols = from.PatrolChallenge.Patrols.Select(o => PatrolConverter.ConvertPatrolFromVanilla(o)).ToList();
 			level.HoldPhases = from.HoldChallenge.Phases.Select(o => HoldPhaseConverter.ConvertHoldPhaseFromVanilla(o)).ToList();
 
@@ -31,7 +31,7 @@ namespace TNHTweaker.ObjectConverters
 
 			level.NumOverrideTokensForHold = from.NumOverrideTokensForHold;
 			level.TakeChallenge = TakeChallengeConverter.ConvertTakeChallengeToVanilla(from.TakeChallenge);
-			level.SupplyChallenge = TakeChallengeConverter.ConvertTakeChallengeToVanilla(from.SupplyChallenge);
+			level.SupplyChallenge = SupplyChallengeConverter.ConvertSupplyChallengeToVanilla(from.SupplyChallenge);
 			level.PatrolChallenge = ScriptableObject.CreateInstance<TNH_PatrolChallenge>();
 			level.PatrolChallenge.Patrols = from.Patrols.Select(o => PatrolConverter.ConvertPatrolToVanilla(o)).ToList();
 			level.HoldChallenge = ScriptableObject.CreateInstance<TNH_HoldChallenge>();
