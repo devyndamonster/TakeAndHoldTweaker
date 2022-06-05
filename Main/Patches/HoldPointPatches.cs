@@ -28,7 +28,7 @@ namespace TNHTweaker.Patches
             //Go to where SosigEnemyID is accessed, and remove it
             cursor.GotoNext(
                 i => i.MatchLdarg(0),
-                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_SupplyPoint), "T")),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "T")),
                 i => i.MatchLdfld(AccessTools.Field(typeof(TNH_TakeChallenge), "GID"))
                 );
             cursor.RemoveRange(3);

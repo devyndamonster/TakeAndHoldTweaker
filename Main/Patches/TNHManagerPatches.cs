@@ -96,23 +96,23 @@ namespace TNHTweaker.Patches
 
             //Get random patrol index and store it
             cursor.Emit(OpCodes.Call, ((Func<TNH_Manager, int>)GetRandomPatrolIndex).Method);
-            cursor.Emit(OpCodes.Stloc_S, 8);
+            cursor.Emit(OpCodes.Stloc, 8);
 
             //Set patrol from this patrol index
             cursor.Emit(OpCodes.Ldarg_1);
             cursor.Emit(OpCodes.Ldfld, AccessTools.Field(typeof(TNH_PatrolChallenge), "Patrols"));
-            cursor.Emit(OpCodes.Ldloca_S, 8);
+            cursor.Emit(OpCodes.Ldloc, 8);
             cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(List<TNH_PatrolChallenge.Patrol>), "get_Item", new Type[] {typeof(int)}));
             cursor.Emit(OpCodes.Stloc_0);
 
             //Now generate the patrol with our own method
             cursor.Emit(OpCodes.Ldarg_0);
-            cursor.Emit(OpCodes.Ldloca_S, 8);
+            cursor.Emit(OpCodes.Ldloc, 8);
             cursor.Emit(OpCodes.Ldloc_1);
             cursor.Emit(OpCodes.Ldc_I4_0);
             cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(List<int>), "get_Item", new Type[] { typeof(int) }));
             cursor.Emit(OpCodes.Call, ((Func<TNH_Manager, int, int, TNH_Manager.SosigPatrolSquad>)GeneratePatrol).Method);
-            cursor.Emit(OpCodes.Stloc_S, 11);
+            cursor.Emit(OpCodes.Stloc, 11);
         }
 
 
