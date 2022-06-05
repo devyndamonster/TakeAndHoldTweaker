@@ -4,6 +4,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System;
 using System.Reflection;
+using TNHTweaker.Objects.CharacterData;
 using TNHTweaker.ObjectWrappers;
 using TNHTweaker.Utilities;
 using UnityEngine;
@@ -12,6 +13,32 @@ namespace TNHTweaker.Patches
 {
     public static class HoldPointPatches
     {
+
+        /// <summary>
+        /// Patches SpawnTakeEnemyGroup method to use the TakeChallenges random sosig IDs <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/110"> Allow multiple types of sosigs to spawn at hold point to defend during take challenge </see><br/>
+        /// </summary>
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnTakeEnemyGroup")]
+        [HarmonyILManipulator]
+        public static void SpawnTakeEnemyGroupPatch(ILContext ctx, MethodBase orig)
+        {
+            ILCursor cursor = new ILCursor(ctx);
+
+            //Go to where SosigEnemyID is accessed, and remove it
+            cursor.GotoNext(
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_SupplyPoint), "T")),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_TakeChallenge), "GID"))
+                );
+            cursor.RemoveRange(3);
+
+            //Replace SosigEnemyID with a call to access a random one
+            cursor.Emit(OpCodes.Ldsfld, AccessTools.Field(typeof(TNHManagerStateWrapper), "Instance"));
+            cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(TNHManagerStateWrapper), "GetCurrentTakeChallenge"));
+            cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(TakeChallenge), "GetSosigEnemyIdToSpawn"));
+        }
+
 
         /// <summary>
         /// Overrides logic that sets the number of encryptions that will spawn during a hold <br/><br/>

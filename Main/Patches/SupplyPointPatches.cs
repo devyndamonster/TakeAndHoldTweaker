@@ -181,5 +181,31 @@ namespace TNHTweaker.Patches
             GameObject spawnedItem = GameObject.Instantiate(selectedItem.GetGameObject(), spawnPoint.position, spawnPoint.rotation);
             GM.TNH_Manager.AddObjectToTrackedList(spawnedItem);
         }
+
+
+        /// <summary>
+        /// Patches SpawnTakeEnemyGroup method to use the SupplyChallenges random sosig IDs <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/109"> Allow multiple types of sosigs to spawn at supply points </see><br/>
+        /// </summary>
+        [HarmonyPatch(typeof(TNH_SupplyPoint), "SpawnTakeEnemyGroup")]
+        [HarmonyILManipulator]
+        public static void SpawnTakeEnemyGroupPatch(ILContext ctx, MethodBase orig)
+        {
+            ILCursor cursor = new ILCursor(ctx);
+
+            //Go to where SosigEnemyID is accessed, and remove it
+            cursor.GotoNext(
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_SupplyPoint), "T")),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_TakeChallenge), "GID"))
+                );
+            cursor.RemoveRange(3);
+
+            //Replace SosigEnemyID with a call to access a random one
+            cursor.Emit(OpCodes.Ldsfld, AccessTools.Field(typeof(TNHManagerStateWrapper), "Instance"));
+            cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(TNHManagerStateWrapper), "GetCurrentSupplyChallenge"));
+            cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(SupplyChallenge), "GetSosigEnemyIdToSpawn"));
+        }
     }
 }

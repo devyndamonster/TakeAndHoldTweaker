@@ -1,4 +1,5 @@
 ﻿using FistVR;
+using Sodalite.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,5 +24,10 @@ namespace TNHTweaker.Objects.CharacterData
 		public int NumTurrets = 0;
 		/// <summary> The number of sosig guards that can spawn at this challenge </summary>
 		public int NumGuards = 2;
+
+		public SosigEnemyID GetSosigEnemyIdToSpawn()
+        {
+			return SosigEnemyIDs.GetRandom();
+        }
 	}
 }

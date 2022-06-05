@@ -23,7 +23,7 @@ namespace TNHTweaker.Utilities
             int endingIndex = cursor.Index;
 
             int removalLength = endingIndex - startingIndex;
-            Debug.Log("We are about to remove # instructions: " + removalLength);
+            Debug.Log("RemoveStartToEnd - We are about to remove # instructions: " + removalLength);
 
             cursor.Index = startingIndex;
             cursor.RemoveRange(removalLength);

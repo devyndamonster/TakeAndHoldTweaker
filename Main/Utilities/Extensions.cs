@@ -26,6 +26,11 @@ namespace TNHTweaker.Utilities
             }
             return b;
         }
+
+        public static int GetRandomIndex<T>(this IList<T> list)
+        {
+            return UnityEngine.Random.Range(0, list.Count);
+        }
     }
 
 }
