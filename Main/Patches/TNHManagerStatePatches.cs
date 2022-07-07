@@ -19,5 +19,14 @@ namespace TNHTweaker.Patches
             return true;
         }
 
+        [HarmonyPatch(typeof(TNH_Manager), "SetPhase")]
+        [HarmonyPrefix]
+        public static bool AddStateWrapperPatch(TNH_Manager __instance, TNH_Phase p)
+        {
+            TNHManagerStateWrapper.Instance.RegisterLevelStarted();
+            return true;
+        }
+
+
     }
 }

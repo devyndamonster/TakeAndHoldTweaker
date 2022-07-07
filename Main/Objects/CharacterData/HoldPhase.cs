@@ -1,4 +1,5 @@
 ﻿using FistVR;
+using Sodalite.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,6 +60,11 @@ namespace TNHTweaker.Objects.CharacterData
 			}
 			
 			return UnityEngine.Random.Range(MinTargets, MaxTargets + 1);
+		}
+
+		public SosigEnemyID GetRandomEnemyId()
+		{
+			return EnemyTypes.GetRandom();
 		}
 
 	}

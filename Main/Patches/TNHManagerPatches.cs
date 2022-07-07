@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using TNHTweaker.ObjectConverters;
 using TNHTweaker.Objects.CharacterData;
 using TNHTweaker.Objects.LootPools;
 using TNHTweaker.ObjectWrappers;
@@ -78,102 +79,65 @@ namespace TNHTweaker.Patches
         {
             ILCursor cursor = new ILCursor(ctx);
 
-            //Remove call to generate the patrol
-            PatchUtils.RemoveStartToEnd(
-                cursor,
-                new Func<Instruction, bool>[]
-                {
-                    i => i.MatchLdloc(0),
-                    i => i.MatchLdfld(AccessTools.Field(typeof(TNH_PatrolChallenge.Patrol), "LType"))
-                },
-                new Func<Instruction, bool>[]
-                {
-                    i => i.MatchLdfld(AccessTools.Field(typeof(TNH_PatrolChallenge.Patrol), "IFFUsed")),
-                    i => true,
-                    i => i.MatchStloc(11)
-                }
-            );
-
-            //Get random patrol index and store it
-            cursor.Emit(OpCodes.Call, ((Func<TNH_Manager, int>)GetRandomPatrolIndex).Method);
-            cursor.Emit(OpCodes.Stloc, 8);
-
-            //Set patrol from this patrol index
-            cursor.Emit(OpCodes.Ldarg_1);
-            cursor.Emit(OpCodes.Ldfld, AccessTools.Field(typeof(TNH_PatrolChallenge), "Patrols"));
-            cursor.Emit(OpCodes.Ldloc, 8);
-            cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(List<TNH_PatrolChallenge.Patrol>), "get_Item", new Type[] {typeof(int)}));
-            cursor.Emit(OpCodes.Stloc_0);
-
-            //Now generate the patrol with our own method
-            cursor.Emit(OpCodes.Ldarg_0);
-            cursor.Emit(OpCodes.Ldloc, 8);
-            cursor.Emit(OpCodes.Ldloc_1);
-            cursor.Emit(OpCodes.Ldc_I4_0);
-            cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(List<int>), "get_Item", new Type[] { typeof(int) }));
-            cursor.Emit(OpCodes.Call, ((Func<TNH_Manager, int, int, TNH_Manager.SosigPatrolSquad>)GeneratePatrol).Method);
-            cursor.Emit(OpCodes.Stloc, 11);
-        }
-
-
-        public static int GetRandomPatrolIndex(TNH_Manager manager)
-        {
-            return TNHManagerStateWrapper.Instance.GetCurrentLevel().Patrols.GetRandomIndex();
-        }
-
-
-        public static TNH_Manager.SosigPatrolSquad GeneratePatrol(TNH_Manager manager, int patrolIndex, int holdPointStart)
-        {
-            TNH_Manager.SosigPatrolSquad sosigPatrolSquad = new TNH_Manager.SosigPatrolSquad();
-            Patrol patrol = TNHManagerStateWrapper.Instance.GetCurrentLevel().Patrols[patrolIndex];
-            manager.HoldPoints[holdPointStart].SpawnPoints_Sosigs_Defense.Shuffle();
-
-            foreach (TNH_HoldPoint patrolPoint in GetPatrolPoints(manager, holdPointStart))
-            {
-                sosigPatrolSquad.PatrolPoints.Add(patrolPoint.SpawnPoints_Sosigs_Defense.GetRandom().position);
-            }
-
-            for(int sosigIndex = 0; sosigIndex < patrol.PatrolSize; sosigIndex++)
-            {
-                Transform spawnPoint = manager.HoldPoints[holdPointStart].SpawnPoints_Sosigs_Defense[sosigIndex];
-                SosigEnemyID sosigID = sosigIndex == 0 ? patrol.LeaderType : patrol.EnemyTypes.GetRandom();
-                bool allowAllWeapons = sosigIndex == 0;
-                SosigEnemyTemplate sosigTemplate = IM.Instance.odicSosigObjsByID[sosigID];
-
-                Sosig spawnedSosig = manager.SpawnEnemy(
-                    sosigTemplate,
-                    spawnPoint.position,
-                    spawnPoint.rotation,
-                    patrol.IFFUsed,
-                    true,
-                    sosigPatrolSquad.PatrolPoints[0],
-                    allowAllWeapons
+            //Go to where SosigEnemyID is accessed, and remove it
+            cursor.GotoNext(
+                i => i.MatchLdloc(0),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_PatrolChallenge.Patrol), "EType"))
                 );
+            cursor.Index += 1;
+            cursor.RemoveRange(1);
 
-                if (sosigIndex == 0 && RandomUtils.Evaluate(0.35f))
-                {
-                    spawnedSosig.Links[1].RegisterSpawnOnDestroy(manager.Prefab_HealthPickupMinor);
-                }
-
-                spawnedSosig.SetAssaultSpeed(Sosig.SosigMoveSpeed.Walking);
-                sosigPatrolSquad.Squad.Add(spawnedSosig);
-            }
-
-            return sosigPatrolSquad;
+            //Replace SosigEnemyID with a call to access a random one
+            cursor.Emit(OpCodes.Call, ((Func<TNH_PatrolChallenge.Patrol, SosigEnemyID>)GetRandomEnemyFromPatrol).Method);
         }
 
-        private static List<TNH_HoldPoint> GetPatrolPoints(TNH_Manager manager, int holdPointStart)
+
+        /// <summary>
+        /// Patches GenerateSentryPatrol method to spawn multiple types of sosigs <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/111"> Allow multiple types of sosigs to spawn in patrols </see><br/>
+        /// </summary>
+        [HarmonyPatch(typeof(TNH_Manager), "GenerateSentryPatrol")]
+        [HarmonyILManipulator]
+        public static void GenerateSentryPatrolPatch(ILContext ctx, MethodBase orig)
         {
-            List<TNH_HoldPoint> patrolPoints = new List<TNH_HoldPoint>();
-            patrolPoints.Add(manager.HoldPoints[holdPointStart]);
+            ILCursor cursor = new ILCursor(ctx);
 
-            List<TNH_HoldPoint> holdPoints = new List<TNH_HoldPoint>(manager.HoldPoints);
-            holdPoints.RemoveAt(holdPointStart);
+            //Go to where SosigEnemyID is accessed, and remove it
+            cursor.GotoNext(
+                i => i.MatchLdarg(1),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_PatrolChallenge.Patrol), "EType"))
+                );
+            cursor.Index += 1;
+            cursor.RemoveRange(1);
 
-            holdPoints.Shuffle();
-            patrolPoints.AddRange(holdPoints.Take(5));
+            //Replace SosigEnemyID with a call to access a random one
+            cursor.Emit(OpCodes.Call, ((Func<TNH_PatrolChallenge.Patrol, SosigEnemyID>)GetRandomEnemyFromPatrol).Method);
+        }
 
-            return patrolPoints;
+
+        /// <summary>
+        /// Patches UpdatePatrols method to not run if there are no valid patrols to spawn <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/113"> Allow for boss patrols that can only spawn once </see><br/>
+        /// </summary>
+        [HarmonyPatch(typeof(TNH_Manager), "UpdatePatrols")]
+        [HarmonyPrefix]
+        public static bool UpdatePatrolsPatch(TNH_Manager __instance)
+        {
+            if(__instance.m_timeTilPatrolCanSpawn <= 0f)
+            {
+                return TNHManagerStateWrapper.Instance.GetCurrentLevel().Patrols.Any(o => TNHManagerStateWrapper.Instance.CanPatrolSpawn(o));
+            }
+
+            return true;
+        }
+
+
+
+        public static SosigEnemyID GetRandomEnemyFromPatrol(TNH_PatrolChallenge.Patrol patrol)
+        {
+            return PatrolConverter.PatrolFromVanilla[patrol].EnemyTypes.GetRandom();
         }
 
     }

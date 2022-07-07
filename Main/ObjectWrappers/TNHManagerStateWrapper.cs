@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TNHTweaker.Objects;
 using TNHTweaker.Objects.CharacterData;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ namespace TNHTweaker.ObjectWrappers
     {
         public static TNHManagerStateWrapper Instance;
         private TNH_Manager baseManager;
+
+        public List<SavedLevelData> SavedLevelData = new List<SavedLevelData>();
 
         private void Awake()
         {
@@ -123,6 +126,21 @@ namespace TNHTweaker.ObjectWrappers
         public bool IsItemUnlocked(string itemID)
         {
             return DoesItemExist(itemID) && OtherLoader.OtherLoader.UnlockSaveData.IsItemUnlocked(itemID);
+        }
+
+        public void RegisterLevelStarted()
+        {
+            SavedLevelData.Add(new SavedLevelData());
+        }
+
+        public SavedLevelData GetCurrentLevelData()
+        {
+            return SavedLevelData[baseManager.m_level];
+        }
+
+        public bool CanPatrolSpawn(Patrol patrol)
+        {
+            return !patrol.IsBossPatrol || GetCurrentLevelData().PatrolSpawnCount[patrol] <= 0;
         }
 
         private string GetTagType(string tag)

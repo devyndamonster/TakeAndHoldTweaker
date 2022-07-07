@@ -30,5 +30,7 @@ namespace TNHTweaker.Objects.CharacterData
 		public float TimeTilRegen_LimitedAmmo;
 		/// <summary> The IFF of the patrols sosigs </summary>
 		public int IFFUsed = 1;
+		/// <summary> When true, this patrol will only spawn once during a TNH Level </summary>
+		public bool IsBossPatrol = false;
 	}
 }

@@ -11,6 +11,9 @@ namespace TNHTweaker.ObjectConverters
 {
 	public static class PatrolConverter
 	{
+		public static Dictionary<Patrol, TNH_PatrolChallenge.Patrol> PatrolToVanilla = new Dictionary<Patrol, TNH_PatrolChallenge.Patrol>();
+		public static Dictionary<TNH_PatrolChallenge.Patrol, Patrol> PatrolFromVanilla = new Dictionary<TNH_PatrolChallenge.Patrol, Patrol>();
+
 		public static Patrol ConvertPatrolFromVanilla(TNH_PatrolChallenge.Patrol from)
 		{
 			Patrol patrol = ScriptableObject.CreateInstance<Patrol>();
@@ -23,6 +26,9 @@ namespace TNHTweaker.ObjectConverters
 			patrol.TimeTilRegen = from.TimeTilRegen;
 			patrol.TimeTilRegen_LimitedAmmo = from.TimeTilRegen_LimitedAmmo;
 			patrol.IFFUsed = from.IFFUsed;
+
+			PatrolFromVanilla[from] = patrol;
+			PatrolToVanilla[patrol] = from;
 
 			return patrol;
 		}
@@ -40,6 +46,9 @@ namespace TNHTweaker.ObjectConverters
 			patrol.TimeTilRegen = from.TimeTilRegen;
 			patrol.TimeTilRegen_LimitedAmmo = from.TimeTilRegen_LimitedAmmo;
 			patrol.IFFUsed = from.IFFUsed;
+
+			PatrolFromVanilla[patrol] = from;
+			PatrolToVanilla[from] = patrol;
 
 			return patrol;
 		}

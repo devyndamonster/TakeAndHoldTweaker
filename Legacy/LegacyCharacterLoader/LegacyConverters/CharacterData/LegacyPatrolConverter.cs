@@ -24,6 +24,7 @@ namespace LegacyCharacterLoader.LegacyConverters
 			patrol.TimeTilRegen = from.PatrolCadence;
 			patrol.TimeTilRegen_LimitedAmmo = from.PatrolCadenceLimited;
 			patrol.IFFUsed = from.IFFUsed;
+			patrol.IsBossPatrol = from.IsBoss;
 
 			LogConversionEnd(patrol);
 			return patrol;

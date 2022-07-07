@@ -41,6 +41,32 @@ namespace TNHTweaker.Patches
 
 
         /// <summary>
+        /// Patches SpawnHoldEnemyGroup method to use the HoldPhases random sosig IDs <br/><br/>
+        /// Related Features: <br/>
+        /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/112"> Allow multiple types of enemy sosigs to spawn during hold phase </see><br/>
+        /// </summary>
+        [HarmonyPatch(typeof(TNH_HoldPoint), "SpawnHoldEnemyGroup")]
+        [HarmonyILManipulator]
+        public static void SpawnHoldEnemyGroupPatch(ILContext ctx, MethodBase orig)
+        {
+            ILCursor cursor = new ILCursor(ctx);
+
+            //Go to where SosigEnemyID is accessed, and remove it
+            cursor.GotoNext(
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldPoint), "m_curPhase")),
+                i => i.MatchLdfld(AccessTools.Field(typeof(TNH_HoldChallenge.Phase), "EType"))
+                );
+            cursor.RemoveRange(3);
+
+            //Replace SosigEnemyID with a call to access a random one
+            cursor.Emit(OpCodes.Ldsfld, AccessTools.Field(typeof(TNHManagerStateWrapper), "Instance"));
+            cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(TNHManagerStateWrapper), "GetCurrentHoldPhase"));
+            cursor.Emit(OpCodes.Callvirt, AccessTools.Method(typeof(HoldPhase), "GetRandomEnemyId"));
+        }
+
+
+        /// <summary>
         /// Overrides logic that sets the number of encryptions that will spawn during a hold <br/><br/>
         /// Related Features: <br/>
         /// - <see href="https://github.com/devyndamonster/TakeAndHoldTweaker/issues/99"> Allow for min and max encryptions to be set for limited ammo mode </see><br/>
