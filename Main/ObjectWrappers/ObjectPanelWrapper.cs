@@ -161,7 +161,6 @@ namespace TNHTweaker
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(DupeCost);
-                original.M.Increment(10, false);
 
                 if(detectedMag != null)
                 {
@@ -192,7 +191,6 @@ namespace TNHTweaker
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(UpgradeCost);
-                original.M.Increment(10, false);
 
                 TNHTweaker.HoldActions[original.M.m_level].Add($"Upgraded {detectedMag.ObjectWrapper.DisplayName} To {upgradeMag.DisplayName}");
 
@@ -216,7 +214,6 @@ namespace TNHTweaker
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(PurchaseCost);
-                original.M.Increment(10, false);
 
                 TNHTweaker.HoldActions[original.M.m_level].Add($"Purchased {purchaseMag.DisplayName}");
 
@@ -379,7 +376,6 @@ namespace TNHTweaker
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(PanelCost);
-                original.M.Increment(10, false);
 
                 FVRObject.OTagFirearmRoundPower roundPower = AM.GetRoundPower(detectedFirearm.RoundType);
                 int numSpawned = GetRoundsToSpawn(roundPower);
@@ -534,7 +530,6 @@ namespace TNHTweaker
                 //Debug.Log("Adding full auto!");
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(PanelCost);
-                original.M.Increment(10, false);
 
                 if(detectedHandgun != null)
                 {
@@ -833,7 +828,6 @@ namespace TNHTweaker
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(PanelCost);
-                original.M.Increment(10, false);
 
                 IncreaseFireRate();
                 detectedHandgun = null;
@@ -854,7 +848,6 @@ namespace TNHTweaker
             {
                 SM.PlayCoreSound(FVRPooledAudioType.UIChirp, original.AudEvent_Spawn, transform.position);
                 original.M.SubtractTokens(PanelCost);
-                original.M.Increment(10, false);
 
                 DecreaseFireRate();
                 detectedHandgun = null;
