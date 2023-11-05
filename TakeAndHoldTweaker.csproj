@@ -78,6 +78,12 @@
     <Reference Include="DotNetZip, Version=1.12.0.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
       <HintPath>packages\DotNetZip.1.12.0\lib\net20\DotNetZip.dll</HintPath>
     </Reference>
+    <Reference Include="ES2">
+      <HintPath>lib\ES2.dll</HintPath>
+    </Reference>
+    <Reference Include="MagazinePatcher">
+      <HintPath>lib\MagazinePatcher.dll</HintPath>
+    </Reference>
     <Reference Include="ES2, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(H3VRDir)\h3vr_Data\Managed\ES2.dll</HintPath>
@@ -98,6 +104,9 @@
       <HintPath>packages\MonoMod.ILHelpers.1.0.0\lib\net35\MonoMod.ILHelpers.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
+    <Reference Include="OtherLoader">
+      <HintPath>lib\OtherLoader.dll</HintPath>
+    </Reference>
     <Reference Include="OtherLoader, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\OtherLoader\bin\Debug\OtherLoader.dll</HintPath>
