@@ -27,3 +27,8 @@ An H3VR plugin for modifying Take &amp; Hold! Has support for custom characters,
 
 ## Character Creation
 Check out the [Wiki](https://github.com/devyndamonster/TakeAndHoldTweaker/wiki) for documentation on character creation, and other important stuff
+
+
+## Building
+
+Before building, please make sure to add all dependencies to `/lib` listed in `/lib/_README.txt`.
